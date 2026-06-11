@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# MATLAB
+*.asv
+*.m~
+
+# IDE / 编辑器
+.vscode/
+.idea/
+*.code-workspace
+
+# Cursor
+.specstory/
+
+# 系统文件
+Thumbs.db
+.DS_Store
+
+# 大文件 / 模型（按需取消注释）
+# *.mat
+# *.pth
+# *.ckpt
