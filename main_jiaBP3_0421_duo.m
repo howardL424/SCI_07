@@ -370,7 +370,6 @@ function [r_dot, q_dot_y, q_dot_z] = computeMDDot(pos1, pos2, r, q_y, q_z)
 end
 
 
-
 %% 3. 主仿真循环
 
 % 3.0 导入样本生成仿真初始参数

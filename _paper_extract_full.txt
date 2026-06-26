@@ -1,0 +1,2446 @@
+===== PAGE 1 =====
+Intelligent 3D Evasion against Dual Non-Cooperative
+Aerial Vehicles: An Energy-Efficient Optimal Guidance
+Approach
+Abstract. Evading non-cooperative aerial vehicles is crucial in target-reaching
+missions. Current research predominantly maximizes miss distance against a
+single vehicle, often incurring excessive energy consumption and failing against
+multiple vehicles. To address these limitations, this paper proposes an energy-
+efficient 3D optimal evasive guidance algorithm against dual non-cooperative
+vehicles. First, a four-body kinematic model comprising the target, the evader,
+and the two vehicles is established and then simplified utilizing the zero-effort
+miss (ZEM). Based on the Maximum Principle, an optimal guidance law is de-
+rived to handle cross-coupling effects between the dual vehicles. Furthermore, a
+BP neural network surrogate model is designed to adaptively optimize evasion
+weights and the guidance law parameter online. Simulations verify that the pro-
+posed strategy increases average miss distances by 166.5% and 102.3% com-
+pared to the programmed maneuver method and the single-vehicle optimal
+method, respectively, while reducing unit-mass maneuver energy consumption
+by 65.1% and 41.5%. Maintaining a 0.02-meter terminal deviation, the algo-
+rithm successfully balances evasion safety, energy efficiency, and terminal ac-
+curacy.
+Keywords: Dual Non-Cooperative Vehicle Evasion, Multi-Objective Optimal
+Control, BP Neural Network, Energy Efficiency, 3D Four-Body Kinematics.
+1 Introduction
+With the continuous advancement of non-cooperative aerial vehicles, developing
+effective evasion strategies is increasingly critical. Existing studies explore improved
+proportional navigation [1], finite-time convergent guidance (FTCG) [2], proximal
+policy optimization (PPO) [3], and cooperative robust line-of-sight guidance laws [4]
+to enhance evasion against non-cooperative vehicles that employ pure proportional
+navigation. However, prioritizing maximum miss distance often causes excessive
+energy consumption, risking the failure of subsequent target-reaching missions.
+Recently, energy optimization in evasion has gained attention. Li et al. [5] pro-
+posed an energy-efficient PPO-based guidance law. Zhuang et al. [6] applied deep
+reinforcement learning to a 6-DOF model, generating optimal trajectories that balance
+attitude stability and energy. Yao et al. [7] introduced an FTCG law optimizing ener-
+gy via precise timing control. Nevertheless, these methods target single-pursuer sce-
+narios, whereas multi-vehicle cooperative pursuit is more prevalent in practice. Fur-
+thermore, although Hao et al. [8] addressed dual pursuers, their 2D kinematic model
+failed to capture authentic 3D evasion scenarios.
+
+===== PAGE 2 =====
+2
+To bridge these gaps, this paper proposes an intelligent 3D evasion algorithm
+against dual non-cooperative vehicles. Main contributions include: (1) establishing a
+3D four-body kinematic model for target-evader-dual non-cooperative vehicle con-
+frontation; (2) deriving a multi-objective optimal guidance law with explicit cross-
+coupling terms that balances evasion safety and energy efficiency; (3) constructing a
+BP-LM intelligent parameter optimization framework for real-time adaptive adjust-
+ment of guidance parameters. Subsequent sections detail the kinematic modeling,
+guidance design, surrogate model construction, simulations, and conclusions.
+2 数学建模
+本文针对攻击者 A规避和目标打击场景，考虑目标T周围发射两个防御者D ,
+1
+D
+2
+对攻击者实施协同拦截。为表述简洁，后文除特殊说明外，统一定义下标
+i  { 1 , 2 } ，其中 i = 1 对应防御者 D
+1
+，i=2对应防御者 D
+2
+。
+攻击者-目标-防御者1-防御者2四体相对运动关系如下图1所示，坐标系OXYZ
+为以目标T为原点、X轴位于水平面、Y轴竖直向上的地面坐标系。
+Fig. 1. 攻击者-目标-防御者1-防御者2四体相对运动关系图
+Fig. 1中相对位置和运动关系符号如下表1所示。
+Table 1. Fig.1相对位置与运动关系符号表.
+符号 含义 Fig.1中对应正负
+Y
+Z
+O (T )
+A
+X
+D
+1
+V
+D 1
+q
+z1
+V
+A
+V A
+
+q
+
+r
+A D 1
+
+D VD2
+2
+r
+A T
+r
+A D 2
+V
+D 2
+
+A
+
+D1
+q
+y1
+q
+
+
+===== PAGE 3 =====
+3
+r
+A T
+, r
+A D i
+攻击者与目标、第i个防御者之间的距离 正，正
+q ,
+yi
+q
+zi
+第i个防御者的俯仰、偏航方向视线角 正，正
+q , q 攻击者与目标的俯仰、偏航方向视线角 负，正
+ 
+V
+D
+,i
+D
+,i
+V D i
+  第i个防御者的速度、弹道倾角和弹道偏角 正，正
+V
+A
+,
+A
+,
+V A
+  攻击者的速度、弹道倾角和弹道偏角 正，正
+u ,
+ri
+v
+ri
+攻击者加速度、第i枚防御者加速度在视线坐
+标系x轴（正方向由第i枚防御者指向攻击 正，正
+者）投影
+防御者D , D 与攻击者A的相对运动方程
+1 2
+r
+q
+q
+A D i
+r
+yi A
+r
+zi A
+V
+V
+D i
+V
+c o
+D i
+D
+A
+V
+A
+s
+i
+D
+q
+c
+c o
+i
+c o
+yi
+o s
+s
+c o
+s
+c o
+D i
+c o s
+A
+s s
+D i
+s in
+A
+s q c o
+yi
+q c o s
+yi
+in q c
+yi
+q c o s
+yi
+( s q
+zi
+( q
+zi
+( o s q
+zi
+( q
+zi
+V
+V
+A
+A
+V D
+)
+V
+)
+i
+D
+)
+i
+s
+)
+s
+s in
+in
+A
+s in
+in
+A
+s
+c
+s in q
+D i
+in q
+yi
+c o s
+D i
+o s q
+zi
+yi
+q
+yi
+  
+  
+  
+  
+ = −
+ =
+
+V
+A
+
+
+c
+
+o
+
+s
+= V
+A
+D
+s
+c
+i
+in
+o
+(
+s
+q
+zi
+D i
+s in
+V
+(
+q
+)
+A
+−
+−
+yi
+−
+−
+V D
++
+−
+)
+i
++
+−
+
+
+ +
+ −
+ 
+ 
+
+−
+− −
+(1)
+攻击者和目标相对运动方程
+
+r =V sinq sin −cos ( q − ) cosq cos 
+
+AT A  A  VA  A
+ V cos sinq cos ( q − ) −sin cosq 
+
+q =
+A A   VA A 
+(2)
+ r
+ AT
+ ( )
+V cos cos q −
+ q = A A  VA
+   r cosq
+AT 
+由运动学关系可得防御者与攻击者视线方向相对加速度
+r=r q2 +r q2cos2q +u −v (3)
+ADi ADi yi ADi zi yi ri ri
+式中，u ,v 分别为攻击者和第i个防御者的加速度在防御者与攻击者视线坐标
+ri ri
+系（设为视线坐标系S ）x轴投影，坐标系x轴正向定义为防御者指向攻击者。
+i
+目标与攻击者视线方向相对加速度
+r
+A T
+r
+A T
+q 2 r
+A T
+q 2 c o s 2 q u
+rT   
+   = + + (4)
+式中，u 为攻击者加速度在目标与攻击者视线坐标系（设为视线坐标系S ）x
+rT T
+轴投影，坐标系x轴正向定义为目标指向攻击者。
+
+===== PAGE 4 =====
+4
+攻击者与防御者的运动方程组
+x
+y
+z
+i
+i
+i
+i
+i
+V
+V
+a
+V
+c o s
+i i
+s in
+i i
+V c o s
+i
+yi
+i
+a
+zi
+V c o s
+i
+c o
+s
+i
+i
+s
+in
+V i
+V i
+ 
+
+ 
+
+
+
+ 
+
+
+
+
+=
+=
+=
+=
+=
+−
+−
+(5)
+式中， ( x ,i y ,i z )i 为飞行器在地面坐标系位置坐标； a
+yi
+, a
+zi
+分别表示垂直于飞行
+器速度矢量的铅垂方向和水平方向的法向加速度；此处下标i=A,D1,D2（与
+其它地方的 i 不同），分别表示攻击者和防御者 D
+1
+, D
+2
+。
+3 考虑两枚拦截者的三维最优突防制导律设计
+3.1 突防最优控制模型建立
+由视线方向相对加速度关系式可知，攻击者与第i枚防御者的加速度在视线坐标
+系S 的x轴投影
+i
+u
+ri
+和 v
+ri
+，与各自法向加速度 a
+yA
+, a
+zA
+和 a
+yD i
+, a
+zD i
+存在坐标转换
+关系。设地面坐标系到视线坐标系 S
+i
+的转换矩阵为 L ( q ,
+yi
+q )
+zi
+，地面坐标系到弹
+道坐标系的转换矩阵为 ( ,
+V
+)  L ，则两者的投影关系可表示为
+u
+ri
+1 0 0  ( q ,
+yi
+q )
+zi
+1 (
+A
+,
+V A
+) a
+a
+0
+yA
+zA
+  = L L −
+ 
+(6)
+ 0 
+v =1 0 0L(q ,q )L−1( , )  a  (7)
+ri yi zi Di VDi  yDi
+ a  
+zDi
+其中转换矩阵的具体形式与三维空间坐标系转换的通用定义一致，此处不再
+赘述。同理，设地面坐标系到视线坐标系S 的转换矩阵为
+T
+( q , q )
+ 
+L ，则攻击
+者加速度在坐标系 S
+T
+的x轴投影
+u
+rT
+1 0 0  ( q , q ) 1 (
+A
+,
+V A
+) a
+a
+0
+yA
+zA
+ 
+ 
+= L L −
+ 
+(8)
+假设防御者采用经典的比例导引律实施拦截，其法向加速度指令满足
+
+===== PAGE 5 =====
+5
+a
+a
+yD
+zD
+i
+i
+K
+D
+K
+Vi
+D
+D
+Vi
+qi
+q
+D i
+c
+zi
+yi
+o s
+D i
+
+ 
+=
+
+− 
+ 
+(9)
+式中，K 为第i枚防御者比例导引系数。将式(6)、(7)及其中的转换矩阵代入式
+Di
+(3)得
+r
+A D i
+a
+a
+c
+r
+A D i
+yA
+yD i
+o s q
+( 2 2 q q c o
+yi zi
+c o s q s in
+yi
+c o s q s in
+yi
+(
+s in q
+yi zi
+s 2 q
+c
+A
+D i
+V D i
+) c o s
+yi
+( o s q
+zi
+( c o s q
+zi
+)
+a
+zD i
+q s
+yi
+V A
+V
+in
+)
+)
+D i
+( q
+zi
+s in q
+s in
+yi
+q
+V A
+c o
+c
+yi
+)
+s
+o
+a
+s
+zA
+A
+D i
+
+  
+  
+
+  =
+ −
+
+ −
+
+  +
+−
+−
+−
+−
++
++
+−
+
++
+−
+ +
+(10)
+定义状态变量 x
+i
+=  r
+A D i
+r
+A D i
+T ，控制变量 u
+A
+=  a
+yA
+a
+zA
+ T ，则可得攻击者与
+第i个防御者交互的状态空间方程
+.x
+(i t ) = A
+i
+x (i t ) + B ui
+A
+( t ) + C
+i
+(11)
+ 0 1
+式中，A = ,
+i q2+q2cos2q 0  yi zi yi 
+B
+i
+=
+ 0
+B 1i B
+0
+2 i
+  0 
+,C =  ，其中
+i C  1i
+B =sinq cos −cosq sin cos ( q − )
+ 1i yi A yi A zi VA
+ ( )
+B =cosq sin q − (12)
+
+2i yi zi VA
+( ) ( )
+C =cosq sin q − a +[cosq sin cos q − −sinq cos ]a
+ 1i yi zi VDi zDi yi Di zi VDi yi Di yDi
+该系统为线性时变系统，但在每个离散制导周期内可近似为定常系统，即认为
+每一离散时刻 A,B, C 为时不变量，该假设在工程实践中已被广泛验证其有效
+性。
+同理，将式(8)及其中的转换矩阵代入式(4)得
+r =r ( q2+q2cos2q ) +(cosq cosq sin +sinq cos)a +
+AT AT      A  A yA
+(13)
+a (sin sin sinq −cos sin cosq cosq −cos cosq sinq )
+zA A VA  A VA   VA  
+定义状态变量 x
+A T
+=  r
+A T
+r
+A T
+T ，则可得攻击者与目标的相对状态空间方程
+x
+A T
+( t ) = A
+T
+x
+A T
+( t ) + B
+T
+u
+A
+( t ) (14)
+ 0 1  0 0 
+式中，A = ,B =  ，其中
+T  q  2+q  2cos2q  0  T B 1T B 2T 
+ B
+1T
+=cosq
+
+cosq
+
+sin
+A
++sinq
+
+cos
+A
+ (15)
+ B
+2T
+=sin
+A
+sin
+VA
+sinq
+
+−cos
+A
+sin
+VA
+cosq
+
+cosq
+
+−cos
+VA
+cosq
+
+sinq
+
+为降低系统阶次并简化求解，引入零控脱靶量 z ( t ) 。定义攻击者与第i个防御者
+的零控脱靶量
+
+===== PAGE 6 =====
+6
+z (i t ) = 1 0  Ω ( t ,
+fi
+t ) x (i t ) (16)
+式中，状态转移矩阵
+ eQ i tg  o  ,i +e−Qitgo,i eQitgo,i −e−Qitgo,i 
+ 
+Ω ( t ,t ) =eAi (tfi−t) =  2 2Q i  (17)
+fi   Q eQ i tg  o  ,i −e−Qitgo,i eQitgo,i +e−Qitgo,i  
+ i 2 2 
+其中， Q 
+i
+= q 2yi + q 2zi c o s 2 q
+yi
+为视线角速度合成量， t
+g o ,i
+= t
+fi
+− t 为剩余飞行时
+间。利用状态转移矩阵性质Ω(
+t ,t
+)
+=−Ω
+(
+t ,t
+)
+A ，对式(16)求导整理可得
+fi fi i
+z (i t ) (i t ) Ti
+A
+( t ) (i t ) v
+ri
+   = b u − (18)
+式中，
+(i
+i
+t )
+ B
+e
+1i
+Q ti go,i
+2
+B
+2 i
+e
+Q
+i
+T
+Q ti go,i
+
+
+b =
+=
+  −
+
+−
+(19)
+同理可得攻击者与目标的零控脱靶量导数
+z
+T
+( t )
+T
+( t ) Tt
+A
+( t )   = b u (20)
+式中，
+T
+t
+( t )
+ B
+e
+1T
+Q T tgo,T
+2
+B
+2 T
+e
+Q
+T
+T
+Q T tgo,T
+
+
+b =
+=
+  −
+
+−
+(21)
+其中， Q
+T
+q 2 q 2 c o s 2 q
+  
+ =   + , t
+g o ,T
+= t
+fT
+− t .
+本文智能规避算法的核心目标是在保证成功规避两枚防御者的同时，最小化
+机动能量消耗，并避免过度机动影响后续目标打击。为此，构建如下二次型性
+能指标函数
+minJ =2 w i z ( t ) −d* 2 + w E  tfuTu d+ w T z2( t ) (22)
+uA i=1 2  fi i  2 t0 A A 2 T fT
+式中，w 0为规避脱靶量控制权重，
+i
+w
+E
+ 0 为控制能量权重， w
+T
+ 0 为目标
+到达脱靶量权重， d *i 为攻击者与第i个防御者的期望规避脱靶量，通常设定为
+略大于防御者作用半径。 t
+f
+= m a x ( t
+f1
+, t
+f 2
+) 为全局规避终止时刻。为体现对两枚
+防御者的均衡规避需求，设w +w =w（w为一正常数），且w , w 满足
+1 2 1 2
+w
+w
+1
+2
+w
+w
+1
+w
+1
+e
+1
+w
+1
+e
+e
+
+
+
+
+=
+=
+
+−
++ −
+= 
++
+−
+−
+(23)
+
+===== PAGE 7 =====
+7
+3.2 最优制导指令求解
+采用极大值原理求解上述最优控制问题。构造哈密顿函数
+H
+1
+z
+1
+( t ) I ( t t
+f1
+)
+2
+z
+2
+( t ) I ( t t
+f 2
+) +
+T
+z
+T
+( t )
+w
+2
+E a 2yA ( t ) a 2zA ( t )    =      +   +  +  (24)
+式中， ,i
+T
+ 分别为对应零控脱靶量 z (i t ) , z
+T
+( t ) 的协态变量，I(tt )(i=1,2)为
+fi
+指示函数。由正则方程和终端横截条件，可得协态变量的解析解
+i
+T
+( ) t
+( ) t
+w
+w
+i
+T
+z
+z
+( t
+fi
+( t
+fT
+)
+)
+d *i , i 1 , 2 
+
+ =
+=
+ −  =
+(25)
+根据最优控制的极值条件
+
+
+H
+u
+A
+= 0 ，对哈密顿函数关于控制量求偏导并令其
+为零，可得最优控制指令的开环形式
+*A
+w
+w
+T
+E
+w
+w
+z
+T
+1
+E
+(
+t
+z
+fT
+(
+1
+)
+t )
+f1
+( t
+T
+)
+d
+t
+*1
+1
+( t )
+1
+I ( t t
+f1
+)
+w
+w
+2
+E
+z
+2
+( t
+f 2
+) d *2
+2
+( t )
+2
+I ( t t
+f 2
+)  
+
+u = −  −
+b
+ b  −  −  b  −
+(26)
+为得到闭环制导指令，需确定终端零控脱靶量 z (i t )
+fi
+。将式(26)代入式(18)，
+可得攻击弹与两防御弹终端零控脱靶量导数
+z ( t )
+1
+w
+w
+w
+w
+w
+w
+2
+E
+T
+E
+1
+E
+z
+z
+T
+z ( t )
+1 f1
+( t )
+2 f 2
+( t ) (
+fT 1
+d
+t )
+d
+*2
+*1
+T
+(
+21
+( t
+1
+( t )
+(
+)
+( t ) B
+( t
+2
+T1
+T
+21
+1
+( )
+)
+B
+T1
+( t
+) 22
+1
+)
+2
+t
+I
+f1
+(
+)
+t
+1
+( t )
+t
+v
+f
+r1
+)
+2
+ 
+ 
+ 
+ = −
+
+
+−
+−
+
+
+b b
++
+b b
+
+
+−
+
+−
+− (27)
+z ( t )
+2
+w
+w
+w
+w
+w
+w
+2
+E
+T
+E
+1
+E
+z
+z
+T
+2
+(
+z
+(
+t
+(
+1
+t
+f
+fT
+t
+2
+)
+)
+f1
+)
+(
+2
+d
+t
+d
+*2
+)
+*1
+T
+(
+( t
+1
+2 ( t )
+2
+( t )
+)
+(
+T2
+B
+( ( t )
+2
+2 B
+1 2
+) (
+T
+T1
+22
+2
+t
+)
+2
+t
+)
+f 2
+I ( t
+( t
+2
+)
+) v
+t
+f1
+r 2
+)  
+ 
+ 
+ = −
+
+
+−
+−
+
+
+b b
++
+b b
+
+−
+ 
+−
+−
+(28)
+
+===== PAGE 8 =====
+8
+z ( t )
+T
+w
+w
+w
+w
+w
+w
+2
+E
+T
+E
+1
+E
+z
+z
+T
+2
+(
+z ( t
+1
+( t
+f 2
+t )
+fT
+)
+f1
+) d
+2 ( t
+T
+d
+*2
+( )
+*1
+B
+T
+21T
+T
+( t
+( t
+)
+B
+) ( t )
+1
+( ( t )
+2
+) 2
+2 T
+(
+T2
+( t
+T1
+t
+) I (
+t
+) I ( t
+t )
+fT
+t
+t
+t
+f1
+)
+f 2
+)  
+ 
+
+ = −
+
+
+−
+−
+
+
++
+b
+b
+b
+
+b
+
+
+
+
+−
+−
+(29)
+将式(27)、(28)、(29)分别从t到 t
+f1
+、t到 t
+f 2
+、t到 t
+fT
+积分得
+z
+1
+( t
+f1
+) = z
+w
+w
+(
+1
+2
+T
+t )
+( b
+w
+( b
+w
+−
+T1
+E
+T1
+E
+w
+b
+2
+b
+T
+( B
+1
+)
+
+)
+
+21
+1w
+1 2
+1T
++
+E
+
+z
+z
+T
+B
+2
+(
+2 )
+2 1
+( t
+f
+t
+fT
+
+)
+2
+) −
+1
+−
+ z
+ 1
+* d
+2
+N
+1
+( t
+
+f1
+−
+) − d *1  −
+(30)
+z
+2
+( t
+f 2
+) = z
+w
+w
+( t )
+2
+( B
+2
+( b
+T
+w
+w
+−
+2 +
+1 2w
+E
+T b
+2 T
+E
+1
+B
+)
+( T b b
+1 2
+w
+E
+2 )
+2 2 
+ z
+2 T
+)
+2
+T
+
+
+( t
+ z ( t
+ 1 2 1 f1
+z ( t ) −
+2 f 2
+) − N
+fT 2
+)
+d
+−
+*2
+d
+
+*1
+−
+ −
+(31)
+w ( bTb )
+z (t )=z (t)− 1 1 T  z (t )−d*−
+T fT T w 1T  1 f1 1
+E
+w ( bTb )
+2 2 T  z (t )−d*− (32)
+w 2T  2 f2 2
+E
+w ( B2 +B2 )
+T 1T 2T  z (t )
+w T T fT
+E
+上三式中， , N (i=1,2),
+i i
+
+T
+和 ,  ,  的表达式分别为
+12 1T 2T
+N
+i
+i
+T
+tfi
+t
+tfi
+t
+tfT
+t
+2 (
+i
+(i
+2T
+) d
+) v d
+ri
+( ) d
+4
+1 e
+2 Q
+i
+Q t e i go,i
+1
+2 4 Q
+T
+2 Q t e i go,i
+2 Q
+i
+Q t e i go,i
+2 2 Q
+i
+2 Q t e T go,T
+2 Q
+2
+e
+T
+Q ti go,i
+2
+2
+v , i
+ri
+2 Q tT go,T
+t
+g o ,i
+1 , 2
+2 t
+g o
+,
+,T
+i 1 , 2   
+ 
+  
+
+
+
+=
+=
+=
+
+
+
+=
+=
+=
+
+
+ 
+ 
+ 
+
++
+ 
+−
+
+ 
+−
+−
+−
+−
+−
+−
+=
+−
+
+
+=
+(33)
+
+===== PAGE 9 =====
+9
+ =
+min(tf1,tf2)
+()()d
+12 t 1 2
+1 eQ 1 tg  o  ,1 +Q2tgo,2 −eQ1tgo,1+Q2tgo,2−(Q1+Q2)min(tgo,1,tgo,2)
+= 
+4Q
+1
+Q
+2
+  Q
+1
++Q
+2
+eQ 1 tg  o  ,1 −Q2tgo,2 −eQ1tgo,1−Q2tgo,2−(Q1−Q2)min(tgo,1,tgo,2)
+− (34)
+Q−Q
+1 2
+e−Q 1 tgo,1+Q2tgo,2+(Q 1 −Q 2)min(tgo,1,tgo,2)−e−Q1tgo,1+Q2tgo,2
+−
+Q−Q
+1 2
+e−Q
+1
+tg 
+o
+
+,1
+−Q2tgo,2+(Q1+Q2)min(tgo,1,tgo,2)−e−Q1tgo,1−Q2tgo,2
++ 
+Q
+1
++Q
+2
+
+1T
+m
+t
+4 Q
+Q e
+e
+in (t ,t ) f1 fT ( )
+1
+Q t 1 e 1 go,1
+Q1
+T
+t Q t e 1 go,1 T go,T
+Q t1 go,1
+Q
+Q
+(
+T
+tT go,T
+t1 go,1
+Q
+1
+)
+Q
+d
+Q e
+t T go,T
+Q
+T
+t1 go,1
+Q
+1
+(Q 1
+Q
+Q
+t T go,T
+Q
+T
+) m in T
+(Q Q ) m in 1 T
+(t ,t ) go,1 go,T
+(t ,t go,1 go,T )
+    =
+=
+−
+−
++
+
+e
+
+    
+     −
+  − + Q
+      − Q t − Q 1 go,1
+     + + −
++
+− − − −
+  −
+    t + (Q − Q )m in (t ,t ) T go,T 1 T go,1 go,T
+  Q − Q
+1 T
+t + (Q + Q )m in (t ,t ) T go,T 1 T go,1 go,T
+  Q + Q
+1 T
+−
+−
+
+e
+e
+−
+− Q
+− Q
++
+t + 1 go,1
+t − 1 go,1
+Q
+Q
+
+t T go,T
+t T go,T 
+(35)
+2 T
+m
+t
+4 Q
+Q e
+e
+in (t ,t ) f2 fT ( )
+2
+Q t 1 e 2 go,2
+Q
+2 T
+t Q t e 2 go,2 T go,T
+Q t2 go,2
+Q
+Q
+(
+T
+t T go,T
+t2 go,2
+Q
+2
+) d
+Q e
+Q tT go,T
+Q
+T
+t2 go,2
+Q
+2
+(Q 2
+Q
+Q
+t T go,T
+Q
+T
+) m in T
+(Q 2
+(tgo,2
+Q ) m T
+,t ) go,T
+in (t ,t go,2 go,T )
+     =
+=
+−
+−
++
+
+e
+
+    
+     −
+  − + Q
+      − Q t − Q 2 go,2
+     +
+−
+    t + (Q − Q T go,T 2
+t + (Q + Q T go,T 2
+−
+− −
+  −
+)m in (t ,t T go,2 go,T
+  Q − Q
+2 T
+)m in (t ,t T go,2 go,T
+  Q + Q
+2 T
++
++
+−
+) −
+) −
+
+e
+e
+−
+−
+−
+Q
+Q
++
+t + 2 go,2
+t − 2 go,2
+Q
+Q
+
+t T go,T
+tT go,T 
+(36)
+令待求脱靶量偏差为 X =z(t )−d*, X =z (t )−d*, X =z (t )。联立
+1 1 f1 1 2 2 f2 2 T T fT
+式(30)、(31)、(32)，移项整理得
+
+===== PAGE 10 =====
+10
+ 1 +
+G
+G
+G
+1
+
+2 1
+
+T 1
+1
+1 2
+1T
+1
+1
+G
++
+G
+1 2
+G
+T 2
+
+2
+
+2
+1 2
+
+2 T
+2
+1
+G
+G
++
+1T
+2 T
+G
+
+
+T
+1T
+2 T
+
+T
+  X
+X
+X
+1
+2
+T
+
+=
+ z
+1
+z
+2
+z
+T
+( t )
+( t )
+( t )
+-
+-
+N
+N
+1
+2
+-
+-
+d
+d
+*1
+*2
+
+(37)
+其中，自耦合增益
+w(B2 +B2) w (B2 +B2 ) w (B2 +B2 )
+G = 1 11 21 , G = 2 12 22 ，G = T 1T 2T (38)
+11 w 22 w T w
+E E E
+防御者间交叉耦合增益
+w (bTb ) w(bTb )
+G = 2 1 2 , G = 1 1 2 (39)
+12 w 21 w
+E E
+目标与防御者间交叉耦合增益
+G
+1T
+=
+w
+T
+( b
+w
+T1
+E
+b
+T
+)
+, G
+2 T
+=
+w
+T
+( b
+w
+T2
+E
+b
+T
+)
+, G
+T 1
+=
+w
+1
+( b
+w
+T1
+E
+b
+T
+)
+, G
+T 2
+=
+w
+2
+( b
+w
+T2
+E
+b
+T
+)
+(40)
+式(37)中， G 
+ii
+(i i = 1 , 2 ) , G
+T
+
+T
+为自耦合项，表征各防御者和目标自身与攻
+击者相对运动对其终端脱靶量的影响。 G
+1 2
+
+1 2
+, G
+2
+1
+1 2
+, G
+iT
+
+iT
+, G
+T
+i
+iT
+( i = 1 , 2 )
+为交叉耦合项，体现了防御者和目标分别与攻击者相对运动产生的交联影响，
+是双防御者规避和目标打击一体化场景区别于单防御者场景的核心特征。其物
+理本质在于攻击者的同一机动动作会同时改变与两枚防御者和目标的相对运动
+状态，并作用于最优制导指令中，导致两个规避进程与目标打击进程产生相互
+耦合。
+令Z =z (t)−N −d*,
+1 1 1 1
+ Z
+2
+= z
+2
+( t ) − N
+2
+− d *2 ,  Z
+T
+= z
+T
+( t ) ，则有
+ 1 +
+G
+G
+G
+1
+
+2 1
+
+T 1
+1
+1 2
+1T
+1
+1
+G
++
+G
+1 2
+G
+T 2
+
+2
+
+2
+1 2
+
+2 T
+2
+1
+G
+G
++
+1T
+2 T
+G
+
+
+T
+1T
+2 T
+
+T
+  X
+X
+X
+1
+2
+T
+
+=
+ 
+
+
+Z
+Z
+Z
+1
+2
+T
+
+(41)
+记矩阵行列式
+
+d et
+=
+1 +
+G
+G
+G
+1
+
+2 1
+
+T 1
+1
+1 2
+1T
+1
+1
+G
++
+G
+1 2
+G
+T 2
+
+2
+
+2
+1 2
+
+2 T
+2
+1
+G
+G
++
+1T
+2 T
+G
+
+
+T
+1T
+2 T
+
+T
+(42)
+
+1
+=
+
+
+
+Z
+Z
+Z
+1
+2
+T
+1
+G
++
+G
+1 2
+G
+T 2
+
+2
+
+2
+1 2
+
+2 T
+2
+1
+G
+G
++
+1T
+2 T
+G
+
+
+T
+1T
+2 T
+
+T
+(43)
+1+G  Z G 
+11 1 1 1T 1T
+ = G  Z G  (44)
+2 21 12 2 2T 2T
+G  Z 1+G 
+T1 1T T T T
+
+===== PAGE 11 =====
+11
+1+G  G  Z
+11 1 12 12 1
+ = G  1+G  Z (45)
+T 21 12 22 2 2
+G  G  Z
+T1 1T T2 2T T
+则由克莱姆法则可对线性方程组式(41)求解得
+X
+1
+=
+
+
+1
+d et
+, X
+2
+=
+
+
+2
+d et
+, X
+T
+=
+
+
+T
+d et
+(46)
+将式(46)代入式(26)，得到最优规避制导加速度指令
+*A ( t )
+1
+d et
+w
+w
+1
+E
+1
+( t )
+1 1
+I ( t t
+f1
+) +
+w
+w
+2
+E
+2
+( t )
+2 2
+I ( t t
+f 2
+)
+w
+w
+T
+E
+T
+( t )
+T t
+   u = −
+
+
+ b   b  +  b
+
+(47)
+该最优制导指令综合考虑了两枚防御者的威胁程度、控制能量消耗以及目标
+打击影响，能够实现双防御者规避和目标打击一体化制导。
+4 智能制导律参数设计
+在上述最优规避制导律指令中，需预先设定的参数包括 w
+1
+, w
+2
+, w ,
+E
+w
+T
+和 d *1 ,
+d *2 (分别在 X
+1
+, X
+2
+，也即 
+1
+, 
+2
+中)，由于一般而言同一批次追击攻击者的两
+枚防御者性能通常相同，安全规避两者的距离也应当相同，这里我们假定
+d *1 = d *2 = d * 。同时由式(23)，w , w 可由
+1 2
+w 和表示且有 w
+1
++ w
+2
+= w ，因而需
+设定的参数转化为 w 和， w 代表规避部分权重总和，代表攻击者对于两枚
+防御者规避脱靶量的权衡。因此，如果对规避脱靶量控制精度要求高，则需将
+w 设的较大；如果考虑尽量节省规避过程中的消耗的控制能量或需要调节飞行
+更偏重目标打击，则需将 w
+E
+或w 设的较大。对于突防结束的终端时刻
+T
+t
+f
+，有
+如下预估关系式
+
+t
+t
+fi
+f
+=
+=
+t
+m
++
+a
+t
+x
+=
+g o ,i
+{ t
+f1
+,
+t
+t
+−
+f 2
+}
+r
+Ar
+A
+D
+D
+i
+i
+, i = 1 , 2
+(48)
+式中，t为当前时刻， t
+g o ,i
+为预估的攻击者与第i个防御者的剩余飞行时间。
+对于目标打击终端时刻 t
+fT
+，有预估关系式
+r
+t =t+t =t− AT (49)
+fT go,T r
+AT
+式中， t
+g o ,T
+为攻击者到达目标的预估剩余飞行时间。
+4.1 基于BP神经网络的两防御者规避代理模型构建
+由上述推导可知，制导律参数与最终摆脱距离之间存在复杂的非线性关系，无
+法通过解析表达式直接描述。特别是在双防御者场景下，交叉耦合效应的存在
+
+===== PAGE 12 =====
+12
+使得这种非线性关系更加显著。为此，本文采用BP神经网络构建代理模型，建
+立攻防初始态势、制导律参数与实际规避脱靶量之间的映射关系。
+为全面表征初始攻防态势，定义如下状态量：
+防御者速度前置角
+yD i
+zD i
+D
+V
+i
+D i
+q
+yi
+q
+zi
+, i 1 , 2
+ 
+ 
+ =
+=
+−
+−
+= (50)
+攻击者相对于第i枚防御者的速度前置角
+yA
+zA
+i
+i
+A
+V A
+q
+yi
+q
+zi
+ 
+  
+ =
+=
++
+− −
+(51)
+Comprehensively considering the main factors affecting evasion effectiveness, let
+the initial angle state of the relative position between the evader and the i-th non-
+cooperative vehicle beX =[q , , , , ](i=1,2). Considering that in
+i yi0 yAi0 zAi0 yDi0 zDi0
+practice the initial distance difference between simultaneously launched non-
+cooperative vehicles and the evader will not be too large, it is assumed that when the
+evader enters the evasion state with one non-cooperative vehicle, the distance differ-
+ence between the two non-cooperative vehicles and the evader is less than 3km. Let
+the random variable [ 1 .5 ,1 .5 ] k m   − be the adjustment variable and r
+A D 0
+be the
+median value, satisfying r
+A D 1 0
+r
+A D 0
+ = + , r
+A D 2 0
+r
+A D 0
+ = − . Then, a 12-dimensional
+initial state vector X =[X ,X ,r ,]T and guidance law parameter vector
+1 2 AD0
+p=[,d*]T are used as neural network inputs, and the actual evasion miss distances
+d
+1 m in
+, d of the two non-cooperative vehicles as outputs, to establish the BP neural
+2min
+network surrogate model.
+4.2 Parameter Solving via Surrogate Model and LM Method
+We formulate parameter estimation as a nonlinear least squares problem:
+minJ =f (X,p)−d*  2 +f (X,p)−d*  2 (52)
+p  1 min  2 min
+p
+where d *m
+in
+is the desired evasion miss distance, which is set slightly larger than the
+minimum safe evasion distance (approximately three times the body diameter of the
+non-cooperative vehicle).
+The objective of this optimization problem is to make the actual evasion miss dis-
+tances of the two non-cooperative vehicles as close as possible to the expected values,
+and even if there is no exact solution, the optimal approximate solution can be ob-
+tained. The Levenberg-Marquardt (LM) algorithm is used for robust, real-time opti-
+mization.
+Before and after the evasion phase, the evader adopts the proportional navigation
+guidance law to reach the target, with its guidance command:
+
+===== PAGE 13 =====
+13
+a
+a
+yA
+zA
+K
+K
+V
+A
+A
+A
+V
+q
+A
+q
+c o s
+A
+
+
+
+ 
+=
+
+− 
+ 
+(53)
+The intelligent evasion guidance process for two non-cooperative vehicles is as fol-
+lows:
+a. Pre-evasion: Evader approaches target using PN;
+b. Trigger: Evasion starts when r r . Meanwhile, to properly handle the ex-
+ADi safe
+treme case that the relative distance discrepancy between the two non-
+cooperative vehicles and the evader is too large at evasion activation, if the ini-
+tial distance difference is greater than 3km, only single-vehicle optimal evasion
+is performed against the closer non-cooperative vehicle. The system switches to
+the dual-vehicle evasion mode only when the distance difference falls below 3
+km and the evasion against the initial threat remains active;
+c. Parameter Optimization: Collect state X , apply LM on f(X,p) to obtain
+optimal , d * ;
+d. Execution: Apply the optimal command (Eq.(47));
+e. Update: Transition to single-vehicle evasion once either r
+A D i
+ 0 ;
+f. Termination: When both r
+A D i
+ 0 , evasion is seen as successful; resume PN
+toward the target.
+5 Simulation and Analysis
+5.1 Simulation Conditions and Parameters
+• Target: (0,0,0).
+• Evader: V
+A
+= 5 0 0 m /s , max overload: 8g, PN gain: K
+A
+= 3 .
+• Non-cooperative vehicles: V
+D i
+= 6 0 0 m /s , max overload: 10g, PN gain:
+K
+D i
+= 4 ( i = 1 , 2 ) .
+• Threshold: Evasion triggers at r =8km; the minimum safe evasion distance is
+safe
+set at 6m.
+The initial state quantities of the evader and non-cooperative vehicles are shown in
+Table 1.
+Table 2. Initial states of evader and non-cooperative vehicles
+Object Initial Position/m Initial trajectory Trajectory deflection
+inclination angle angle
+Evader A (10000,6000,3500)
+A 0
+2 0  = −   =155
+VA0
+Non-cooperative
+vehicle D
+1
+(1000,0,0)
+D 1 0
+4 0  = 
+V D 01
+2 0  = − 
+
+===== PAGE 14 =====
+14
+Non-cooperative (-1000,0,0)
+vehicle D
+2
+D 2 0
+4 0  =   =−20
+VD20
+To verify the effectiveness of the proposed algorithm, we compare four guidance
+methods: (1) Pure PN, with K
+A
+= 4 ; (2) Sinusoidal Evasion, with acceleration com-
+mand:
+A y
+A c o s ( 2 f ( t t
+0
+) ) 
+
+u = − ,
+A z
+A s in ( 2 f ( t t
+0
+) ) 
+
+u = − , where f is the fre-
+quency, t is the evasion activation time; take A =54,f =0.15; (3) Single-Vehicle
+0 
+Optimal Evasion, which adopts the single-vehicle optimal evasion guidance law in
+[9], and selects only the non-cooperative vehicle that first enters the evasion activa-
+tion distance as the evasion target, ignoring the evasion risk of the other non-
+cooperative vehicle; (4)Dual-Vehicle Optimal Evasion (proposed method).
+Three indicators are used to evaluate guidance law performance: evasion miss dis-
+tance, unit-mass maneuver energy consumption, and target terminal miss distance.
+The BP-NN surrogate model contains two hidden layers (60 and 40 neurons, ReLU
+activation). It is trained using 1 .2  1 0 5 samples generated via Latin Hypercube Sam-
+pling. The initial relative evasion distance median r
+A D 0
+ [ 6 .5 ,1 3 .5 ] k m , distance
+difference adjustment variable [ 1 .5 ,1 .5 ] k m   − , non-cooperative vehicle LOS an-
+gles q
+yi0
+ [ 2 0  , 7 0 ] , velocity lead angles
+y 0 Ai
+,
+yD 0i
+[ 2 0 , 2 0 ]    −   ,
+z 0 Ai
+,
+zD 0i
+[ 1 0 ,1 0 ]    −   , optimal evasion guidance law parameters d *  [ 2 0 ,1 2 0 ] m ,
+[ 3 , 3 ]   − . Except for
+y 0 Ai
+ and
+z 0 Ai
+ which adopt normal distribution, other sample
+parameters adopt uniform distribution. The generated samples are randomly divided
+into training set, validation set and test set with a ratio of 8:1:1.
+5.2 Performance Comparison of Guidance Laws in Typical Scenarios
+Based on the above simulation conditions, typical scenario simulation verification is
+carried out for the four guidance methods. The expected escape distance of the evader
+is set to d* =15m , and the guidance law weight parameters are w=104 ,
+min
+w
+E
+= 1 .4 4  1 0 3 .
+The 3D trajectories of the evader and non-cooperative vehicles under different
+methods are shown in Fig. 2, and the acceleration change curves of the evader under
+different maneuver evasion methods are shown in Fig. 3. The core performance indi-
+cator comparison results are shown in Table 2.
+…
+6 Conclusion
+This paper proposes an energy-efficient 3D optimal evasive guidance algorithm
+against dual non-cooperative aerial vehicles, overcoming the high energy consump-
+
+===== PAGE 15 =====
+15
+tion and poor multi-threat adaptability of existing methods. A 3D four-body kinematic
+model is constructed, and an optimal guidance law considering cross-coupling effects
+is derived. A BP neural network adaptively optimizes guidance parameters online.
+Simulations verify that the algorithm greatly improves miss distances and cuts energy
+consumption while maintaining high terminal accuracy, effectively balancing evasion
+safety, energy efficiency and terminal precision.
+References
+1. Feng, L., Lu, W., Wang, F., Zhang, F., Sun, Q.: Optimal penetration guidance law for
+high-speed vehicles against an interceptor with modified proportional navigation guidance.
+Symmetry 15(7), 1337 (2023).
+2. Ding, H., Wang, D., Li, C., Liang, X., Li, X.: Design of convergent and accurate guidance
+law with finite time in complex adversarial scenarios. Aerospace 11(1), 56 (2024).
+3. Cao, J., Wang, T., Yang, B.: Research on intelligent penetration technology of high speed
+flight vehicle based on PPO algorithm. In: 2024 International Conference on Intelligent
+Robotics and Automatic Control (IRAC), pp. 476–483. IEEE, Guangzhou (2024).
+4. Luo, H., Tan, G., Yan, H., Wang, X., Ji, H.: Cooperative line-of-sight guidance with opti-
+mal evasion strategy for three-body confrontation. ISA Transactions 133, 262–272 (2023).
+5. Li, X., Wang, X., Zhou, H., Li, Y.: A novel evasion guidance for hypersonic morphing ve-
+hicle via intelligent maneuver strategy. Chinese Journal of Aeronautics 37(5), 441–461
+(2024).
+6. Zhuang, X., Li, D., Wang, Y., Liu, X., Li, H.: Optimization of high-speed fixed-wing
+UAV penetration strategy based on deep reinforcement learning. Aerospace Science and
+Technology 148, 109089 (2024).
+7. Yao, D., Xia, Q.: Finite-time convergence guidance law for hypersonic morphing vehicle.
+Aerospace 11(8), 680 (2024).
+8. Hao, Z., Zhang, R., Li, H.: Parameterized evasion strategy for hypersonic glide vehicles
+against two missiles based on reinforcement learning. Chinese Journal of Aeronautics
+38(4), 103173 (2025).
+9. Yu, X., Wang, X., Lin, H.: Optimal penetration guidance law with controllable missile es-
+cape distance. Journal of Astronautics 44(7), 1053–1063 (2023). (in Chinese)
