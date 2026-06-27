@@ -400,15 +400,15 @@ r_min1 = 10000;% 初始化D1摆脱距离
 r_min2 = 10000;% 初始化D2摆脱距离
 
 % 样本向量[eta_yM10, eta_zM10, eta_yM20, eta_zM20, qy10, eta_yD10, eta_zD10, eta_yD20, eta_zD20, 
-% d*, gamma, rAD0, beta, qy20]
+%  gamma, rAD0, beta, qy20]
 eta_y_M10 = samples_clean(i*N_jian, 1); eta_z_M10 = samples_clean(i*N_jian, 2);
 eta_y_M20 = samples_clean(i*N_jian, 3); eta_z_M20 = samples_clean(i*N_jian, 4);
 q_y_MD10 = samples_clean(i*N_jian, 5); 
 eta_y_D10 = samples_clean(i*N_jian, 6); eta_z_D10 = samples_clean(i*N_jian, 7);
 eta_y_D20 = samples_clean(i*N_jian, 8); eta_z_D20 = samples_clean(i*N_jian, 9);
-r_star = samples_clean(i*N_jian, 10);
-gamma = samples_clean(i*N_jian, 11);
-% rAD0 = samples_clean(i*N_jian, 12);% 两防御者突防初始距离中间值
+% r_star = samples_clean(i*N_jian, 10);
+gamma = samples_clean(i*N_jian, 10);
+rAD0 = samples_clean(i*N_jian, 11);% 两防御者突防初始距离中间值
 beta = samples_clean(i*N_jian, 12); 
 q_z_MD20 = samples_clean(i*N_jian, 13); q_z_MD10 = samples_clean(i*N_jian, 14);
 q_y_MD20 = samples_clean(i*N_jian, 15);
