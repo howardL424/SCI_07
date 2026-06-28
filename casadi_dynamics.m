@@ -14,6 +14,8 @@ function [Xdot, aM, aD1, aD2] = casadi_dynamics(X, theta, t, params)
     import casadi.*
 
     w = params.w; KD1 = params.KD1; KD2 = params.KD2; r_star = params.r_star;
+    if isfield(params,'amax_M'); amax_M = params.amax_M; else; amax_M = 8*9.81; end
+    if isfield(params,'amax_D'); amax_D = params.amax_D; else; amax_D = 10*9.81; end
 
     M  = X(1:6);  D1 = X(7:12);  D2 = X(13:18);
     gamma = theta(1); wT = theta(2); wE = theta(3);
@@ -50,8 +52,20 @@ function [Xdot, aM, aD1, aD2] = casadi_dynamics(X, theta, t, params)
         M(4), M(5), D1(4), D1(5), D2(4), D2(5), ...
         aD1(1), aD1(2), aD2(1), aD2(2), a1, a2, wT, wE, r_star);
 
+    % ---------- 光滑过载饱和 (贴合 warm-start 物理) ----------
+    aM  = satf(aM,  amax_M);
+    aD1 = satf(aD1, amax_D);
+    aD2 = satf(aD2, amax_D);
+
     % ---------- 运动学 (式5) ----------
     Xdot = [kin(M, aM); kin(D1, aD1); kin(D2, aD2)];
+end
+
+% 光滑过载饱和: 保方向, ||a||<=amax (a<amax 时近似恒等)
+function as = satf(a, amax)
+    s = sqrt(a(1)^2 + a(2)^2 + 1e-9);
+    smax = 0.5 * (s + amax + sqrt((s - amax)^2 + (0.05*amax)^2));
+    as = a * (amax / smax);
 end
 
 % ---------- 视线角 (computeLOS 符号版) ----------

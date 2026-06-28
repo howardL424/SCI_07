@@ -35,8 +35,20 @@ function res = solve_ps_trajectory(tau_warm, cfg)
     P = build_ps_nlp(x0, Tev, cfg);
     opti = P.opti; K = P.cfg.K; deg = P.cfg.deg; h = P.h; tau_c = P.tau_c;
 
-    % ---------------- 热启动: 插值 warm-start 状态 ----------------
-    interpX = @(tq) interp1(t_rel, Xwarm.', min(max(tq,0),Tev), 'linear', 'extrap').'; % 18 x numel(tq)
+    % ---------------- 热启动: 用符号动力学 RK4 滚动出零缺陷初值轨迹 ----------------
+    Xs = SX.sym('Xs', 18); ths = SX.sym('ths', 3); tts = SX.sym('tts');
+    fdyn = Function('fdyn', {Xs, ths, tts}, {casadi_dynamics(Xs, ths, tts, P.params)});
+    th0 = [0; wT0; wE0];
+    Ng = 200; dtg = Tev / Ng; Xg = zeros(18, Ng+1); Xg(:,1) = x0; tg = 0;
+    for s = 1:Ng
+        k1 = full(fdyn(Xg(:,s),            th0, tg));
+        k2 = full(fdyn(Xg(:,s)+0.5*dtg*k1, th0, tg+0.5*dtg));
+        k3 = full(fdyn(Xg(:,s)+0.5*dtg*k2, th0, tg+0.5*dtg));
+        k4 = full(fdyn(Xg(:,s)+dtg*k3,     th0, tg+dtg));
+        Xg(:,s+1) = Xg(:,s) + dtg/6*(k1+2*k2+2*k3+k4); tg = tg + dtg;
+    end
+    tgrid = linspace(0, Tev, Ng+1);
+    interpX = @(tq) interp1(tgrid, Xg.', min(max(tq,0),Tev), 'linear', 'extrap').';
     for i = 1:K+1
         opti.set_initial(P.Xstart{i}, interpX((i-1)*h));
     end
@@ -48,8 +60,8 @@ function res = solve_ps_trajectory(tau_warm, cfg)
 
     % ---------------- 求解 ----------------
     p_opts = struct('expand', true);
-    s_opts = struct('max_iter', 500, 'print_level', 0, 'tol', 1e-4, ...
-                    'acceptable_tol', 1e-3, 'mu_strategy', 'adaptive');
+    s_opts = struct('max_iter', 1000, 'print_level', 0, 'tol', 1e-4, ...
+                    'acceptable_tol', 1e-3, 'acceptable_iter', 10, 'mu_strategy', 'adaptive');
     opti.solver('ipopt', p_opts, s_opts);
 
     res = struct('w_fixed', P.cfg.w, 'x0', x0, 'Tev', Tev, 'tcoll', P.tcoll);

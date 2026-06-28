@@ -100,19 +100,6 @@ function [q_y, q_z, r] = computeLOS(pos1, pos2)
     q_z = -atan2(dz, dx);
 end
 
-% % 函数2: 计算状态转移矩阵Ω(式14)
-% function Omega = computeOmega(Q_dot, t_go)
-%     t_go = max(t_go, 1e-3);% 强制剩余飞行时间非负，且不小于1e-3，杜绝负时间、0时间
-%     if abs(Q_dot) > 1e-6
-%         exp_pos = exp(Q_dot * t_go);
-%         exp_neg = exp(-Q_dot * t_go);
-%         Omega = [(exp_pos+exp_neg)/2, (exp_pos-exp_neg)/(2*Q_dot);
-%                  Q_dot*(exp_pos-exp_neg)/2, (exp_pos+exp_neg)/2];
-%     else
-%         Omega = [1, t_go; 0, 1];
-%     end
-% 
-% end
 
 % 函数2: 计算交叉项积分Phi_12(式27)
 function Phi_12 = calc_Phi12(Q_dot1, Q_dot2, t_go1, t_go2)
@@ -495,9 +482,7 @@ flag_pan_dan = false;% 记录是否第一次进入特殊单弹模式标志
 % flag_pan_dan1 = 0;% 记录是否第一次进入单弹1模式标志
 % flag_pan_dan2 = 0;
 load('bpnet_0421_5035lm.mat');% 15维
-% load('bpnet_0422_5035lm_1.mat');
-% load('bpnet_0423_3ceng_dlt.mat');
-% load('bpnet_0521_25612864_dlt.mat');% 16维
+
 
 % a1 = a / (1+exp(-gamma));% D1规避项权重系数
 % a2 = a * exp(-gamma) / (1+exp(-gamma));
@@ -659,12 +644,7 @@ while t < t_max % 截止点为经过弹目距离最小点或最大时间1000s
         % % 样本向量[eta_yA0, eta_zA0, qy0, eta_yD0, eta_zD0, r0]
         % if ~flag_pan_dan1 == true
         %     flag_pan_dan1 = false;
-        %     % a1_dan = a; a2_dan = a;
-        %     X_tu0(1) = M(4) + q_y_MD1; X_tu0(2) = M(5) - q_z_MD1 - pi;
-        %     X_tu0(3) = q_y_MD1;
-        %     X_tu0(4) = D1(4) - q_y_MD1; X_tu0(5) = D1(5) - q_z_MD1;
-        %     % X_tu0(10) = (r_MD1 + r_MD2) / 2;% 中间距离
-        %     X_tu0(6) = r_MD1;
+       
         %     r_star_dan1 = LMfanjie_dan(net, X_tu0);% 突防初始调用LM单弹反解一次
         % end
         a_M_cmd = computeOptimalCmd(q_y_MD1, q_z_MD1, q_dot_MD1(1), q_dot_MD1(2), ...
@@ -816,24 +796,11 @@ if penetration_started
     fprintf('\nD1预估突防终端时刻: %.3f s, D2预估突防终端时刻: %.3f s:\n', t_penetrat_end1, t_penetrat_end2);
     % fprintf('  零控脱靶量 z(t_f) = %.4f m (期望规避脱靶量 r* = %.1f m)\n', z_at_tf, r_min);
     fprintf('结束与D1突防时刻实际与D1弹间距离 r1(t_f) = %.4f m\n', r_at_tf1);
-    % % D2
-    % [~, idx_tf2] = min(abs(record.t - t_penetrat_end));
-    % [~, idx_tf_rmin2] = min(abs(record.r_MD- min(record.r_MD)));% 记录最小弹间距离时刻
-    % % z_at_tf2 = record.z2(idx_tf2);
-    % r_at_tf2 = record.r_MD(idx_tf2);
-    % t_rmin2 = (idx_tf_rmin2 - 1) * dt;% 最小距离时刻
-    % % fprintf('\n在实时终端时刻 t_f = %.3f s (全局: %.3f s):\n', t_f, t_f_global);
-    % fprintf('\n仿真结束。在D2最小弹间距离时刻 t_rmin2 = %.3f s, 最小弹间距离 r_min2 = %.4f m\n', t_rmin2, min(record.r_MD2));
-    % fprintf('\n在D2突防最终结束时刻 t_penetrat_end2 = %.3f s (预估突防终端时刻: %.3f s):\n', t_penetrat_end2, t_f2);
-    % % fprintf('  零控脱靶量 z(t_f) = %.4f m (期望规避脱靶量 r* = %.1f m)\n', z_at_tf, r_min);
-    % fprintf('  结束与D2突防时刻实际与D1弹间距离 r2(t_f) = %.4f m\n', r_at_tf);
+
 end
 
 % 绘图1: 三维轨迹
 figure('Name', '3-D Evasion Trajectory');
-% plot3(record.pos_M(1,:), record.pos_M(3,:), record.pos_M(2,:), 'k-', 'LineWidth',1.0); hold on;
-% plot3(record.pos_D1(1,:), record.pos_D1(3,:), record.pos_D1(2,:), 'r-', 'LineWidth',1.0);
-% plot3(record.pos_D2(1,:), record.pos_D2(3,:), record.pos_D2(2,:), 'b-', 'LineWidth',1.0);
 plot3(record.pos_M(1,:), record.pos_M(3,:), record.pos_M(2,:), 'k-', 'LineWidth',1.2); hold on;
 plot3(record.pos_D1(1,:), record.pos_D1(3,:), record.pos_D1(2,:), 'r--', 'LineWidth',1.2);
 plot3(record.pos_D2(1,:), record.pos_D2(3,:), record.pos_D2(2,:), 'b-.', 'LineWidth',1.2);
@@ -846,51 +813,7 @@ legend('Evader A', 'D1', 'D2','T','A0','D10','D20'); grid on;
 title('3-D Evasion Trajectory');
 grid on; view(3);
 set(gca, 'SortMethod', 'childorder');  % 修复线型的关键设置！
-% % ========== 带1200dpi的EMF导出（关键设置） ==========
-% exportgraphics(gcf, 'sanweiguiji_dual.emf', ...
-%     'ContentType', 'vector', ...  % 强制纯矢量内容
-%     'Resolution', 1200);          % 1200dpi，优化位图元素清晰度
 
-% % 绘图2: 零控脱靶量
-% figure('Name', '零控脱靶量z(t)');
-% plot(record.t, record.z, 'b-', 'LineWidth',1.5);
-% if penetration_started
-%     % xline(t_f_global, 'r--', 'LineWidth',1.5);
-%     xline(t_f, 'r--', 'LineWidth',1.5);
-%     yline(r_star, 'k--', 'LineWidth',1);
-%     plot(record.t(idx_tf), record.z(idx_tf), 'ro', 'MarkerSize',10, 'MarkerFaceColor','r');
-%     legend('z(t)', sprintf('t_f=%.2fs',t_f_global), sprintf('r^*=%dm',r_star), 't_f时刻值');
-% end
-% xlabel('时间(s)'); ylabel('零控脱靶量z(t)(m)'); title('零控脱靶量变化');
-% grid on;
-
-% % 绘图3.1: 弹间距离D1
-% figure('Name', '弹间距离r_MD1');
-% plot(record.t, record.r_MD1, 'k-', 'LineWidth',1.5); hold on;
-% yline(20, 'r--', 'LineWidth',1.5);
-% if penetration_started
-%     xline(t_start_penetration, 'g--', 'LineWidth',1);
-%     % xline(t_f_global, 'b--', 'LineWidth',1);
-%     xline(t_penetrat_end, 'b--', 'LineWidth',1);
-%     plot(record.t(idx_tf1), record.r_MD1(idx_tf1), 'bo', 'MarkerSize',10);
-% end
-% xlabel('时间(s)'); ylabel('弹间距离r_{MD1}(m)'); title('攻击弹-防御弹1距离');
-% legend('r_{MD1}', '拦截阈值20m', '突防开始', '突防结束时刻', 't_{penetrat-end}时刻');
-% grid on;
-% 
-% % 绘图3.2: 弹间距离D2
-% figure('Name', '弹间距离r_MD2');
-% plot(record.t, record.r_MD2, 'k-', 'LineWidth',1.5); hold on;
-% yline(20, 'r--', 'LineWidth',1.5);
-% if penetration_started
-%     xline(t_start_penetration, 'g--', 'LineWidth',1);
-%     % xline(t_f_global, 'b--', 'LineWidth',1);
-%     xline(t_penetrat_end, 'b--', 'LineWidth',1);
-%     % plot(record.t(idx_tf2), record.r_MD1(idx_tf2), 'bo', 'MarkerSize',10);
-% end
-% xlabel('时间(s)'); ylabel('弹间距离r_{MD2}(m)'); title('攻击弹-防御弹2距离');
-% legend('r_{MD2}', '拦截阈值20m', '突防开始', '突防结束时刻');
-% grid on;
 
 % 绘图4: 攻击弹、防御弹加速度
 figure('Name', 'Accelerations of Evader A');
@@ -903,12 +826,3 @@ plot(record.t, record.a_M(2,:), 'r--', 'LineWidth',1.2);
 xlabel('t/s'); ylabel('Acceleration/(m/s^2)');
 legend('a_{yA}', 'a_{zA}'); title('Accelerations of Evader A'); grid on;
 set(gca, 'SortMethod', 'childorder');  % 修复线型的关键设置！
-% % ========== 带1200dpi的EMF导出（关键设置） ==========
-% exportgraphics(gcf, 'acc_dual.emf', ...
-%     'ContentType', 'vector', ...  % 强制纯矢量内容
-%     'Resolution', 1200);          % 1200dpi，优化位图元素清晰度
-% subplot(2,1,2);
-% plot(record.t, vecnorm(record.a_D1,2,1), 'r-'); hold on;
-% plot(record.t, vecnorm(record.a_D2,2,1), 'b-');
-% legend('a_{D1}','a_{D2}');
-% xlabel('t/s'); ylabel('加速度/(m/s^2)'); title('Accelerations of Two Defenders'); grid on;

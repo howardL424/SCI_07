@@ -80,8 +80,7 @@ function [z, phi, Phi, N, B1, B2, Q, tgo] = chan_sym( ...
 
     Q   = sqrt(qd_y^2 + qd_z^2 * cos(q_y)^2 + epsQ);
     tgo = tf - t;
-    tg  = 25 * tanh(tgo / 25);      % 钳制双曲参数用 tgo (防 r_dot->0 溢出)
-    Qt  = clampval(Q * tg, 40);
+    Qt  = clampval(Q * tgo, 30);    % 仅钳制双曲参数(防 r_dot->0 溢出), 有效区恒等
 
     % B1,B2,C1 (式12)
     B1 = sin(q_y)*cos(theta_M) - cos(q_y)*sin(theta_M)*cos(q_z - psi_vM);
@@ -91,21 +90,20 @@ function [z, phi, Phi, N, B1, B2, Q, tgo] = chan_sym( ...
     C1 = term1 - term2;
     v_r = -C1;
 
-    % 用 (钳制后) Qt, tg 表达, 借助光滑可去奇点函数
-    z   = cosh(Qt) * r + tg * sinhc(Qt) * rdot;
-    phi = tg * sinhc(Qt);
-    Phi = 2 * tg^3 * d2func(2 * Qt);      % = tgo^3/3 当 Qt->0
-    N   = tg^2 * c2func(Qt) * v_r;        % = 0.5 tgo^2 v_r 当 Qt->0
+    % 借助光滑可去奇点函数 (有效区 Qt=Q*tgo, 钳制不激活)
+    z   = cosh(Qt) * r + tgo * sinhc(Qt) * rdot;
+    phi = tgo * sinhc(Qt);
+    Phi = 2 * tgo^3 * d2func(2 * Qt);     % = tgo^3/3 当 Qt->0
+    N   = tgo^2 * c2func(Qt) * v_r;       % = 0.5 tgo^2 v_r 当 Qt->0
 end
 
 % ======================================================================
 % 交叉项积分 Phi_12 (式34) 的统一光滑公式 (用 expdiv 消去 Q1-Q2 奇点)
 function P = phi12_sym(Q1, Q2, tgo1, tgo2)
-    tg1 = 25 * tanh(tgo1 / 25);  tg2 = 25 * tanh(tgo2 / 25);
-    Tmin  = smin(tg1, tg2);
+    Tmin  = smin(tgo1, tgo2);
     sumQ  = Q1 + Q2;
     diffQ = Q1 - Q2;
-    Qt1 = clampval(Q1 * tg1, 40); Qt2 = clampval(Q2 * tg2, 40);
+    Qt1 = clampval(Q1 * tgo1, 30); Qt2 = clampval(Q2 * tgo2, 30);
 
     part1 = exp( Qt1 + Qt2) * expdiv(-sumQ,  Tmin);
     part2 = exp( Qt1 - Qt2) * expdiv(-diffQ, Tmin);
@@ -145,9 +143,10 @@ function y = expdiv(d, T)
     y = if_else(abs(d) < 1e-4, s, (exp(u) - 1) ./ d);
 end
 
-% 光滑钳制到 [-L, L]
+% 硬钳制到 [-L, L] (有效区恒等, 仅极端饱和)
 function y = clampval(x, L)
-    y = L * tanh(x / L);
+    import casadi.*
+    y = if_else(x > L, L, if_else(x < -L, -L, x));
 end
 
 % 光滑 min

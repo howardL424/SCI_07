@@ -20,6 +20,7 @@ function P = build_ps_nlp(x0, Tev, cfg)
     d.amax = 8 * 9.81;              % 攻弹过载上限
     d.dfloor = 6;                   % 非拦截下限(m)
     d.beta_min = 3;                 % softmin 平滑尺度(m)
+    d.Jscale = 1e6;                 % 目标函数缩放(改善数值条件)
     % 固定评分系数 (式22, 阶段A 常数)
     d.s_w = 1e4; d.s_wE = 1.44e3; d.s_wT = 1e3;
     % theta 边界
@@ -46,7 +47,7 @@ function P = build_ps_nlp(x0, Tev, cfg)
     Xcoll  = cell(1, K);      % 各区间配点状态 (nx x deg)
     Th     = cell(1, K);      % 各区间时变权重 [gamma; wT; wE]
     tcoll  = zeros(1, K*deg); % 各配点全局时间
-    rMD1 = {}; rMD2 = {}; rMT = {};  % 各配点相对距离
+    rMD1 = {}; rMD2 = {};     % 各配点弹间距离 (求最近脱靶)
 
     Xstart{1} = opti.variable(nx, 1);
     opti.subject_to(Xstart{1} == x0);       % 初值约束
@@ -70,24 +71,25 @@ function P = build_ps_nlp(x0, Tev, cfg)
             % 过载约束
             opti.subject_to(aMj.' * aMj <= cfg.amax^2);
 
-            % 相对距离 (供脱靶项与非拦截约束)
+            % 弹间距离 (供脱靶项与非拦截约束)
             Mc = Xcoll{i}(1:3, j); D1c = Xcoll{i}(7:9, j); D2c = Xcoll{i}(13:15, j);
             cpt = cpt + 1;
             tcoll(cpt) = tij;
             rMD1{end+1} = sqrt(sumsqr(Mc - D1c) + 1e-6); %#ok<AGROW>
             rMD2{end+1} = sqrt(sumsqr(Mc - D2c) + 1e-6); %#ok<AGROW>
-            rMT{end+1}  = sqrt(sumsqr(Mc) + 1e-6);       %#ok<AGROW>
         end
 
         Xstart{i+1} = opti.variable(nx, 1);
         opti.subject_to(Xstart{i+1} == Z * Dm);          % 区间衔接
     end
 
-    % ---------------- 脱靶量 (softmin 近似最近距离) ----------------
-    v1 = vertcat(rMD1{:});  v2 = vertcat(rMD2{:});  vT = vertcat(rMT{:});
+    % ---------------- 脱靶量 ----------------
+    % 双防: 规避窗口内最近距离 (softmin 近似 z_i(t_fi))
+    v1 = vertcat(rMD1{:});  v2 = vertcat(rMD2{:});
     miss1 = softmin(v1, cfg.beta_min);
     miss2 = softmin(v2, cfg.beta_min);
-    missT = softmin(vT, cfg.beta_min);
+    % 目标: 规避末端对目标的预测脱靶量 z_T(t_fT) (规避后才命中, 故用末态 ZEM 而非窗口距离)
+    missT = casadi_target_zem(Xstart{K+1}(1:6));
 
     % 非拦截硬约束 (式: 终端脱靶 >= dfloor)
     opti.subject_to(miss1 >= cfg.dfloor);
@@ -99,7 +101,7 @@ function P = build_ps_nlp(x0, Tev, cfg)
       + 0.5 * s_w2 * (miss2 - cfg.dstar)^2 ...
       + 0.5 * cfg.s_wE * J_energy ...
       + 0.5 * cfg.s_wT * missT^2;
-    opti.minimize(J);
+    opti.minimize(J / cfg.Jscale);
 
     % ---------------- theta 边界 ----------------
     for i = 1:K
