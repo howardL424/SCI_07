@@ -3,6 +3,7 @@ function validate_guidance_sym()
 %   CasADi 符号版 casadi_guidance_duo_target 的逐点对拍。
 %   在若干真实交战几何下分别求 uA, 比较相对误差。
 
+    setup_expert_path();
     import casadi.*
     H = evasion_helpers();
 

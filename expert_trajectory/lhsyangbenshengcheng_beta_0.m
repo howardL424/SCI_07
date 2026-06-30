@@ -1,4 +1,6 @@
 clc; clear;
+addpath(fileparts(mfilename('fullpath')));
+setup_expert_path();
 %% 拉丁超立方采样 (LHS) 核心代码
 % 样本规模 N=1e3，变量维数 dim=16
 
@@ -84,7 +86,8 @@ for i = 1:N
 end 
 
 % save('samples.mat');
-save('samples_clean.mat');
+[~, projectRoot] = project_paths();
+save(fullfile(projectRoot, 'samples_clean.mat'));
 
 % %% Z-score标准化
 % % 对矩阵 X_actual 进行 Z-score 标准化

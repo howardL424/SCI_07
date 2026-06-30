@@ -1,0 +1,285 @@
+# Terminal 6 — cwd: D:\LTY\yan\yanerxia\GAIL
+# last_command: python rl_td3/evaluate_td3.py --model rl_td3/checkpoints/best/best_model --episodes 100
+# last_exit_code: 0
+
+|    n_updates       | 488475   |
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 86.3     |
+|    ep_rew_mean     | -185     |
+| time/              |          |
+|    episodes        | 5500     |
+|    fps             | 79       |
+|    time_elapsed    | 6176     |
+|    total_timesteps | 489322   |
+| train/             |          |
+|    actor_loss      | -124     |
+|    critic_loss     | 964      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 489321   |
+---------------------------------
+Eval num_timesteps=490000, episode_reward=-616.45 +/- 1878.17
+Episode length: 89.40 +/- 61.73
+---------------------------------
+| eval/              |          |
+|    mean_ep_length  | 89.4     |
+|    mean_reward     | -616     |
+| time/              |          |
+|    total_timesteps | 490000   |
+| train/             |          |
+|    actor_loss      | -143     |
+|    critic_loss     | 145      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 489999   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 85.9     |
+|    ep_rew_mean     | -217     |
+| time/              |          |
+|    episodes        | 5510     |
+|    fps             | 79       |
+|    time_elapsed    | 6189     |
+|    total_timesteps | 490073   |
+| train/             |          |
+|    actor_loss      | -97.2    |
+|    critic_loss     | 169      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 490072   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 83.3     |
+|    ep_rew_mean     | -296     |
+| time/              |          |
+|    episodes        | 5520     |
+|    fps             | 79       |
+|    time_elapsed    | 6199     |
+|    total_timesteps | 490790   |
+| train/             |          |
+|    actor_loss      | -109     |
+|    critic_loss     | 67.4     |
+|    learning_rate   | 0.001    |
+|    n_updates       | 490789   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 87.1     |
+|    ep_rew_mean     | -152     |
+| time/              |          |
+|    episodes        | 5530     |
+|    fps             | 79       |
+|    time_elapsed    | 6214     |
+|    total_timesteps | 491810   |
+| train/             |          |
+|    actor_loss      | -130     |
+|    critic_loss     | 758      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 491809   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 87.2     |
+|    ep_rew_mean     | -179     |
+| time/              |          |
+|    episodes        | 5540     |
+|    fps             | 79       |
+|    time_elapsed    | 6227     |
+|    total_timesteps | 492768   |
+| train/             |          |
+|    actor_loss      | -125     |
+|    critic_loss     | 123      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 492767   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 89       |
+|    ep_rew_mean     | -164     |
+| time/              |          |
+|    episodes        | 5550     |
+|    fps             | 79       |
+|    time_elapsed    | 6239     |
+|    total_timesteps | 493694   |
+| train/             |          |
+|    actor_loss      | -62.5    |
+|    critic_loss     | 229      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 493693   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 92.3     |
+|    ep_rew_mean     | -52.5    |
+| time/              |          |
+|    episodes        | 5560     |
+|    fps             | 79       |
+|    time_elapsed    | 6252     |
+|    total_timesteps | 494870   |
+| train/             |          |
+|    actor_loss      | -87.9    |
+|    critic_loss     | 235      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 494869   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 92.9     |
+|    ep_rew_mean     | -104     |
+| time/              |          |
+|    episodes        | 5570     |
+|    fps             | 79       |
+|    time_elapsed    | 6263     |
+|    total_timesteps | 495809   |
+| train/             |          |
+|    actor_loss      | -133     |
+|    critic_loss     | 143      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 495808   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 92       |
+|    ep_rew_mean     | -169     |
+| time/              |          |
+|    episodes        | 5580     |
+|    fps             | 79       |
+|    time_elapsed    | 6272     |
+|    total_timesteps | 496527   |
+| train/             |          |
+|    actor_loss      | -93.5    |
+|    critic_loss     | 187      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 496526   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 90.3     |
+|    ep_rew_mean     | -268     |
+| time/              |          |
+|    episodes        | 5590     |
+|    fps             | 79       |
+|    time_elapsed    | 6283     |
+|    total_timesteps | 497507   |
+| train/             |          |
+|    actor_loss      | -100     |
+|    critic_loss     | 71.7     |
+|    learning_rate   | 0.001    |
+|    n_updates       | 497506   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 90.8     |
+|    ep_rew_mean     | -292     |
+| time/              |          |
+|    episodes        | 5600     |
+|    fps             | 79       |
+|    time_elapsed    | 6294     |
+|    total_timesteps | 498405   |
+| train/             |          |
+|    actor_loss      | -57.6    |
+|    critic_loss     | 106      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 498404   |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 93.2     |
+|    ep_rew_mean     | -216     |
+| time/              |          |
+|    episodes        | 5610     |
+|    fps             | 79       |
+|    time_elapsed    | 6305     |
+|    total_timesteps | 499389   |
+| train/             |          |
+|    actor_loss      | -96.3    |
+|    critic_loss     | 60.1     |
+|    learning_rate   | 0.001    |
+|    n_updates       | 499388   |
+---------------------------------
+Eval num_timesteps=500000, episode_reward=789.23 +/- 58.58
+Episode length: 121.80 +/- 8.06
+---------------------------------
+| eval/              |          |
+|    mean_ep_length  | 122      |
+|    mean_reward     | 789      |
+| time/              |          |
+|    total_timesteps | 500000   |
+| train/             |          |
+|    actor_loss      | -65.6    |
+|    critic_loss     | 271      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 499999   |
+---------------------------------
+
+[train] 训练完成，最终模型已保存至 rl_td3\checkpoints\td3_evasion_bc.zip
+(rl_pytorch) PS D:\LTY\yan\yanerxia\GAIL> python rl_td3/evaluate_td3.py --model rl_td3/checkpoints/best/best_model --episodes 100
+[evaluate] 加载模型：rl_td3/checkpoints/best/best_model.zip
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+
+[evaluate] 开始 100 轮蒙特卡洛评估…
+  [ep  10/100] 双防+到达成功率 0.0%  r_MD1_min=7.1m  r_MT_final=1633.4m
+  [ep  20/100] 双防+到达成功率 0.0%  r_MD1_min=110.0m  r_MT_final=750.0m
+  [ep  30/100] 双防+到达成功率 0.0%  r_MD1_min=16.0m  r_MT_final=3497.7m
+  [ep  40/100] 双防+到达成功率 0.0%  r_MD1_min=5.4m  r_MT_final=3300.8m
+  [ep  50/100] 双防+到达成功率 0.0%  r_MD1_min=34.8m  r_MT_final=2262.5m
+  [ep  60/100] 双防+到达成功率 0.0%  r_MD1_min=34.6m  r_MT_final=3218.0m
+  [ep  70/100] 双防+到达成功率 0.0%  r_MD1_min=9.6m  r_MT_final=864.8m
+  [ep  80/100] 双防+到达成功率 0.0%  r_MD1_min=110.0m  r_MT_final=750.0m
+  [ep  90/100] 双防+到达成功率 0.0%  r_MD1_min=110.0m  r_MT_final=750.0m
+  [ep 100/100] 双防+到达成功率 0.0%  r_MD1_min=14.7m  r_MT_final=5255.4m
+
+============================================================
+  评估结果：TD3 (BC热启动)  （100 轮）
+============================================================
+  双防均规避成功  (d1,d2≥20m)        :  54/100 = 54.0%
+  到达目标        (r_MT≤50m)          :   0/100 = 0.0%
+  规避+到达 全部达标                  :   0/100 = 0.0%
+  被拦截          (r_MD<6m)           :  12/100 = 12.0%
+  最小脱靶距离 D1  mean±std (m)       : 94.2 ± 292.6
+  最小脱靶距离 D2  mean±std (m)       : 102.4 ± 335.5
+  终端目标距离     mean±std (m)        : 2722.6 ± 1725.2
+  累计奖励         mean±std            : -23.11 ± 1499.56
+
+[evaluate] 抽样 20 个初态，输出策略网络动作分布…
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+    γ=-3.000  wT=1.00e+02  wE=1.00e+04
+
+  γ  均值=-3.000  范围=[-3.000, -3.000]
+  wT 均值=1.00e+02  范围=[1.00e+02, 1.00e+02]
+  wE 均值=1.00e+04  范围=[1.00e+04, 1.00e+04]
+(rl_pytorch) PS D:\LTY\yan\yanerxia\GAIL>

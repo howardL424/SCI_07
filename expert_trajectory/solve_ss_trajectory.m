@@ -14,7 +14,7 @@ function res = solve_ss_trajectory(tau_warm, cfg)
     d.gamma_lo = -3; d.gamma_hi = 3; d.wT_lo = 1; d.wT_hi = 1e5;
     d.wE_lo = 10; d.wE_hi = 1e4;
     d.report_terms_only = false;   % true: 仅在 warm θ 处测三项原始量级 (标定用, 不求解)
-    d.max_iter = 500; d.print_level = 0;
+    d.max_iter = 300; d.print_level = 0;  % 批处理时 300 iter 足够; 失败条快速退出
     fn = fieldnames(d); for k=1:numel(fn); if ~isfield(cfg,fn{k}); cfg.(fn{k})=d.(fn{k}); end; end
 
     % ---------------- 抽取规避段 ----------------
@@ -93,11 +93,12 @@ function res = solve_ss_trajectory(tau_warm, cfg)
         return;
     end
 
-    res = struct('w_fixed',cfg.w,'x0',x0,'Tev',Tev,'tcoll',tcoll);
+    res = struct('w_fixed',cfg.w,'x0',x0,'Tev',Tev,'tcoll',tcoll,'K',K,'nsub',nsub);
     try
         sol = opti.solve(); res.ok = true;
         th = full(sol.value(Theta));
-        res.theta = repelem(th, 1, nsub);
+        res.theta_K = th;                      % 原始 3×K 分段权重 (供 extract 用)
+        res.theta   = repelem(th, 1, nsub);    % 3×(K*nsub) 展开版
         res.miss = [full(sol.value(miss1)); full(sol.value(miss2)); full(sol.value(missT))];
         res.J = full(sol.value(J));
         res.terms = struct('avoid', full(sol.value(term_avoid)), ...
@@ -109,10 +110,12 @@ function res = solve_ss_trajectory(tau_warm, cfg)
     catch ME
         res.ok = false; res.reason = ME.message;
         try
-            th = full(opti.debug.value(Theta)); res.theta = repelem(th,1,nsub);
+            th = full(opti.debug.value(Theta));
+            res.theta_K = th;
+            res.theta   = repelem(th, 1, nsub);
             res.miss = [full(opti.debug.value(miss1)); full(opti.debug.value(miss2)); full(opti.debug.value(missT))];
             res.J = full(opti.debug.value(J));
-        catch; res.theta = []; end
+        catch; res.theta_K = []; res.theta = []; end
     end
 end
 

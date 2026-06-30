@@ -12,6 +12,8 @@ function out = calibrate_J_weights(nRows, doSolve)
     if nargin < 1 || isempty(nRows);   nRows = 6;    end
     if nargin < 2 || isempty(doSolve); doSolve = true; end
 
+    setup_expert_path();
+    [~, projectRoot] = project_paths();
     add_casadi_path();
 
     % ---------------- 标定常数 ----------------
@@ -22,7 +24,8 @@ function out = calibrate_J_weights(nRows, doSolve)
     A_floor = 2 * (dstar - dfloor)^2;   % 规避项"塌到下限"的惩罚基准 = 392
 
     % ---------------- 阶段A + 实测原始量级 ----------------
-    S  = load('samples_clean.mat', 'samples_clean');
+    samples_file = fullfile(projectRoot, 'samples_clean.mat');
+    S  = load(samples_file, 'samples_clean');
     sc = S.samples_clean;
     valid = find(any(sc ~= 0, 2));
     nRows = min(nRows, numel(valid));

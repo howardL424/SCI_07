@@ -1,0 +1,182 @@
+# Terminal 7 — cwd: D:\LTY\yan\yanerxia\GAIL
+# last_command: python rl_td3/evaluate_td3.py --model rl_td3/checkpoints_smoke/td3_smoke --episodes 20
+# last_exit_code: 0
+
+PS D:\LTY\yan\yanerxia\GAIL> & E:/Python/venvs/rl_pytorch/Scripts/Activate.ps1
+(rl_pytorch) PS D:\LTY\yan\yanerxia\GAIL> python rl_td3/train_td3.py --smoke
+============================================================
+  训练方案: BC 热启动 + TD3 精调
+  运行模式: 冒烟测试
+  总步数  : 5,000
+  运行名称: td3_smoke
+  BC 预填充: 是
+  专家库  : E:\matlab\result_0628\reault_p3_1000\expert_lib_1000.mat
+  保存目录: rl_td3\checkpoints_smoke
+============================================================
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Using cuda device
+Wrapping the env in a DummyVecEnv.
+[load_expert_buffer] 加载专家库：E:\matlab\result_0628\reault_p3_1000\expert_lib_1000.mat
+[load_expert_buffer] 共 86677 条 transition
+[load_expert_buffer] 预填充完成：写入 86675 条 transition，ReplayBuffer 当前大小 86675 / 300000
+[train] BC 预填充完成，写入 86675 条 transition
+
+[train] 开始 TD3 训练，共 5,000 步…
+Logging to rl_td3\checkpoints_smoke\tb_logs\TD3_1
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 81       |
+|    ep_rew_mean     | -679     |
+| time/              |          |
+|    episodes        | 10       |
+|    fps             | 73       |
+|    time_elapsed    | 11       |
+|    total_timesteps | 810      |
+| train/             |          |
+|    actor_loss      | -123     |
+|    critic_loss     | 31.5     |
+|    learning_rate   | 0.001    |
+|    n_updates       | 809      |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 77.4     |
+|    ep_rew_mean     | -708     |
+| time/              |          |
+|    episodes        | 20       |
+|    fps             | 76       |
+|    time_elapsed    | 20       |
+|    total_timesteps | 1548     |
+| train/             |          |
+|    actor_loss      | -138     |
+|    critic_loss     | 71.4     |
+|    learning_rate   | 0.001    |
+|    n_updates       | 1547     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 84.9     |
+|    ep_rew_mean     | -271     |
+| time/              |          |
+|    episodes        | 30       |
+|    fps             | 77       |
+|    time_elapsed    | 32       |
+|    total_timesteps | 2546     |
+| train/             |          |
+|    actor_loss      | -145     |
+|    critic_loss     | 33.6     |
+|    learning_rate   | 0.001    |
+|    n_updates       | 2545     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 84.7     |
+|    ep_rew_mean     | -367     |
+| time/              |          |
+|    episodes        | 40       |
+|    fps             | 78       |
+|    time_elapsed    | 43       |
+|    total_timesteps | 3388     |
+| train/             |          |
+|    actor_loss      | -132     |
+|    critic_loss     | 226      |
+|    learning_rate   | 0.001    |
+|    n_updates       | 3387     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 88.2     |
+|    ep_rew_mean     | -282     |
+| time/              |          |
+|    episodes        | 50       |
+|    fps             | 79       |
+|    time_elapsed    | 55       |
+|    total_timesteps | 4410     |
+| train/             |          |
+|    actor_loss      | -136     |
+|    critic_loss     | 19.3     |
+|    learning_rate   | 0.001    |
+|    n_updates       | 4409     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 83       |
+|    ep_rew_mean     | -427     |
+| time/              |          |
+|    episodes        | 60       |
+|    fps             | 78       |
+|    time_elapsed    | 63       |
+|    total_timesteps | 4983     |
+| train/             |          |
+|    actor_loss      | -143     |
+|    critic_loss     | 25       |
+|    learning_rate   | 0.001    |
+|    n_updates       | 4982     |
+---------------------------------
+
+[train] 训练完成，最终模型已保存至 rl_td3\checkpoints_smoke\td3_smoke.zip
+(rl_pytorch) PS D:\LTY\yan\yanerxia\GAIL> python rl_td3/evaluate_td3.py --model rl_td3/checkpoints_smoke/td3_smoke --episodes 20
+[evaluate] 加载模型：rl_td3/checkpoints_smoke/td3_smoke.zip
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+
+[evaluate] 开始 20 轮蒙特卡洛评估…
+  [ep  10/20] 双防+到达成功率 0.0%  r_MD1_min=15.7m  r_MT_final=414.9m
+  [ep  20/20] 双防+到达成功率 0.0%  r_MD1_min=17.9m  r_MT_final=2896.9m
+
+============================================================
+  评估结果：TD3 (BC热启动)  （20 轮）
+============================================================
+  双防均规避成功  (d1,d2≥20m)        :  10/20 = 50.0%
+  到达目标        (r_MT≤50m)          :   0/20 = 0.0%
+  规避+到达 全部达标                  :   0/20 = 0.0%
+  被拦截          (r_MD<6m)           :   1/20 = 5.0%
+  最小脱靶距离 D1  mean±std (m)       : 117.2 ± 294.3
+  最小脱靶距离 D2  mean±std (m)       : 55.1 ± 37.8
+  终端目标距离     mean±std (m)        : 2275.4 ± 1779.6
+  累计奖励         mean±std            : -319.26 ± 1704.57
+
+[evaluate] 抽样 20 个初态，输出策略网络动作分布…
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+    γ= 3.000  wT=1.00e+04  wE=1.00e+04
+
+  γ  均值=3.000  范围=[3.000, 3.000]
+  wT 均值=1.00e+04  范围=[1.00e+04, 1.00e+04]
+  wE 均值=1.00e+04  范围=[1.00e+04, 1.00e+04]
+(rl_pytorch) PS D:\LTY\yan\yanerxia\GAIL>

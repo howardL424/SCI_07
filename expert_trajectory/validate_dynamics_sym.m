@@ -2,6 +2,7 @@ function validate_dynamics_sym()
 %VALIDATE_DYNAMICS_SYM 符号动力学 casadi_dynamics 与数值重构的对拍。
 %   验证 18 维 Xdot 在多组交战几何下数值版与符号版一致 (规避段, 不含饱和)。
 
+    setup_expert_path();
     import casadi.*
     H = evasion_helpers();
 

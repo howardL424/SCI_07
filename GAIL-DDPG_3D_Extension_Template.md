@@ -137,7 +137,7 @@ Each expert trajectory: $\tau^{(l)} = \langle (\mathbf{s}_1,\mathbf{a}_1), \ldot
 
 ### 4.2 Base Paper RL Definition (Eq. 44–46)
 
-**State** (10-D):
+**State** (11-D):
 
 $$
 \mathbf{s} = \left[x,\, y,\, V,\, \theta,\, \alpha,\, n_{\max},\, x^*_{Af},\, y^*_{Af},\, x_D,\, y_D,\, V_D\right]^T
@@ -332,7 +332,25 @@ $$
 - 终端目标偏差（保持论文中的高精度要求）；
 - 成功规避率与任务完成率（规避+到达目标）。
 
-### 8.4 当前版本待办
+### 8.4 项目目录（2025-06 整理）
+
+| 目录/文件 | 用途 |
+| :--- | :--- |
+| `expert_trajectory/` | 伪谱专家轨迹生成（阶段A/B、CasADi、批处理、质检脚本） |
+| `expert_trajectory/setup_expert_path.m` | 一键添加本模块 + 项目根路径 |
+| `evasion_helpers.m` | **共享**：数值版式47制导 + 动力学（TD3 环境与专家提取共用） |
+| `main_changjing3_0421_LM.m` | 参考仿真（三阶段 PN→规避→PN） |
+| `verify_rl_env.py` | Python RL 环境检查 |
+| `samples_clean.mat` | 初态样本（项目根目录，专家生成与 TD3 共用） |
+
+专家库归档路径（读取/质检用）：`E:\matlab\result_0628\reault_p3_1000\expert_lib_1000.mat`（P3 生成后手动移入）。批处理生成入口：
+
+```matlab
+addpath('expert_trajectory'); setup_expert_path();
+generate_ps_expert_library(100, struct('run_stageB', true, 'save', true));
+```
+
+### 8.5 当前版本待办
 
 - [x] 动作空间已定为 $\mathbf{a}=[w,\gamma,w_T,w_E]$，$d^*$ 固定（如15 m），经式(47)映射为指令；
 - [ ] 给出12维状态在代码中的字段顺序，确保与训练数据一致；
