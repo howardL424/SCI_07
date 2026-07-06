@@ -1,8 +1,8 @@
-function [obs, state_abs, Tev, r_MT0, ok] = env_reset(row, cfg_in)
+function [obs, state_abs, Tev, zT0, ok] = env_reset(row, cfg_in)
 %ENV_RESET  初始化一个 episode：重建几何 → warm-start → 规避段初态 → 13维 obs。
 %
-%   [obs, state_abs, Tev, r_MT0, ok] = env_reset(row)
-%   [obs, state_abs, Tev, r_MT0, ok] = env_reset(row, cfg_in)
+%   [obs, state_abs, Tev, zT0, ok] = env_reset(row)
+%   [obs, state_abs, Tev, zT0, ok] = env_reset(row, cfg_in)
 %
 %   输入:
 %     row    [1×14] samples_clean 中的一行 (物理单位，弧度/米)
@@ -25,7 +25,7 @@ function [obs, state_abs, Tev, r_MT0, ok] = env_reset(row, cfg_in)
 %      13  tgo_norm 归一化剩余规避时间 =1 (初始)
 %     state_abs  [18×1 double]  绝对状态 [M(6); D1(6); D2(6)]，供 env_step 使用
 %     Tev        规避段估计时长 (s)
-%     r_MT0      规避段开始时攻-目标距离 (m)，用于 reward 归一化
+%     zT0        规避段开始时攻-目标 ZEM (m)，用于 reward 归一化
 %     ok         逻辑，是否找到有效规避段 (false 时 Python 端应重新采样)
 
     % 添加项目路径
@@ -46,7 +46,7 @@ function [obs, state_abs, Tev, r_MT0, ok] = env_reset(row, cfg_in)
     idx2 = find(tau.stage == 2);
     if isempty(idx2)
         obs = zeros(13, 1); state_abs = zeros(18, 1);
-        Tev = 10; r_MT0 = 1e4; ok = false;
+        Tev = 10; zT0 = 1e4; ok = false;
         return;
     end
     ok  = true;
@@ -72,6 +72,6 @@ function [obs, state_abs, Tev, r_MT0, ok] = env_reset(row, cfg_in)
            r_MD2; rdot_MD2; qy_D2M; qz_D2M;
            r_MT;  qy_MT;   qz_MT;  M(6);  1.0];   % 13×1, tgo_norm=1
 
-    r_MT0     = r_MT;
+    zT0       = target_zem(M);
     state_abs = [M(:); D1(:); D2(:)];   % 18×1
 end

@@ -5,7 +5,7 @@ setup_expert_path();
 % 样本规模 N=1e3，变量维数 dim=16
 
 % N = 2 * 1e5;
-N = 1.4e3;
+N = 2.4e3;
 % dim = 14;
 dim = 14;
 
@@ -26,7 +26,8 @@ samples_clean = zeros(N, dim);
 mu = 0;
 % sigma = 6;
 sigma = deg2rad(6);
-lower_bound = deg2rad(-20); upper_bound = deg2rad(20);
+% lower_bound = deg2rad(-20); upper_bound = deg2rad(20);
+lower_bound = deg2rad(-10); upper_bound = deg2rad(10);
 
 % 截断正态分布映射
 % 计算边界对应的正态分布累积概率 (CDF)
@@ -48,7 +49,8 @@ samples(:, 1:4) = norminv(X_scaled, mu, sigma);
 ranges = [
      
      % 5, 10;   % 开始突防距离r0/km
-     deg2rad(20), deg2rad(70);  % qy10
+     % deg2rad(20), deg2rad(70);  % qy10
+     deg2rad(20), deg2rad(55);  % qy10
      % deg2rad(20), deg2rad(70);  % qy20
      deg2rad(-10), deg2rad(10);   % eta_yD10
      deg2rad(-10), deg2rad(10); % eta_zD10
@@ -56,10 +58,12 @@ ranges = [
      deg2rad(-10), deg2rad(10); % eta_zD20
      % 20, 120;    % d*/m, 即r_star
      % -3, 3; % gamma
-     6500, 13500;   % 开始突防距离中间值r0/m
+     % 6500, 13500;   % 开始突防距离中间值r0/m
+     11500, 15000;
      % -1.5, 1.5 % beta
      -1500, 1500 % beta/m
-     deg2rad(-25), deg2rad(25);  % qz20
+     % deg2rad(-25), deg2rad(25);  % qz20
+     deg2rad(-15), deg2rad(15);
 ];
 for i = 5:(dim-2)
     lb = ranges(i-4, 1);
@@ -78,7 +82,7 @@ samples(:, dim-1) = samples(:, 4) + samples(:, 12) - samples(:, 2);
 
 j = 0;
 for i = 1:N
-    if samples(i, dim) <= deg2rad(70) && samples(i, dim) >= deg2rad(20) && samples(i, dim-1) <= deg2rad(25) && samples(i, dim-1) >= deg2rad(-25)
+    if samples(i, dim) <= deg2rad(55) && samples(i, dim) >= deg2rad(20) && samples(i, dim-1) <= deg2rad(15) && samples(i, dim-1) >= deg2rad(-15)
         j = j + 1;
         samples_clean(j, :) = samples(i, :);% 将符合qy20、qz10要求的样本做记录
         % j = j + 1;

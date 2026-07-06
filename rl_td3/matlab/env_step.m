@@ -1,17 +1,17 @@
 function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
-        env_step(state_abs, t, Tev, r_MT0, action_norm, cfg_in)
+        env_step(state_abs, t, Tev, zT0, action_norm, cfg_in)
 %ENV_STEP  执行一步环境交互（dt=0.1s）：式47 制导 + RK4 更新 → 新 obs + reward。
 %
 %   [obs_next, state_abs_next, reward, terminated, info_vec] = ...
-%       env_step(state_abs, t, Tev, r_MT0, action_norm)
+%       env_step(state_abs, t, Tev, zT0, action_norm)
 %   [obs_next, state_abs_next, reward, terminated, info_vec] = ...
-%       env_step(state_abs, t, Tev, r_MT0, action_norm, cfg_in)
+%       env_step(state_abs, t, Tev, zT0, action_norm, cfg_in)
 %
 %   输入:
 %     state_abs   [18×1] 当前绝对状态 [M(6); D1(6); D2(6)]
 %     t           当前仿真时刻 (s，从规避段起点算起)
 %     Tev         规避段总时长估计 (s)
-%     r_MT0       规避段开始时攻-目标距离 (m)，reward 归一化基准
+%     zT0         规避段开始时攻-目标 ZEM (m)，reward 归一化基准
 %     action_norm [3×1] 归一化动作 [gamma_n, wT_n, wE_n] ∈ [-1,1]
 %     cfg_in      可选配置，字段：dt(默认0.1), dstar(20), KD1(4), KD2(4),
 %                                  KM(3), g0(9.81), k1(1.0), kT(0.5), kE(1e-6)
@@ -21,7 +21,7 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 %     state_abs_next [18×1] 新绝对状态
 %     reward         标量奖励
 %     terminated     逻辑，本 episode 是否结束
-%     info_vec       [5×1] 调试信息 [r_MD1, r_MD2, r_MT, intercepted, reached]
+%     info_vec       [5×1] 调试信息 [r_MD1, r_MD2, zT, intercepted, reached]
 %
 %   动作反归一化:
 %     gamma = action_norm(1) * 3          → [-3, 3]
@@ -34,9 +34,13 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
     d.dt    = 0.1;    d.dstar = 20.0;
     d.KD1   = 4;      d.KD2   = 4;    d.KM = 3;
     d.g0    = 9.81;
-    d.k1    = 1.0;    d.kT    = 0.5;  d.kE = 1e-6;
+    d.k1    = 1.0;    d.kT    = 1.0;  d.kE = 1e-6;
     d.kill_radius  = 6.0;    % 被拦截判定距离 (m)
-    d.reach_radius = 50.0;   % 到达目标判定距离 (m)
+    d.zT_reach     = 25.0;   % 目标 ZEM 达标判定阈值 (m)
+    d.zT0_floor    = 25.0;   % zT0 归一化下限，与 zT_reach 对齐，防止小 zT0 致比值爆炸
+    d.ratio_cap    = 5.0;    % zT/zT0 比值上限（从30降至5），max单步ZEM惩罚=-kT*25=-25，
+                              % 大幅压缩Q值量程，防止 Critic 发散（原30→max=-900/step过大）
+    d.zT_info_cap  = 1e5;    % info_vec 中 zT 上限，防止天文数字污染评估统计
     if nargin < 6 || isempty(cfg_in); cfg_in = struct(); end
     fn = fieldnames(d);
     for k = 1:numel(fn)
@@ -131,8 +135,11 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
     % ---- 奖励计算 ----
     % 规避距离项：鼓励保持与两防距离
     r_evade  = k1 * (log10(max(r_MD1_n, 1.0)) + log10(max(r_MD2_n, 1.0)));
-    % 目标距离项：鼓励靠近目标（归一化）
-    r_target = -kT * (r_MT_n / max(r_MT0, 1.0));
+    % 目标 ZEM 项：zT0 下限取 zT0_floor（=25m=zT_reach），比值 clip 到 ratio_cap，防止溢出
+    zT_n        = target_zem(M_new);
+    zT0_safe    = max(zT0, cfg_in.zT0_floor);
+    ratio_zT    = min(zT_n / zT0_safe, cfg_in.ratio_cap);
+    r_target    = -kT * ratio_zT^2;
     % 能量惩罚
     r_energy = -kE * (a_M(1)^2 + a_M(2)^2) * dt;
 
@@ -140,7 +147,7 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 
     % ---- 终止条件判断 ----
     intercepted = (min(r_MD1_n, r_MD2_n) <= cfg_in.kill_radius);
-    reached     = (r_MT_n <= cfg_in.reach_radius) && (t_new > Tev * 0.5);
+    reached     = (zT_n <= cfg_in.zT_reach) && (t_new > Tev * 0.5);
     timeout     = (t_new >= Tev * 1.5);   % 超时（1.5倍估计时长）
 
     if intercepted
@@ -155,5 +162,7 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
         terminated = false;
     end
 
-    info_vec = [r_MD1_n; r_MD2_n; r_MT_n; double(intercepted); double(reached)];
+    % zT_n 裁剪至 zT_info_cap，防止天文数字污染评估统计（奖励已由 ratio_cap 保护）
+    zT_info = min(zT_n, cfg_in.zT_info_cap);
+    info_vec = [r_MD1_n; r_MD2_n; zT_info; double(intercepted); double(reached)];
 end

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe .cursor/hooks/rewrite-python-shell.py",
+        "matcher": "Shell"
+      }
+    ]
+  }
+}

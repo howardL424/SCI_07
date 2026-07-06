@@ -7,13 +7,15 @@ function results = generate_ps_expert_library(N, opts)
 %         -> 汇总保存 expert_lib.mat
 %
 %   输入:
-%     N    : 处理的样本条数 (默认 10; P0 验证)
+%     N    : 处理的样本条数 (默认 10; P0 验证); Inf=使用 samples_clean 全部有效行
 %     opts : 可选, 字段:
 %            .run_stageB       (默认 false)  是否运行阶段B NLP
 %            .plot             (默认 true)   是否绘制第一条阶段A轨迹
 %            .save             (默认 false)  是否保存 expert_lib.mat
 %            .save_file        (默认 'expert_lib.mat')  保存文件名
 %            .checkpoint_every (默认 50)     每处理多少条保存一次中间结果; 0=禁用
+%            .resume_ckpt      (默认 '')      checkpoint 文件路径, 非空则从断点续跑
+%            .valid_pos        (默认 [])      指定 valid 行序号子集, 用于分批
 %            .cfg              传给 simulate_warmstart_trajectory 的配置
 %            .ss_cfg           传给 solve_ss_trajectory 的配置
 %            .ex_cfg           传给 extract_expert_transitions 的配置
@@ -42,7 +44,12 @@ function results = generate_ps_expert_library(N, opts)
     if ~isfield(opts,'ss_cfg');           opts.ss_cfg           = struct(); end
     if ~isfield(opts,'ex_cfg');           opts.ex_cfg           = struct(); end
     if ~isfield(opts,'checkpoint_every'); opts.checkpoint_every = 50;       end
+    if ~isfield(opts,'resume_ckpt');      opts.resume_ckpt      = '';       end
+    if ~isfield(opts,'valid_pos');        opts.valid_pos        = [];       end
     opts.save_file = resolve_data_path(opts.save_file, expertRoot);
+    if ~isempty(opts.resume_ckpt)
+        opts.resume_ckpt = resolve_data_path(opts.resume_ckpt, expertRoot);
+    end
 
     %% -------- 加载样本 --------
     samples_file = fullfile(projectRoot, 'samples_clean.mat');
@@ -54,21 +61,67 @@ function results = generate_ps_expert_library(N, opts)
     sc = S.samples_clean;
     valid = find(any(sc ~= 0, 2));
     nValid = numel(valid);
-    N = min(N, nValid);
-    fprintf('samples_clean: %d 有效行, 本次处理前 %d 条\n', nValid, N);
+    if isscalar(N) && isinf(N)
+        N = nValid;
+    else
+        N = min(N, nValid);
+    end
+    select_pos = 1:N;
+    if ~isempty(opts.valid_pos)
+        pos = unique(opts.valid_pos(:).');
+        pos = pos(pos >= 1 & pos <= nValid);
+        select_pos = pos;
+        N = numel(select_pos);
+        fprintf('samples_clean: %d 有效行, 指定子集 %d 条\n', nValid, N);
+    else
+        fprintf('samples_clean: %d 有效行, 本次处理 %d 条\n', nValid, N);
+    end
 
     if opts.run_stageB
         add_casadi_path();
     end
 
-    %% -------- 主循环 --------
+    %% -------- 断点续跑 (可选) --------
+    resume_k = 0;
+    elapsed_prev = 0;
     trajectories = struct('idx',{},'X',{},'geo',{},'tau',{},'stageB',{},'transitions',{},'ok_use',{});
     nA_succ = 0; nA_int = 0; nB_ok = 0; nB_dbg = 0; nB_fail = 0;
     expert_sa_list = {};   % cell array, 每条轨迹一个 [N_steps×17] 矩阵
 
+    if ~isempty(opts.resume_ckpt)
+        if ~isfile(opts.resume_ckpt)
+            error('generate_ps_expert_library:MissingCheckpoint', ...
+                '未找到 checkpoint: %s', opts.resume_ckpt);
+        end
+        tmp = load(opts.resume_ckpt, 'results_ckpt');
+        prev = tmp.results_ckpt;
+        resume_k = numel(prev.trajectories);
+        if resume_k >= N
+            fprintf('[resume] checkpoint 已含 %d/%d 条, 无需续跑\n', resume_k, N);
+            results = prev;
+            results.valid_pos = select_pos;
+            results.valid_idx = valid(select_pos);
+            if opts.save
+                save(opts.save_file, 'results', '-v7.3');
+                fprintf('已保存最终结果 %s\n', opts.save_file);
+            end
+            return;
+        end
+        trajectories = prev.trajectories;
+        [nA_succ, nA_int, nB_ok, nB_dbg, nB_fail, expert_sa_list] = ...
+            restore_batch_state(prev);
+        if isfield(prev.stats, 'elapsed_s')
+            elapsed_prev = prev.stats.elapsed_s;
+        end
+        fprintf('[resume] 从 %s 恢复 %d/%d 条, 续跑 %d:%d\n', ...
+            opts.resume_ckpt, resume_k, N, resume_k + 1, N);
+    end
+
+    %% -------- 主循环 --------
     t0_total = tic;
-    for k = 1:N
-        row = sc(valid(k), :);
+    for k = (resume_k + 1):N
+        vpos = select_pos(k);
+        row = sc(valid(vpos), :);
         [M0, D10, D20, geo] = reconstruct_geometry(row);
 
         % ---- 阶段A ----
@@ -76,7 +129,8 @@ function results = generate_ps_expert_library(N, opts)
         nA_succ = nA_succ + double(tau.success);
         nA_int  = nA_int  + double(tau.intercepted);
 
-        trajectories(k).idx    = valid(k);
+        trajectories(k).idx    = valid(vpos);
+        trajectories(k).valid_pos = vpos;
         trajectories(k).X      = row;
         trajectories(k).geo    = geo;
         trajectories(k).tau    = tau;
@@ -87,7 +141,7 @@ function results = generate_ps_expert_library(N, opts)
 
         fprintf(['  [%3d/%3d] row=%4d rAD0=%.0f beta=%.1f wE=%4d | ', ...
                  'r_min1=%.1f r_min2=%.1f r_minT=%.0f | succA=%d int=%d reach=%d\n'], ...
-                 k, N, valid(k), geo.rAD0, geo.beta, wE_used, ...
+                 k, N, valid(vpos), geo.rAD0, geo.beta, wE_used, ...
                  tau.r_min1, tau.r_min2, tau.r_minT, tau.success, tau.intercepted, tau.reached);
 
         % ---- 阶段B (可选) ----
@@ -100,16 +154,18 @@ function results = generate_ps_expert_library(N, opts)
         dt_b = toc(t_b);
 
         % 判断可用性: ok=true 直接用; ok=false 但 debug theta 存在且 miss 充分时降级使用
+        % 硬门槛: miss1/miss2 >= dfloor(6m) 且 missT <= missT_ceil(50m)
         ok_use  = false;
         ok_mode = 'fail';
+        dfloor     = 6;    if isfield(opts.ss_cfg,'dfloor');     dfloor     = opts.ss_cfg.dfloor;     end
+        missT_ceil = 50;   if isfield(opts.ss_cfg,'missT_ceil'); missT_ceil = opts.ss_cfg.missT_ceil; end
         if res.ok
             ok_use  = true;
             ok_mode = 'ok';
             nB_ok   = nB_ok + 1;
         elseif ~isempty(res.theta_K) && isfield(res,'miss') && ~isempty(res.miss)
-            dfloor = 6;
-            if isfield(opts.ss_cfg,'dfloor'); dfloor = opts.ss_cfg.dfloor; end
-            if res.miss(1) >= dfloor && res.miss(2) >= dfloor
+            missT_ok = (numel(res.miss) < 3) || (res.miss(3) <= missT_ceil);
+            if res.miss(1) >= dfloor && res.miss(2) >= dfloor && missT_ok
                 ok_use  = true;
                 ok_mode = 'debug';
                 nB_dbg  = nB_dbg + 1;
@@ -154,7 +210,7 @@ function results = generate_ps_expert_library(N, opts)
         end
     end
 
-    elapsed = toc(t0_total);
+    elapsed = elapsed_prev + toc(t0_total);
     fprintf('\n===== 批处理完成 =====\n');
     fprintf('  阶段A: 成功 %d/%d, 被拦截 %d/%d\n', nA_succ, N, nA_int, N);
     if opts.run_stageB
@@ -169,6 +225,8 @@ function results = generate_ps_expert_library(N, opts)
     %% -------- 汇总 --------
     results = build_results(trajectories, expert_sa_list, N, ...
         nA_succ, nA_int, nB_ok, nB_dbg, nB_fail, elapsed);
+    results.valid_pos = select_pos;
+    results.valid_idx = valid(select_pos);
 
     %% -------- 可视化 (第一条阶段A) --------
     if opts.plot && N >= 1
@@ -186,6 +244,22 @@ end
 % =========================================================
 % 辅助: 组装 results 结构体 (供主函数和 checkpoint 共用)
 % =========================================================
+function [nA_succ, nA_int, nB_ok, nB_dbg, nB_fail, expert_sa_list] = restore_batch_state(prev)
+    nA_succ = prev.stats.nA_succ;
+    nA_int  = prev.stats.nA_int;
+    nB_ok   = prev.stats.nB_ok;
+    nB_dbg  = prev.stats.nB_dbg;
+    nB_fail = prev.stats.nB_fail;
+    expert_sa_list = {};
+    for i = 1:numel(prev.trajectories)
+        tr = prev.trajectories(i);
+        if tr.ok_use && ~isempty(tr.transitions) && isfield(tr.transitions, 'state') ...
+                && size(tr.transitions.state, 1) > 0
+            expert_sa_list{end+1} = [tr.transitions.state, tr.transitions.action]; %#ok<AGROW>
+        end
+    end
+end
+
 function results = build_results(trajectories, expert_sa_list, N, ...
         nA_succ, nA_int, nB_ok, nB_dbg, nB_fail, elapsed)
     results = struct();

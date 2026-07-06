@@ -91,7 +91,7 @@ class EvasionEnv(gym.Env):
         self._state_abs: Optional[np.ndarray] = None  # [18]
         self._t:   float = 0.0
         self._Tev: float = 10.0
-        self._r_MT0: float = 1.0
+        self._zT0:  float = 1.0
 
     # ── reset ─────────────────────────────────────────────────────────────────
     def reset(
@@ -106,7 +106,7 @@ class EvasionEnv(gym.Env):
             row_idx = self.np_random.integers(0, self._n_samples)
             row_ml  = matlab.double(self._samples[row_idx].tolist())
 
-            obs_ml, sabs_ml, Tev_ml, r_MT0_ml, ok_ml = self._eng.env_reset(
+            obs_ml, sabs_ml, Tev_ml, zT0_ml, ok_ml = self._eng.env_reset(
                 row_ml, self.matlab_cfg, nargout=5
             )
             ok = bool(ok_ml)
@@ -117,7 +117,7 @@ class EvasionEnv(gym.Env):
             self._state_abs = np.array(sabs_ml, dtype=np.float64).flatten()
             self._t         = 0.0
             self._Tev       = float(Tev_ml)
-            self._r_MT0     = float(r_MT0_ml)
+            self._zT0       = float(zT0_ml)
             return obs, {"row_idx": int(row_idx)}
 
         raise RuntimeError(
@@ -138,7 +138,7 @@ class EvasionEnv(gym.Env):
             sabs_ml,
             float(self._t),
             float(self._Tev),
-            float(self._r_MT0),
+            float(self._zT0),
             act_ml,
             self.matlab_cfg,
             nargout=5,
@@ -155,7 +155,7 @@ class EvasionEnv(gym.Env):
         info = {
             "r_MD1":       info_vec[0],
             "r_MD2":       info_vec[1],
-            "r_MT":        info_vec[2],
+            "zT":          info_vec[2],
             "intercepted": bool(info_vec[3]),
             "reached":     bool(info_vec[4]),
             "t":           self._t,

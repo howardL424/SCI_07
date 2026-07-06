@@ -41,7 +41,8 @@ GAIL/
 └── rl_td3/                        # ★ 本次新增
     ├── matlab/
     │   ├── env_reset.m            # episode 初始化
-    │   └── env_step.m             # 单步仿真 + reward
+    │   ├── env_step.m             # 单步仿真 + reward
+    │   └── target_zem.m           # 目标零控脱靶量 ZEM（reward/终止判据）
     ├── evasion_env.py             # Gymnasium 环境（Python 侧）
     ├── train_td3.py               # BC + TD3 训练入口
     ├── load_expert_buffer.py      # 专家库 → ReplayBuffer 预填充
@@ -53,8 +54,9 @@ GAIL/
 
 | 文件 | 功能 |
 |------|------|
-| `env_reset.m` | `samples_clean` 一行 → `reconstruct_geometry` → `simulate_warmstart_trajectory` → 定位规避段 `stage==2` 起点 → 输出 **13维 obs**、**18维绝对状态**、`Tev`、`r_MT0` |
-| `env_step.m` | 接收归一化动作 `[γ_n,wT_n,wE_n]`，反归一化后调用 `computeOptimalCmd_duo_target`（式47），RK4 推进 `dt=0.1s`，防御弹 PN，计算 reward 与 done |
+| `env_reset.m` | `samples_clean` 一行 → `reconstruct_geometry` → `simulate_warmstart_trajectory` → 定位规避段 `stage==2` 起点 → 输出 **13维 obs**、**18维绝对状态**、`Tev`、`zT0` |
+| `env_step.m` | 接收归一化动作 `[γ_n,wT_n,wE_n]`，反归一化后调用 `computeOptimalCmd_duo_target`（式47），RK4 推进 `dt=0.1s`，防御弹 PN，按 ZEM 计算 reward 与 done |
+| `target_zem.m` | 由攻击弹绝对状态 `M(6)` 计算目标零控脱靶量 `zT`（与 `casadi_target_zem.m` 一致） |
 
 ### 1.3 Python 层
 
@@ -62,8 +64,8 @@ GAIL/
 |------|------|
 | `evasion_env.py` | `gymnasium.Env`：`reset`/`step` 经 MATLAB Engine 调上述 `.m`；`norm_action` / `denorm_action` 静态方法供 BC 与评估复用 |
 | `train_td3.py` | SB3 `TD3` + `NormalActionNoise`；默认 BC 预填充后 `learn(500_000)`；支持 `--no-bc`、`--steps`、`--expert` |
-| `load_expert_buffer.py` | 读 `results.expert_sa [N×17]`，丢弃第14列 `w`，归一化 `[γ,wT,wE]` 写入 ReplayBuffer；支持 v7 / v7.3 `.mat` |
-| `evaluate_td3.py` | 加载 `.zip` 模型，蒙特卡洛统计规避率/到达率/脱靶距离/动作分布 |
+| `load_expert_buffer.py` | 读 `results.expert_sa [N×17]` 与 `trajectories(k).transitions.state_abs`，丢弃第14列 `w`，归一化 `[γ,wT,wE]`，按 ZEM 重算 reward 后写入 ReplayBuffer |
+| `evaluate_td3.py` | 加载 `.zip` 模型，蒙特卡洛统计规避率/到达率（`zT≤25m`）/终端 ZEM/动作分布 |
 
 ### 1.4 依赖的既有工程资产（未改动物理核心）
 
@@ -132,11 +134,13 @@ flowchart TD
 
 ### 2.4 奖励函数（`env_step.m`）
 
+> **2026-07 后续调整**：目标项由 `r_MT/r_MT0` 改为与伪谱 NLP 一致的 **ZEM（`zT`）**；`reached` 判据改为 `zT ≤ 25 m`。13 维观测中的 `r_MT` 仍保留，仅不再用于 reward/终止。
+
 每步稠密奖励：
 
 ```
 R = k1·[log10(r_MD1) + log10(r_MD2)]     # 规避距离（用 step 后值，下限 1m）
-  - kT·(r_MT / r_MT0)                      # 目标距离项（归一化，鼓励逼近目标）
+  - kT·(zT / zT0)²                       # 目标 ZEM 项（zT0=规避段起点 ZEM）
   - kE·||a_M||² · dt                       # 能量惩罚
 ```
 
@@ -144,7 +148,7 @@ R = k1·[log10(r_MD1) + log10(r_MD2)]     # 规避距离（用 step 后值，下
 
 终端：
 - 被拦截（`min(r_MD1,r_MD2) ≤ 6 m`）：`R -= 100`，`terminated=True`
-- 到达目标（`r_MT ≤ 50 m` 且 `t > 0.5·Tev`）：`R += 100`，`terminated=True`
+- 到达目标（`zT ≤ 25 m` 且 `t > 0.5·Tev`）：`R += 100`，`terminated=True`
 - 超时（`t ≥ 1.5·Tev`）：`terminated=True`（无额外终端奖励）
 
 ### 2.5 BC 预填充规则（`load_expert_buffer.py`）
@@ -153,7 +157,7 @@ R = k1·[log10(r_MD1) + log10(r_MD2)]     # 规避距离（用 step 后值，下
 - 列映射：`0:13` state，`13` w（**丢弃**），`14:17` → γ, wT, wE
 - 动作归一化与 `EvasionEnv.norm_action` / `env_step.m` 反归一化 **必须成对一致**
 - `next_state`：同轨迹相邻步；episode 末步 `done=True`，`next_state` 用自身填充
-- `reward`：按与 `env_step.m` 相同的公式在 Python 侧重算（BC 阶段无 `a_M` 幅值时用近似）
+- `reward`：读取 `trajectories(k).transitions.state_abs`，用 Python 版 `target_zem` 计算 `zT`，按与 `env_step.m` 相同公式重算（BC 阶段无 `a_M` 幅值时用近似）
 
 ### 2.6 TD3 默认超参（`train_td3.py`）
 
@@ -263,7 +267,7 @@ python rl_td3/evaluate_td3.py --model rl_td3/checkpoints/best/best_model --episo
 ### 4.6 奖励与量级
 
 - `wT`/`wE` 物理范围跨 **2 个数量级**，必须用 **对数归一化** `10^(a+3)`，否则 Actor 梯度失衡。
-- `kT·r_MT/r_MT0` 已做归一化；若规避项过弱/过强，优先调 `k1`/`kT`，而不是改 state 定义。
+- `kT·(zT/zT0)²` 已做归一化；若规避项过弱/过强，优先调 `k1`/`kT`，而不是改 state 定义。
 - BC 预填充的 reward 为 Python 重算近似，与在线 `env_step` 可能有微小偏差；在线训练后以环境 reward 为准。
 
 ### 4.7 与伪谱专家生成流水线的关系

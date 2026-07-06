@@ -35,7 +35,8 @@ def run_episode(env: EvasionEnv, model: TD3, render: bool = False):
     total_reward = 0.0
     r_MD1_min = np.inf
     r_MD2_min = np.inf
-    r_MT_final = np.inf
+    zT_min    = np.inf
+    zT_final  = np.inf
     intercepted = False
     reached     = False
     step = 0
@@ -47,7 +48,8 @@ def run_episode(env: EvasionEnv, model: TD3, render: bool = False):
         total_reward += reward
         r_MD1_min = min(r_MD1_min, info["r_MD1"])
         r_MD2_min = min(r_MD2_min, info["r_MD2"])
-        r_MT_final = info["r_MT"]
+        zT_final  = info["zT"]
+        zT_min    = min(zT_min, info["zT"])
         intercepted = intercepted or info["intercepted"]
         reached     = reached or info["reached"]
         step += 1
@@ -56,7 +58,7 @@ def run_episode(env: EvasionEnv, model: TD3, render: bool = False):
             gamma, wT, wE = EvasionEnv.denorm_action(action)
             print(
                 f"  step={step:3d} | r_MD1={info['r_MD1']:7.1f}m "
-                f"r_MD2={info['r_MD2']:7.1f}m r_MT={info['r_MT']:8.1f}m "
+                f"r_MD2={info['r_MD2']:7.1f}m zT={info['zT']:8.1f}m "
                 f"| γ={gamma:5.2f} wT={wT:.1e} wE={wE:.1e} "
                 f"| r={reward:7.3f}"
             )
@@ -65,7 +67,8 @@ def run_episode(env: EvasionEnv, model: TD3, render: bool = False):
         "total_reward": total_reward,
         "r_MD1_min":    r_MD1_min,
         "r_MD2_min":    r_MD2_min,
-        "r_MT_final":   r_MT_final,
+        "zT_min":       zT_min,
+        "zT_final":     zT_final,
         "intercepted":  intercepted,
         "reached":      reached,
         "steps":        step,
@@ -84,21 +87,21 @@ def print_stats(label: str, results: list[dict]):
     ]
     intercepted = [r for r in results if r["intercepted"]]
 
-    d1_arr = np.array([r["r_MD1_min"]  for r in results])
-    d2_arr = np.array([r["r_MD2_min"]  for r in results])
-    rT_arr = np.array([r["r_MT_final"] for r in results])
+    d1_arr = np.array([r["r_MD1_min"] for r in results])
+    d2_arr = np.array([r["r_MD2_min"] for r in results])
+    zT_arr = np.array([r["zT_final"]  for r in results])
     rw_arr = np.array([r["total_reward"] for r in results])
 
     print(f"\n{'='*60}")
     print(f"  评估结果：{label}  （{n} 轮）")
     print(f"{'='*60}")
     print(f"  双防均规避成功  (d1,d2≥20m)        : {len(r_evade_ok):3d}/{n} = {100*len(r_evade_ok)/n:.1f}%")
-    print(f"  到达目标        (r_MT≤50m)          : {len(reached_ok):3d}/{n} = {100*len(reached_ok)/n:.1f}%")
+    print(f"  到达目标        (zT≤25m)            : {len(reached_ok):3d}/{n} = {100*len(reached_ok)/n:.1f}%")
     print(f"  规避+到达 全部达标                  : {len(both_ok):3d}/{n} = {100*len(both_ok)/n:.1f}%")
     print(f"  被拦截          (r_MD<6m)           : {len(intercepted):3d}/{n} = {100*len(intercepted)/n:.1f}%")
     print(f"  最小脱靶距离 D1  mean±std (m)       : {d1_arr.mean():.1f} ± {d1_arr.std():.1f}")
     print(f"  最小脱靶距离 D2  mean±std (m)       : {d2_arr.mean():.1f} ± {d2_arr.std():.1f}")
-    print(f"  终端目标距离     mean±std (m)        : {rT_arr.mean():.1f} ± {rT_arr.std():.1f}")
+    print(f"  终端目标 ZEM     mean±std (m)        : {zT_arr.mean():.1f} ± {zT_arr.std():.1f}")
     print(f"  累计奖励         mean±std            : {rw_arr.mean():.2f} ± {rw_arr.std():.2f}")
 
 
@@ -136,7 +139,7 @@ def main():
                 f"  [ep {ep+1:3d}/{args.episodes}] "
                 f"双防+到达成功率 {100*len(done_so_far)/(ep+1):.1f}%  "
                 f"r_MD1_min={ep_result['r_MD1_min']:.1f}m  "
-                f"r_MT_final={ep_result['r_MT_final']:.1f}m"
+                f"zT_final={ep_result['zT_final']:.1f}m"
             )
 
     print_stats("TD3 (BC热启动)", results)

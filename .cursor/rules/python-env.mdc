@@ -1,0 +1,12 @@
+---
+description: Agent 默认 Python 解释器为 rl_pytorch 虚拟环境
+alwaysApply: true
+---
+
+# Agent Python 解释器
+
+- Agent 执行 Python 时，默认解释器为：
+  `E:\Python\venvs\rl_pytorch\Scripts\python.exe`
+- 不要使用裸 `python`、`py` 或 `source activate`；Agent shell 不会自动继承集成终端的 venv。
+- 示例：`E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --smoke`
+- pip 同样通过解释器调用：`E:\Python\venvs\rl_pytorch\Scripts\python.exe -m pip install ...`

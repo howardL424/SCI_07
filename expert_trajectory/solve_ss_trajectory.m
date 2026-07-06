@@ -13,6 +13,7 @@ function res = solve_ss_trajectory(tau_warm, cfg)
     d.s_w = 2e3; d.s_wE = 55; d.s_wT = 22;
     d.gamma_lo = -3; d.gamma_hi = 3; d.wT_lo = 1; d.wT_hi = 1e5;
     d.wE_lo = 10; d.wE_hi = 1e4;
+    d.missT_ceil = 50;             % 规避末端目标 ZEM 上限 (m); ok_use 硬门槛; inf=不限
     d.report_terms_only = false;   % true: 仅在 warm θ 处测三项原始量级 (标定用, 不求解)
     d.max_iter = 300; d.print_level = 0;  % 批处理时 300 iter 足够; 失败条快速退出
     fn = fieldnames(d); for k=1:numel(fn); if ~isfield(cfg,fn{k}); cfg.(fn{k})=d.(fn{k}); end; end
@@ -63,6 +64,9 @@ function res = solve_ss_trajectory(tau_warm, cfg)
 
     opti.subject_to(miss1 >= cfg.dfloor);
     opti.subject_to(miss2 >= cfg.dfloor);
+    if isfinite(cfg.missT_ceil)
+        opti.subject_to(missT <= cfg.missT_ceil);
+    end
     opti.subject_to(cfg.gamma_lo <= Theta(1,:) <= cfg.gamma_hi);
     opti.subject_to(cfg.wT_lo    <= Theta(2,:) <= cfg.wT_hi);
     opti.subject_to(cfg.wE_lo    <= Theta(3,:) <= cfg.wE_hi);

@@ -28,6 +28,9 @@ function tau = simulate_warmstart_trajectory(M0, D10, D20, cfg)
     d.reach_radius = 50;         % 弹目距离小于此值视为"到达目标"
     d.tail_time = 0.3;           % 到达目标后再多跑的时长(s)
     d.diverge_time = 2.0;        % stage3 持续远离目标超过此时长则判定发散早停(s)
+    d.stage3_guidance = 'pn';    % stage3: 'pn' | 'optimal' (式47, 仅目标项)
+    d.stage3_wT = [];            % 空=继承 cfg.wT; 非空则覆盖 stage3 目标项权重
+    d.stage3_wE = [];            % 空=继承 cfg.wE; 非空则覆盖 stage3 能量项权重
     if nargin < 4 || isempty(cfg); cfg = struct(); end
     fn = fieldnames(d);
     for k = 1:numel(fn)
@@ -140,7 +143,18 @@ function tau = simulate_warmstart_trajectory(M0, D10, D20, cfg)
             stage = 2;
             t_pen_end = t;
         else
-            a_M_cmd = computePN(KM, M(6), qd_theta, qd_psi, M(4));
+            if strcmp(cfg.stage3_guidance, 'optimal')
+                wT3 = cfg.wT;  if ~isempty(cfg.stage3_wT); wT3 = cfg.stage3_wT; end
+                wE3 = wE;      if ~isempty(cfg.stage3_wE); wE3 = cfg.stage3_wE; end
+                a_M_cmd = computeOptimalCmd_duo_target( ...
+                    q_y_MD1, q_z_MD1, qd_y1, qd_z1, r_MD1, r_dot_MD1, t, tf1, ...
+                    q_y_MD2, q_z_MD2, qd_y2, qd_z2, r_MD2, r_dot_MD2, tf2, ...
+                    q_y_TM, q_z_TM, qd_y_TM, qd_z_TM, r_TM, r_dot_TM, tfT, ...
+                    M(4), M(5), D1(4), D1(5), D2(4), D2(5), ...
+                    a_D1_cmd, a_D2_cmd, a1, a2, wT3, wE3, r_star);
+            else
+                a_M_cmd = computePN(KM, M(6), qd_theta, qd_psi, M(4));
+            end
             stage = 3;
         end
 
@@ -211,4 +225,11 @@ function tau = simulate_warmstart_trajectory(M0, D10, D20, cfg)
     tau.success = (f1 == 1 && f2 == 1) && ~intercepted;
     tau.meta = struct('M0', M0, 'D10', D10, 'D20', D20, 'cfg', cfg, ...
                       'a1', a1, 'a2', a2);
+
+    % 各阶段攻击弹能量 integral ||a_M||^2 dt (m^2/s^4 * s = m^2/s^3)
+    aM_norm2 = tau.a_M(1,:).^2 + tau.a_M(2,:).^2;
+    tau.energy_total  = sum(aM_norm2) * dt;
+    tau.energy_stage1 = sum(aM_norm2(tau.stage == 1)) * dt;
+    tau.energy_stage2 = sum(aM_norm2(tau.stage == 2)) * dt;
+    tau.energy_stage3 = sum(aM_norm2(tau.stage == 3)) * dt;
 end
