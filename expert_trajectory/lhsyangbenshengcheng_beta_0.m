@@ -5,7 +5,8 @@ setup_expert_path();
 % 样本规模 N=1e3，变量维数 dim=16
 
 % N = 2 * 1e5;
-N = 2.4e3;
+% N = 2.4e3;
+N = 3.4e3;
 % dim = 14;
 dim = 14;
 

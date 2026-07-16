@@ -22,7 +22,10 @@ end
 
 sc = load(fullfile(projectRoot, 'samples_clean.mat'), 'samples_clean');
 nValid = nnz(any(sc.samples_clean ~= 0, 2));
-nMerged = numel(unique([r1.valid_pos, r2.valid_pos]));
+% 统一为行向量，避免两批 orientation 不一致导致 horzcat 失败
+vp1 = r1.valid_pos(:).'; vp2 = r2.valid_pos(:).';
+vi1 = r1.valid_idx(:).'; vi2 = r2.valid_idx(:).';
+nMerged = numel(unique([vp1, vp2]));
 if nMerged ~= nValid
     warning('P3_merge_halves:CountMismatch', ...
         '合并后样本数 (%d) != 当前 samples_clean 有效行 (%d)，请确认两批基于同一份样本', ...
@@ -46,8 +49,8 @@ end
 results = struct();
 results.trajectories = tr;
 results.expert_sa = expert_sa;
-results.valid_pos = [r1.valid_pos, r2.valid_pos];
-results.valid_idx = [r1.valid_idx, r2.valid_idx];
+results.valid_pos = [vp1, vp2];
+results.valid_idx = [vi1, vi2];
 results.N = r1.N + r2.N;
 results.stats = struct( ...
     'nA_succ',   r1.stats.nA_succ   + r2.stats.nA_succ, ...

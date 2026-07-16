@@ -1,0 +1,168 @@
+[train] 终端输出同时写入 D:\LTY\yan\yanerxia\GAIL\rl_td3\logs（终端输出记录）\td3_smoke_20260711_095146.log
+============================================================
+  训练方案: BC 预填充 + 衰减 BC 正则 + TD3
+  运行模式: 冒烟测试
+  总步数  : 5,000
+  学习率  : 0.0001（Actor / Critic 统一）
+  运行名称: td3_smoke
+  BC 预填充: 是（最多 99,000 步，占 buffer 33%）
+  BC 正则  : λ0=1.0, 衰减步数=150,000
+  终端缓存: D:\LTY\yan\yanerxia\GAIL\rl_td3\expert_terminal_cache.npz
+  专家库  : E:\matlab\result_0702\expert_lib_1000.mat
+  评估 ep 数: 20（每 10,000 步）
+  梯度裁剪: ±10.0
+  保存目录: rl_td3\checkpoints_smoke
+============================================================
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Using cuda device
+Wrapping the env in a DummyVecEnv.
+[load_expert_buffer] 加载专家库：E:\matlab\result_0702\expert_lib_1000.mat
+[load_expert_buffer] 共 120115 条 transition
+[load_expert_buffer] 已为 1103 个 episode 末步追加终端奖励 (R1 med=15.58, bonus>0=72.4%)
+[load_expert_buffer] 预填充完成：写入 99000 条 transition，ReplayBuffer 当前大小 99000 / 300000
+[train] BC 预填充完成，写入 99000 条；已注入专家数据集供衰减 BC 正则
+
+[train] 开始 TD3BC 训练，共 5,000 步…
+Logging to rl_td3\checkpoints_smoke\tb_logs\TD3_6
+[GradClipCallback] 已为 36 个参数张量注册梯度裁剪钩子 (±10.0)
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 42.3     |
+|    ep_rew_mean     | 51.3     |
+| time/              |          |
+|    episodes        | 10       |
+|    fps             | 46       |
+|    time_elapsed    | 9        |
+|    total_timesteps | 423      |
+| train/             |          |
+|    actor_loss      | 219      |
+|    bc_lambda       | 0.997    |
+|    bc_loss         | 1.23     |
+|    critic_loss     | 885      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 422      |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 40.6     |
+|    ep_rew_mean     | 51.1     |
+| time/              |          |
+|    episodes        | 20       |
+|    fps             | 49       |
+|    time_elapsed    | 16       |
+|    total_timesteps | 813      |
+| train/             |          |
+|    actor_loss      | 218      |
+|    bc_lambda       | 0.995    |
+|    bc_loss         | 1.24     |
+|    critic_loss     | 1.47e+03 |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 812      |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 46.8     |
+|    ep_rew_mean     | 59.5     |
+| time/              |          |
+|    episodes        | 30       |
+|    fps             | 53       |
+|    time_elapsed    | 26       |
+|    total_timesteps | 1404     |
+| train/             |          |
+|    actor_loss      | 194      |
+|    bc_lambda       | 0.991    |
+|    bc_loss         | 1.24     |
+|    critic_loss     | 699      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 1403     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 53       |
+|    ep_rew_mean     | 65.7     |
+| time/              |          |
+|    episodes        | 40       |
+|    fps             | 57       |
+|    time_elapsed    | 37       |
+|    total_timesteps | 2122     |
+| train/             |          |
+|    actor_loss      | 186      |
+|    bc_lambda       | 0.986    |
+|    bc_loss         | 1.28     |
+|    critic_loss     | 3.43e+03 |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 2121     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 55.8     |
+|    ep_rew_mean     | 70.3     |
+| time/              |          |
+|    episodes        | 50       |
+|    fps             | 57       |
+|    time_elapsed    | 48       |
+|    total_timesteps | 2789     |
+| train/             |          |
+|    actor_loss      | 199      |
+|    bc_lambda       | 0.981    |
+|    bc_loss         | 1.24     |
+|    critic_loss     | 614      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 2788     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 59       |
+|    ep_rew_mean     | 75.5     |
+| time/              |          |
+|    episodes        | 60       |
+|    fps             | 58       |
+|    time_elapsed    | 60       |
+|    total_timesteps | 3538     |
+| train/             |          |
+|    actor_loss      | 173      |
+|    bc_lambda       | 0.976    |
+|    bc_loss         | 1.19     |
+|    critic_loss     | 2.98e+03 |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 3537     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 60.8     |
+|    ep_rew_mean     | 76.8     |
+| time/              |          |
+|    episodes        | 70       |
+|    fps             | 59       |
+|    time_elapsed    | 71       |
+|    total_timesteps | 4258     |
+| train/             |          |
+|    actor_loss      | 174      |
+|    bc_lambda       | 0.972    |
+|    bc_loss         | 1.27     |
+|    critic_loss     | 243      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 4257     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 60.5     |
+|    ep_rew_mean     | 74.6     |
+| time/              |          |
+|    episodes        | 80       |
+|    fps             | 59       |
+|    time_elapsed    | 81       |
+|    total_timesteps | 4840     |
+| train/             |          |
+|    actor_loss      | 186      |
+|    bc_lambda       | 0.968    |
+|    bc_loss         | 1.21     |
+|    critic_loss     | 310      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 4839     |
+---------------------------------
+
+[train] 训练完成，最终模型已保存至 rl_td3\checkpoints_smoke\td3_smoke.zip

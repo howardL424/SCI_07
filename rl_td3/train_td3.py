@@ -1,16 +1,17 @@
 """
-train_td3.py — BC 热启动 + TD3 精调训练入口
+train_td3.py — BC 预填充 + 衰减 BC 正则 + TD3 精调训练入口
 
 训练范式：
-    1. 用专家库 expert_lib_1000.mat 预填充 ReplayBuffer（行为克隆热启动）
-    2. TD3 在线与仿真环境交互，精调策略网络
+    1. 用专家库预填充 ReplayBuffer（末步含 R1/+100，需 expert_terminal_cache.npz）
+    2. TD3BC：actor 损失加衰减 λ‖π(s)-a_E‖²
+    3. 在线与仿真环境交互精调
 
 用法：
-    python train_td3.py                          # 使用全部默认参数
-    python train_td3.py --no-bc                  # 不做 BC 预填充（纯 TD3）
+    python train_td3.py                          # 默认 300k 步
+    python train_td3.py --no-bc                  # 不做 BC 预填充
     python train_td3.py --steps 200000           # 自定义训练步数
     python train_td3.py --expert E:/path/to.mat  # 指定专家库路径
-    python train_td3.py --smoke                  # 冒烟测试（独立 checkpoint，不与正式训练冲突）
+    python train_td3.py --smoke                  # 冒烟测试
 
 终端输出默认同时写入 rl_td3/logs（终端输出记录）/{run_name}_{时间戳}.log
 """
@@ -25,7 +26,6 @@ from pathlib import Path
 
 import numpy as np
 import torch
-from stable_baselines3 import TD3
 from stable_baselines3.common.callbacks import (
     BaseCallback,
     CheckpointCallback,
@@ -37,28 +37,35 @@ from stable_baselines3.common.noise import NormalActionNoise
 # ── 确保 rl_td3/ 目录在 Python 路径上 ──────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent))
 from evasion_env import EvasionEnv
-from load_expert_buffer import load_expert_buffer, DEFAULT_EXPERT_PATH
+from load_expert_buffer import (
+    DEFAULT_EXPERT_PATH,
+    DEFAULT_TERMINAL_CACHE,
+    load_expert_buffer,
+)
+from td3_bc import TD3BC
 
 
 # ── 训练超参数（合理默认值，可通过 argparse 覆盖）────────────────────────────
 DEFAULTS = dict(
-    total_steps     = 500_000,    # TD3 在线交互总步数
-    learning_rate   = 3e-4,
+    total_steps     = 300_000,    # TD3 在线交互总步数
+    learning_rate   = 1e-4,   # Actor / Critic 统一学习率（SB3 TD3 单 lr 参数）
     batch_size      = 256,
     gamma           = 0.99,
     tau             = 0.005,      # 目标网络软更新系数
     buffer_size     = 300_000,    # ReplayBuffer 容量
     learning_starts = 1_000,      # 多少步后开始更新（BC 预填充后可设为 0）
     train_freq      = (1, "step"),
-    policy_delay    = 2,          # TD3 延迟策略更新频率
+    policy_delay    = 3,          # TD3 延迟策略更新频率（2→3，给 Critic 更多收敛时间）
     net_arch        = [256, 256], # Actor / Critic MLP 结构
     noise_sigma     = 0.1,        # 探索噪声标准差
     eval_freq       = 10_000,     # 每隔多少步评估一次
-    n_eval_episodes = 5,
+    n_eval_episodes = 20,
     save_dir        = "rl_td3/checkpoints",
     run_name        = "td3_evasion_bc",
     grad_clip       = 10.0,       # 梯度元素裁剪幅度（±grad_clip），防止 Critic 发散
     bc_ratio        = 0.33,       # BC 预填充占 buffer 的比例（降低 BC 锚定效应）
+    bc_lambda0      = 1.0,        # 衰减 BC 正则初始系数 λ0
+    bc_decay_steps  = 150_000,    # λ 线性衰减到 0 的步数（默认总步数一半）
 )
 
 # 冒烟测试专用路径（与正式训练 rl_td3/checkpoints 完全隔离）
@@ -204,6 +211,30 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULTS["bc_ratio"],
         help="BC 预填充占 buffer_size 的比例（默认 0.33，降低 BC 锚定效应）",
     )
+    p.add_argument(
+        "--n-eval",
+        type=int,
+        default=DEFAULTS["n_eval_episodes"],
+        help="每次评估的 episode 数（默认 20，越大 best_model 越可信）",
+    )
+    p.add_argument(
+        "--bc-lambda0",
+        type=float,
+        default=DEFAULTS["bc_lambda0"],
+        help="衰减 BC 正则初始 λ0（默认 1.0；0 关闭）",
+    )
+    p.add_argument(
+        "--bc-decay-steps",
+        type=int,
+        default=DEFAULTS["bc_decay_steps"],
+        help="BC 正则 λ 线性衰减到 0 的步数（默认 150000）",
+    )
+    p.add_argument(
+        "--terminal-cache",
+        type=str,
+        default=DEFAULT_TERMINAL_CACHE,
+        help="专家终端 R1/+100 缓存 npz（由 precompute_expert_terminals.py 生成）",
+    )
     return resolve_run_config(p.parse_args())
 
 
@@ -216,12 +247,16 @@ def make_env() -> EvasionEnv:
 def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     bc_max_steps = int(DEFAULTS["buffer_size"] * args.bc_ratio) if not args.no_bc else 0
     print("=" * 60)
-    print(f"  训练方案: BC 热启动 + TD3 精调")
+    print(f"  训练方案: BC 预填充 + 衰减 BC 正则 + TD3")
     print(f"  运行模式: {'冒烟测试' if args.smoke else '正式训练'}")
     print(f"  总步数  : {args.steps:,}")
+    print(f"  学习率  : {args.lr}（Actor / Critic 统一）")
     print(f"  运行名称: {args.name}")
     print(f"  BC 预填充: {'否' if args.no_bc else f'是（最多 {bc_max_steps:,} 步，占 buffer {args.bc_ratio:.0%}）'}")
+    print(f"  BC 正则  : λ0={args.bc_lambda0}, 衰减步数={args.bc_decay_steps:,}")
+    print(f"  终端缓存: {args.terminal_cache}")
     print(f"  专家库  : {args.expert}")
+    print(f"  评估 ep 数: {args.n_eval}（每 {DEFAULTS['eval_freq']:,} 步）")
     print(f"  梯度裁剪: {'禁用' if args.grad_clip == 0 else f'±{args.grad_clip}'}")
     print(f"  保存目录: {save_dir}")
     print("=" * 60)
@@ -237,8 +272,8 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
         sigma = args.noise * np.ones(n_actions),
     )
 
-    # ── 构建 TD3 模型 ─────────────────────────────────────────────────────────
-    model = TD3(
+    # ── 构建 TD3BC 模型 ───────────────────────────────────────────────────────
+    model = TD3BC(
         policy          = "MlpPolicy",
         env             = env,
         learning_rate   = args.lr,
@@ -253,21 +288,28 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
         policy_kwargs   = dict(net_arch=DEFAULTS["net_arch"]),
         verbose         = 1,
         tensorboard_log = str(save_dir / "tb_logs"),
+        bc_lambda0      = args.bc_lambda0,
+        bc_decay_steps  = args.bc_decay_steps,
     )
 
-    # ── BC 预填充 ReplayBuffer ────────────────────────────────────────────────
+    # ── BC 预填充 ReplayBuffer + 注入专家数据集 ───────────────────────────────
     if not args.no_bc:
         try:
-            n_written = load_expert_buffer(
+            result = load_expert_buffer(
                 model.replay_buffer,
-                mat_path    = args.expert,
-                max_steps   = bc_max_steps,      # BC 退火：只填充 buffer 的 bc_ratio 份
-                verbose     = True,
+                mat_path       = args.expert,
+                max_steps      = bc_max_steps,
+                terminal_cache = args.terminal_cache,
+                verbose        = True,
             )
-            print(f"[train] BC 预填充完成，写入 {n_written} 条 transition")
+            model.set_expert_dataset(result.states, result.actions)
+            print(
+                f"[train] BC 预填充完成，写入 {result.n_written} 条；"
+                f"已注入专家数据集供衰减 BC 正则"
+            )
         except FileNotFoundError as e:
             print(f"[train] 警告: {e}")
-            print("[train] 将跳过 BC 预填充，改为纯 TD3 训练。")
+            print("[train] 将跳过 BC 预填充；若 λ0>0 且无专家集，BC 正则不生效。")
 
     # ── 回调函数 ─────────────────────────────────────────────────────────────
     checkpoint_cb = CheckpointCallback(
@@ -278,7 +320,7 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     )
     eval_cb = EvalCallback(
         eval_env            = eval_env,
-        n_eval_episodes     = DEFAULTS["n_eval_episodes"],
+        n_eval_episodes     = args.n_eval,
         eval_freq           = DEFAULTS["eval_freq"],
         best_model_save_path= str(save_dir / "best"),
         log_path            = str(save_dir / "eval_logs"),
@@ -292,7 +334,7 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
         callbacks.append(GradClipCallback(max_grad=args.grad_clip, verbose=1))
 
     # ── 开始训练 ─────────────────────────────────────────────────────────────
-    print(f"\n[train] 开始 TD3 训练，共 {args.steps:,} 步…")
+    print(f"\n[train] 开始 TD3BC 训练，共 {args.steps:,} 步…")
     model.learn(
         total_timesteps = args.steps,
         callback        = callbacks,

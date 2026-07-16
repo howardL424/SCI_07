@@ -12,6 +12,7 @@ end
 % 'fresh'  : 从头跑 (忽略已有 checkpoint)
 % 'resume' : 从最新 checkpoint 续跑 (按修改时间取 expert_lib_1000_half1_ckpt*.mat 最新)
 RUN_MODE = 'resume';
+% RUN_MODE = 'fresh';
 
 opts.run_stageB       = true;
 opts.plot             = false;

@@ -1,0 +1,168 @@
+[train] 终端输出同时写入 rl_td3\checkpoints_smoke\smoke_5k_20260714_2311\train.log
+============================================================
+  训练方案: BC 预填充 + 衰减 BC 正则 + TD3
+  运行模式: 冒烟测试
+  总步数  : 5,000
+  学习率  : 0.0001（Actor / Critic 统一）
+  运行名称: td3_smoke_5k
+  BC 预填充: 是（最多 99,000 步，占 buffer 33%）
+  BC 正则  : λ0=1.0, 衰减步数=150,000
+  终端缓存: D:\LTY\yan\yanerxia\GAIL\rl_td3\expert_terminal_cache.npz
+  专家库  : E:\matlab\result_0714\expert_lib_1000.mat
+  评估 ep 数: 20（每 10,000 步）
+  梯度裁剪: ±10.0
+  保存目录: rl_td3\checkpoints_smoke\smoke_5k_20260714_2311
+============================================================
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Using cuda device
+Wrapping the env in a DummyVecEnv.
+[load_expert_buffer] 加载专家库：E:\matlab\result_0714\expert_lib_1000.mat
+[load_expert_buffer] 共 144518 条 transition
+[load_expert_buffer] 已为 1287 个 episode 末步追加终端奖励 (R1 med=12.65, bonus>0=69.8%)
+[load_expert_buffer] 预填充完成：写入 99000 条 transition，ReplayBuffer 当前大小 99000 / 300000
+[train] BC 预填充完成，写入 99000 条；已注入专家数据集供衰减 BC 正则
+
+[train] 开始 TD3BC 训练，共 5,000 步…
+Logging to rl_td3\checkpoints_smoke\smoke_5k_20260714_2311\tb_logs\TD3_1
+[GradClipCallback] 已为 36 个参数张量注册梯度裁剪钩子 (±10.0)
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 61.3     |
+|    ep_rew_mean     | 76.5     |
+| time/              |          |
+|    episodes        | 10       |
+|    fps             | 53       |
+|    time_elapsed    | 11       |
+|    total_timesteps | 613      |
+| train/             |          |
+|    actor_loss      | 568      |
+|    bc_lambda       | 0.996    |
+|    bc_loss         | 1.2      |
+|    critic_loss     | 1.76e+03 |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 612      |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 64.1     |
+|    ep_rew_mean     | 82.6     |
+| time/              |          |
+|    episodes        | 20       |
+|    fps             | 56       |
+|    time_elapsed    | 22       |
+|    total_timesteps | 1282     |
+| train/             |          |
+|    actor_loss      | 557      |
+|    bc_lambda       | 0.991    |
+|    bc_loss         | 1.28     |
+|    critic_loss     | 1.07e+03 |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 1281     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 61.9     |
+|    ep_rew_mean     | 80.5     |
+| time/              |          |
+|    episodes        | 30       |
+|    fps             | 57       |
+|    time_elapsed    | 32       |
+|    total_timesteps | 1858     |
+| train/             |          |
+|    actor_loss      | 552      |
+|    bc_lambda       | 0.988    |
+|    bc_loss         | 1.26     |
+|    critic_loss     | 982      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 1857     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 63       |
+|    ep_rew_mean     | 82.5     |
+| time/              |          |
+|    episodes        | 40       |
+|    fps             | 59       |
+|    time_elapsed    | 42       |
+|    total_timesteps | 2522     |
+| train/             |          |
+|    actor_loss      | 524      |
+|    bc_lambda       | 0.983    |
+|    bc_loss         | 1.17     |
+|    critic_loss     | 2.6e+03  |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 2521     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 62.4     |
+|    ep_rew_mean     | 78       |
+| time/              |          |
+|    episodes        | 50       |
+|    fps             | 59       |
+|    time_elapsed    | 52       |
+|    total_timesteps | 3120     |
+| train/             |          |
+|    actor_loss      | 497      |
+|    bc_lambda       | 0.979    |
+|    bc_loss         | 1.21     |
+|    critic_loss     | 4.18e+03 |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 3119     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 63.1     |
+|    ep_rew_mean     | 77       |
+| time/              |          |
+|    episodes        | 60       |
+|    fps             | 60       |
+|    time_elapsed    | 62       |
+|    total_timesteps | 3788     |
+| train/             |          |
+|    actor_loss      | 453      |
+|    bc_lambda       | 0.975    |
+|    bc_loss         | 1.19     |
+|    critic_loss     | 513      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 3787     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 61.2     |
+|    ep_rew_mean     | 75.1     |
+| time/              |          |
+|    episodes        | 70       |
+|    fps             | 60       |
+|    time_elapsed    | 70       |
+|    total_timesteps | 4282     |
+| train/             |          |
+|    actor_loss      | 489      |
+|    bc_lambda       | 0.971    |
+|    bc_loss         | 1.25     |
+|    critic_loss     | 437      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 4281     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 62.4     |
+|    ep_rew_mean     | 78.3     |
+| time/              |          |
+|    episodes        | 80       |
+|    fps             | 61       |
+|    time_elapsed    | 81       |
+|    total_timesteps | 4988     |
+| train/             |          |
+|    actor_loss      | 491      |
+|    bc_lambda       | 0.967    |
+|    bc_loss         | 1.26     |
+|    critic_loss     | 1.07e+03 |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 4987     |
+---------------------------------
+
+[train] 训练完成，最终模型已保存至 rl_td3\checkpoints_smoke\smoke_5k_20260714_2311\td3_smoke_5k.zip

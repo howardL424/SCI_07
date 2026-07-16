@@ -154,11 +154,11 @@ function results = generate_ps_expert_library(N, opts)
         dt_b = toc(t_b);
 
         % 判断可用性: ok=true 直接用; ok=false 但 debug theta 存在且 miss 充分时降级使用
-        % 硬门槛: miss1/miss2 >= dfloor(6m) 且 missT <= missT_ceil(50m)
+        % 硬门槛: miss1/miss2 >= dfloor(6m) 且 missT <= missT_ceil(30m)
         ok_use  = false;
         ok_mode = 'fail';
         dfloor     = 6;    if isfield(opts.ss_cfg,'dfloor');     dfloor     = opts.ss_cfg.dfloor;     end
-        missT_ceil = 50;   if isfield(opts.ss_cfg,'missT_ceil'); missT_ceil = opts.ss_cfg.missT_ceil; end
+        missT_ceil = 30;   if isfield(opts.ss_cfg,'missT_ceil'); missT_ceil = opts.ss_cfg.missT_ceil; end
         if res.ok
             ok_use  = true;
             ok_mode = 'ok';

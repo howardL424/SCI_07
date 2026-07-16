@@ -1,0 +1,74 @@
+(rl_pytorch) PS D:\LTY\yan\yanerxia\GAIL> E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/precompute_expert_terminals.py                  
+[precompute] 加载专家库: E:\matlab\result_0714\expert_lib_1000.mat
+[precompute] 启动 MATLAB Engine…
+  [1] traj#0 n=90  r_minT=1.483  R1=12.34 bonus=100  reached=True diverged=False
+  [20] traj#45 n=87  r_minT=2.483  R1=10.69 bonus=100  reached=True diverged=False
+  [40] traj#79 n=76  r_minT=2.171  R1=11.16 bonus=100  reached=True diverged=False
+  [60] traj#116 n=98  r_minT=1.886  R1=11.62 bonus=0  reached=True diverged=False
+  [80] traj#155 n=86  r_minT=1.758  R1=11.84 bonus=100  reached=True diverged=False
+  [100] traj#191 n=76  r_minT=0.650  R1=14.16 bonus=100  reached=True diverged=False
+  [120] traj#223 n=91  r_minT=2.465  R1=10.72 bonus=100  reached=True diverged=False
+  [140] traj#259 n=78  r_minT=2.117  R1=11.24 bonus=100  reached=True diverged=False
+  [160] traj#299 n=87  r_minT=1.649  R1=12.03 bonus=100  reached=True diverged=False
+  [180] traj#337 n=99  r_minT=2.220  R1=11.08 bonus=100  reached=True diverged=False
+  [200] traj#369 n=93  r_minT=1.576  R1=12.17 bonus=100  reached=True diverged=False
+  [220] traj#399 n=97  r_minT=0.671  R1=14.11 bonus=100  reached=True diverged=False
+  [240] traj#431 n=94  r_minT=0.516  R1=14.50 bonus=100  reached=True diverged=False
+  [260] traj#467 n=76  r_minT=0.023  R1=15.93 bonus=0  reached=True diverged=False
+  [280] traj#509 n=94  r_minT=0.516  R1=14.50 bonus=0  reached=True diverged=False
+  [300] traj#551 n=80  r_minT=2.005  R1=11.42 bonus=0  reached=True diverged=False
+  [320] traj#589 n=92  r_minT=0.252  R1=15.23 bonus=0  reached=True diverged=False
+  [340] traj#629 n=83  r_minT=2.340  R1=10.90 bonus=100  reached=True diverged=False
+  [360] traj#662 n=245  r_minT=2032.905  R1=0.00 bonus=0  reached=False diverged=True
+  [380] traj#708 n=93  r_minT=0.294  R1=15.11 bonus=100  reached=True diverged=False
+  [400] traj#741 n=85  r_minT=1.456  R1=12.39 bonus=100  reached=True diverged=False
+  [420] traj#773 n=95  r_minT=1.352  R1=12.60 bonus=0  reached=True diverged=False
+  [440] traj#801 n=78  r_minT=2.349  R1=10.89 bonus=100  reached=True diverged=False
+  [460] traj#830 n=86  r_minT=1.278  R1=12.74 bonus=100  reached=True diverged=False
+  [480] traj#879 n=76  r_minT=1.079  R1=13.16 bonus=100  reached=True diverged=False
+  [500] traj#920 n=95  r_minT=1.125  R1=13.06 bonus=100  reached=True diverged=False
+  [520] traj#964 n=87  r_minT=0.379  R1=14.87 bonus=100  reached=True diverged=False
+  [540] traj#1005 n=76  r_minT=1.554  R1=12.21 bonus=0  reached=True diverged=False
+  [560] traj#1045 n=78  r_minT=0.711  R1=14.01 bonus=100  reached=True diverged=False
+  [580] traj#1079 n=561  r_minT=14903.331  R1=0.00 bonus=0  reached=False diverged=True
+  [600] traj#1111 n=95  r_minT=0.733  R1=13.96 bonus=100  reached=True diverged=False
+  [620] traj#1144 n=84  r_minT=1.226  R1=12.85 bonus=100  reached=True diverged=False
+  [640] traj#1178 n=86  r_minT=0.396  R1=14.82 bonus=0  reached=True diverged=False
+  [660] traj#1211 n=98  r_minT=1.612  R1=12.10 bonus=100  reached=True diverged=False
+  [680] traj#1242 n=93  r_minT=0.179  R1=15.45 bonus=100  reached=True diverged=False
+  [700] traj#1269 n=99  r_minT=1.446  R1=12.41 bonus=100  reached=True diverged=False
+  [720] traj#1310 n=267  r_minT=1070.712  R1=0.00 bonus=0  reached=False diverged=True
+  [740] traj#1347 n=79  r_minT=1.710  R1=11.92 bonus=100  reached=True diverged=False
+  [760] traj#1382 n=87  r_minT=0.333  R1=15.00 bonus=100  reached=True diverged=False
+  [780] traj#1420 n=93  r_minT=1.615  R1=12.09 bonus=100  reached=True diverged=False
+  [800] traj#1455 n=79  r_minT=1.821  R1=11.73 bonus=100  reached=True diverged=False
+  [820] traj#1489 n=94  r_minT=1.748  R1=11.86 bonus=100  reached=True diverged=False
+  [840] traj#1522 n=83  r_minT=1.617  R1=12.09 bonus=0  reached=True diverged=False
+  [860] traj#1558 n=85  r_minT=1.584  R1=12.15 bonus=100  reached=True diverged=False
+  [880] traj#1608 n=85  r_minT=2.296  R1=10.96 bonus=100  reached=True diverged=False
+  [900] traj#1643 n=92  r_minT=1.795  R1=11.77 bonus=100  reached=True diverged=False
+  [920] traj#1676 n=75  r_minT=0.842  R1=13.69 bonus=0  reached=True diverged=False
+  [940] traj#1709 n=88  r_minT=1.752  R1=11.85 bonus=100  reached=True diverged=False
+  [960] traj#1746 n=85  r_minT=0.067  R1=15.79 bonus=0  reached=True diverged=False
+  [980] traj#1793 n=89  r_minT=1.576  R1=12.17 bonus=0  reached=True diverged=False
+  [1000] traj#1834 n=93  r_minT=1.155  R1=13.00 bonus=0  reached=True diverged=False
+  [1020] traj#1874 n=100  r_minT=2.409  R1=10.80 bonus=100  reached=True diverged=False
+  [1040] traj#1906 n=76  r_minT=2.497  R1=10.67 bonus=100  reached=True diverged=False
+  [1060] traj#1955 n=94  r_minT=1.805  R1=11.76 bonus=100  reached=True diverged=False
+  [1080] traj#1987 n=94  r_minT=0.997  R1=13.34 bonus=100  reached=True diverged=False
+  [1100] traj#2017 n=93  r_minT=0.017  R1=15.94 bonus=100  reached=True diverged=False
+  [1120] traj#2052 n=81  r_minT=0.986  R1=13.37 bonus=100  reached=True diverged=False
+  [1140] traj#2093 n=97  r_minT=1.653  R1=12.02 bonus=100  reached=True diverged=False
+  [1160] traj#2128 n=77  r_minT=0.900  R1=13.56 bonus=100  reached=True diverged=False
+  [1180] traj#2156 n=82  r_minT=2.355  R1=10.88 bonus=100  reached=True diverged=False
+  [1200] traj#2195 n=93  r_minT=2.375  R1=10.85 bonus=0  reached=True diverged=False
+  [1220] traj#2226 n=102  r_minT=1.935  R1=11.54 bonus=100  reached=True diverged=False
+  [1240] traj#2252 n=81  r_minT=1.655  R1=12.02 bonus=100  reached=True diverged=False
+  [1260] traj#2288 n=81  r_minT=0.590  R1=14.31 bonus=100  reached=True diverged=False
+  [1280] traj#2335 n=91  r_minT=0.050  R1=15.84 bonus=100  reached=True diverged=False
+
+[precompute] 完成 1287 条轨迹 → D:\LTY\yan\yanerxia\GAIL\rl_td3\expert_terminal_cache.npz
+  r_minT  med=1.324  ≤10m=92.9%
+  R1      med=12.65  >0=92.9%
+  bonus>0 比例=69.8%
+  终端增量 med=111.86
