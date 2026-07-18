@@ -157,7 +157,7 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py \
 ```
 
 - 总步数：50,000；BC：99,000（33%）；梯度裁剪：±10.0；评估：每 10k、20 episode
-- 日志：`rl_td3/logs（终端输出记录）/td3_50k_valid_20260707_085815.log`
+- 日志：`rl_td3/logs/td3_50k_valid_20260707_085815.log`
 - 产物：`rl_td3/checkpoints_50k/td3_50k_valid.zip`、`best/best_model.zip`、TB `checkpoints_50k/tb_logs/TD3_1/`
 - **耗时**：约 13.1 分钟（~72 fps，双 MATLAB Engine 启动后）
 
@@ -222,7 +222,7 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py \
 | `rl_td3/checkpoints/tb_logs/TD3_1/events...1783165488...` | **旧** 500k TB 日志 |
 | `rl_td3/checkpoints_50k/tb_logs/TD3_1/` | **新** 50k 验证 TB 日志 |
 | `rl_td3/checkpoints_50k/best/best_model.zip` | 50k 验证最优模型（eval -932） |
-| `rl_td3/logs（终端输出记录）/td3_50k_valid_20260707_085815.log` | 50k 完整终端日志 |
+| `rl_td3/logs/td3_50k_valid_20260707_085815.log` | 50k 完整终端日志 |
 
 ---
 

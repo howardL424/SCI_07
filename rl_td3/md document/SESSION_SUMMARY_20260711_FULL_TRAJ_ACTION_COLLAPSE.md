@@ -5,8 +5,8 @@
 > **相关模型**：`rl_td3/checkpoints/training_300k_td3bc_0711/best/best_model.zip`
 >
 > **相关日志**：
-> - 蒙特卡洛 100 轮：`rl_td3/logs（终端输出记录）/0711_300k/monte_carlo_eval_300k_td3bc_0711_20260711_1431.log`
-> - 全段动作探测 20 轮：`rl_td3/logs（终端输出记录）/0711_300k/full_traj_action_probe_20ep.log`
+> - 蒙特卡洛 100 轮：`rl_td3/logs/0711_300k/monte_carlo_eval_300k_td3bc_0711_20260711_1431.log`
+> - 全段动作探测 20 轮：`rl_td3/logs/0711_300k/full_traj_action_probe_20ep.log`
 >
 > **专家数据**：`E:\matlab\result_0702\expert_lib_1000.mat` → `results.expert_sa`（120115 步）
 
@@ -199,4 +199,4 @@ w2 = W * exp(-gamma) / (1 + exp(-gamma));
 
 ## 9. 本对话未改动的代码
 
-本次仅为诊断：写过临时探针脚本并已删除；**未修改**训练/环境/评估主代码。日志保留于 `rl_td3/logs（终端输出记录）/0711_300k/`。
+本次仅为诊断：写过临时探针脚本并已删除；**未修改**训练/环境/评估主代码。日志保留于 `rl_td3/logs/0711_300k/`。

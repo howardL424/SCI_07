@@ -1,0 +1,62 @@
+﻿[precompute] 加载对齐数据: rl_td3\expert_transitions_aligned.mat
+[precompute] 启动 MATLAB Engine…
+  [1/1287] n=90  r_minT=0.234  R1=15.28 bonus=100  reached=True diverged=False
+  [20/1287] n=87  r_minT=0.231  R1=15.29 bonus=100  reached=True diverged=False
+  [40/1287] n=76  r_minT=0.071  R1=15.77 bonus=100  reached=True diverged=False
+  [80/1287] n=86  r_minT=0.027  R1=15.91 bonus=100  reached=True diverged=False
+  [100/1287] n=76  r_minT=0.049  R1=15.84 bonus=100  reached=True diverged=False
+  [120/1287] n=91  r_minT=0.098  R1=15.69 bonus=100  reached=True diverged=False
+  [140/1287] n=78  r_minT=0.140  R1=15.56 bonus=100  reached=True diverged=False
+  [160/1287] n=87  r_minT=0.001  R1=16.00 bonus=100  reached=True diverged=False
+  [180/1287] n=99  r_minT=0.149  R1=15.54 bonus=100  reached=True diverged=False
+  [200/1287] n=93  r_minT=0.141  R1=15.56 bonus=100  reached=True diverged=False
+  [220/1287] n=97  r_minT=0.021  R1=15.93 bonus=100  reached=True diverged=False
+  [240/1287] n=94  r_minT=0.141  R1=15.56 bonus=100  reached=True diverged=False
+  [300/1287] n=80  r_minT=0.045  R1=15.86 bonus=100  reached=True diverged=False
+  [320/1287] n=92  r_minT=0.143  R1=15.55 bonus=100  reached=True diverged=False
+  [340/1287] n=83  r_minT=0.069  R1=15.78 bonus=100  reached=True diverged=False
+  [360/1287] n=245  r_minT=2041.128  R1=0.00 bonus=0  reached=False diverged=True
+  [380/1287] n=93  r_minT=0.191  R1=15.41 bonus=100  reached=True diverged=False
+  [400/1287] n=85  r_minT=0.150  R1=15.53 bonus=100  reached=True diverged=False
+  [440/1287] n=78  r_minT=0.095  R1=15.70 bonus=100  reached=True diverged=False
+  [460/1287] n=86  r_minT=0.122  R1=15.62 bonus=100  reached=True diverged=False
+  [480/1287] n=76  r_minT=0.187  R1=15.42 bonus=100  reached=True diverged=False
+  [500/1287] n=95  r_minT=0.070  R1=15.78 bonus=100  reached=True diverged=False
+  [520/1287] n=87  r_minT=0.109  R1=15.66 bonus=100  reached=True diverged=False
+  [560/1287] n=78  r_minT=0.044  R1=15.86 bonus=100  reached=True diverged=False
+  [580/1287] n=561  r_minT=14951.508  R1=0.00 bonus=0  reached=False diverged=True
+  [600/1287] n=95  r_minT=0.024  R1=15.92 bonus=100  reached=True diverged=False
+  [620/1287] n=84  r_minT=0.013  R1=15.96 bonus=100  reached=True diverged=False
+  [660/1287] n=98  r_minT=0.180  R1=15.44 bonus=100  reached=True diverged=False
+  [680/1287] n=93  r_minT=0.058  R1=15.82 bonus=100  reached=True diverged=False
+  [700/1287] n=99  r_minT=0.068  R1=15.78 bonus=100  reached=True diverged=False
+  [720/1287] n=267  r_minT=1090.701  R1=0.00 bonus=0  reached=False diverged=True
+  [740/1287] n=79  r_minT=0.013  R1=15.96 bonus=100  reached=True diverged=False
+  [760/1287] n=87  r_minT=0.075  R1=15.76 bonus=100  reached=True diverged=False
+  [780/1287] n=93  r_minT=0.118  R1=15.63 bonus=100  reached=True diverged=False
+  [800/1287] n=79  r_minT=0.059  R1=15.81 bonus=100  reached=True diverged=False
+  [820/1287] n=94  r_minT=0.188  R1=15.42 bonus=100  reached=True diverged=False
+  [860/1287] n=85  r_minT=0.242  R1=15.26 bonus=100  reached=True diverged=False
+  [880/1287] n=85  r_minT=0.182  R1=15.44 bonus=100  reached=True diverged=False
+  [900/1287] n=92  r_minT=0.013  R1=15.96 bonus=100  reached=True diverged=False
+  [940/1287] n=88  r_minT=0.245  R1=15.25 bonus=100  reached=True diverged=False
+  [1020/1287] n=100  r_minT=0.096  R1=15.70 bonus=100  reached=True diverged=False
+  [1040/1287] n=76  r_minT=0.218  R1=15.33 bonus=100  reached=True diverged=False
+  [1060/1287] n=94  r_minT=0.006  R1=15.98 bonus=100  reached=True diverged=False
+  [1080/1287] n=94  r_minT=0.241  R1=15.26 bonus=100  reached=True diverged=False
+  [1100/1287] n=93  r_minT=0.224  R1=15.31 bonus=100  reached=True diverged=False
+  [1120/1287] n=81  r_minT=0.221  R1=15.32 bonus=100  reached=True diverged=False
+  [1140/1287] n=97  r_minT=0.108  R1=15.66 bonus=100  reached=True diverged=False
+  [1160/1287] n=77  r_minT=0.050  R1=15.84 bonus=100  reached=True diverged=False
+  [1180/1287] n=82  r_minT=0.114  R1=15.64 bonus=100  reached=True diverged=False
+  [1220/1287] n=102  r_minT=0.106  R1=15.67 bonus=100  reached=True diverged=False
+  [1240/1287] n=81  r_minT=0.178  R1=15.45 bonus=100  reached=True diverged=False
+  [1260/1287] n=81  r_minT=0.234  R1=15.28 bonus=100  reached=True diverged=False
+  [1280/1287] n=91  r_minT=0.237  R1=15.28 bonus=100  reached=True diverged=False
+
+[precompute] 完成 1287 条轨迹 → rl_td3\expert_terminal_cache.npz
+  跳过 stage3（拦截）: 307
+  r_minT  med=0.139  ≤10m=92.1%
+  R1      med=15.45  >0=70.2%
+  bonus>0 比例=70.2%
+  stage3 dt=0.001

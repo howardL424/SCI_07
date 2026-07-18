@@ -1,0 +1,33 @@
+[rebuild_expert_data] 启动 MATLAB Engine…
+[rebuild_expert_data] expert=E:\matlab\result_0714\expert_lib_1000.mat
+[rebuild_expert_data] out   =rl_td3\expert_transitions_aligned.mat
+[rebuild] 加载专家库: E:\matlab\result_0714\expert_lib_1000.mat
+  [1] src=#1 n_rec=90 n_use=90 intercept=0 clip=0
+  [50] src=#98 n_rec=88 n_use=88 intercept=0 clip=9
+  [100] src=#192 n_rec=76 n_use=76 intercept=0 clip=0
+  [150] src=#282 n_rec=80 n_use=80 intercept=0 clip=0
+  [200] src=#370 n_rec=93 n_use=93 intercept=0 clip=10
+  [250] src=#451 n_rec=272 n_use=74 intercept=1 clip=74
+  [300] src=#552 n_rec=80 n_use=80 intercept=0 clip=8
+  [350] src=#647 n_rec=83 n_use=83 intercept=0 clip=0
+  [400] src=#742 n_rec=85 n_use=85 intercept=0 clip=0
+  [450] src=#818 n_rec=556 n_use=556 intercept=0 clip=56
+  [500] src=#921 n_rec=95 n_use=95 intercept=0 clip=0
+  [550] src=#1028 n_rec=93 n_use=93 intercept=0 clip=9
+  [600] src=#1112 n_rec=95 n_use=95 intercept=0 clip=0
+  [650] src=#1197 n_rec=94 n_use=94 intercept=0 clip=0
+  [700] src=#1270 n_rec=99 n_use=99 intercept=0 clip=0
+  [750] src=#1369 n_rec=85 n_use=85 intercept=0 clip=0
+  [800] src=#1456 n_rec=79 n_use=79 intercept=0 clip=0
+  [850] src=#1540 n_rec=90 n_use=90 intercept=0 clip=0
+  [900] src=#1644 n_rec=92 n_use=92 intercept=0 clip=0
+  [950] src=#1732 n_rec=95 n_use=73 intercept=1 clip=0
+  [1000] src=#1835 n_rec=93 n_use=73 intercept=1 clip=0
+  [1050] src=#1924 n_rec=97 n_use=97 intercept=0 clip=19
+  [1100] src=#2018 n_rec=93 n_use=93 intercept=0 clip=0
+  [1150] src=#2112 n_rec=92 n_use=92 intercept=0 clip=10
+  [1200] src=#2196 n_rec=93 n_use=73 intercept=1 clip=0
+  [1250] src=#2270 n_rec=76 n_use=76 intercept=0 clip=62
+[rebuild] 完成 1287 条轨迹 / 136896 步 → D:\LTY\yan\yanerxia\GAIL\rl_td3\expert_transitions_aligned.mat
+  拦截比例=23.9%  动作裁剪步数=12019
+[rebuild_expert_data] 完成 → rl_td3\expert_transitions_aligned.mat

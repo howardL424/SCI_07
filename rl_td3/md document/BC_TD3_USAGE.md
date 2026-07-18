@@ -16,7 +16,9 @@
 | 默认学习率 | `1e-4` |
 | 算法类 | `td3_bc.TD3BC`（非裸 `TD3`） |
 | 默认专家库 | `E:\matlab\result_0714\expert_lib_1000.mat` |
-| 终端奖励缓存 | `rl_td3/expert_terminal_cache.npz`（**训练前必须有**） |
+| 对齐 transition | 旧库：`rl_td3/data/expert_transitions_aligned.mat`；**新库无需** |
+| 终端奖励缓存 | `rl_td3/data/expert_terminal_cache.npz`（stage3 sidecar；训练前必须有） |
+| 观测归一化 | 固定 `OBS_SCALE`（`obs_norm.py`），专家与在线共用 |
 | 训练随机种子 | **当前无 CLI `--seed`**（训练默认不可复现） |
 | 评估随机种子 | `--seed`（默认 `0`），控制 `samples_clean` 初态抽样序列 |
 
@@ -26,20 +28,76 @@
 
 ```
 rl_td3/
-├── train_td3.py                 # 训练入口
-├── td3_bc.py                    # TD3 + 衰减 BC 正则
-├── evaluate_td3.py              # 蒙特卡洛评估
-├── evasion_env.py               # Gymnasium 环境（MATLAB Engine）
-├── load_expert_buffer.py        # 专家库 → ReplayBuffer + 专家 (s,a) 注入
-├── precompute_expert_terminals.py  # 专家末态跑 stage3，生成终端奖励缓存
-├── expert_terminal_cache.npz    # 终端 R1/+100 缓存（需先生成）
-├── matlab/
-│   ├── env_reset.m              # 抽初态 → warm-start → stage2 起点
-│   ├── env_step.m               # stage2：式47 + RK4 + 过程奖励
-│   ├── stage3_rollout.m         # stage2 结束后一次 PN 积分 → r_minT
-│   └── target_zem.m             # ZEM（reset 仍返回；新奖励不再用）
-└── checkpoints/                 # 正式训练产物（建议每次用独立子目录）
+├── train_td3.py / evaluate_td3.py / td3_bc.py   # 训练与评估入口
+├── evasion_env.py / obs_norm.py                  # 在线环境与观测归一化
+├── load_expert_buffer.py / reward_projection.py  # 专家加载与奖励投影
+├── data/                      # 派生数据产物（aligned / sidecar / smoke）
+│   ├── expert_transitions_aligned.mat
+│   ├── expert_terminal_cache.npz
+│   └── …
+├── tools/                     # 数据管线 CLI（非训练热路径）
+│   ├── rebuild_expert_data.py
+│   ├── precompute_expert_terminals.py
+│   ├── check_expert_alignment.py
+│   ├── compare_stage3_dt.py
+│   └── validate_zem_vs_rminT.py
+├── tests/                     # 轻量验收与单测
+│   ├── test_data_alignment.py
+│   ├── test_reward_projection.py
+│   └── test_pipeline_validation.py
+├── matlab/                    # stage2/stage3 MATLAB 核心
+├── logs/                      # 终端 tee / rebuild 日志
+├── md document/               # 用法说明与会话纪要
+├── checkpoints*/              # 训练产物
+└── plots/
 ```
+
+### 1.1 物理 transition schema（`phys_transition_v1`）
+
+生成侧（`extract_expert_transitions`）与在线侧（`env_step`）共用 `stage2_core_init` + `stage2_step`。
+
+**硬性约定**
+
+1. 先 `phys_to_action_norm` 映射/裁剪，再用同一 `action_norm` 积分（禁止「标签已裁剪、`s'` 来自未裁剪动作」）。
+2. 末步 `next_state` / `terminal_abs` = 执行最后一拍后的真实末态。
+3. 拦截立刻截断；物理层只记 `intercepted=true`，**不写死 −50**（奖励由 `stage2_process_reward` / 后续投影层写入）。
+4. 观测存 raw；训练侧统一 `obs_norm.py`（`OBS_NORM_VERSION=obs_scale_0714_v1`）。
+5. 大循环只 `stage2_core_init` 一次，禁止逐步重建 helper。
+
+**兼容字段（每步，旧工具可读）**
+
+| 字段 | 形状 | 含义 |
+|------|------|------|
+| `state` | N×13 | 相对态势 raw |
+| `action` | N×4 | `[w,γ,wT,wE]` 原始分段 theta（审计） |
+| `state_abs` | N×18 | 绝对态 |
+| `t` | N×1 | 时刻 (s) |
+
+**新增权威字段（每步）**
+
+| 字段 | 形状 | 含义 |
+|------|------|------|
+| `action_norm` | N×3 | 裁剪后 TD3 动作 ∈[-1,1] |
+| `next_state` | N×13 | 裁剪动作积分后的真实 `s'` |
+| `next_state_abs` | N×18 | 对应绝对态 |
+| `done` | N×1 logical | `intercepted \|\| stage2_done` |
+| `intercepted` | N×1 logical | `min(r_MD)≤6` |
+| `stage2_done` | N×1 logical | 按时长正常结束（拦截时为 false） |
+| `action_phys` | N×4 | 与 `action` 同义（审计别名） |
+
+**轨迹级**
+
+| 字段 | 含义 |
+|------|------|
+| `r_min1` / `r_min2` | stage2 全程最小弹间距离 |
+| `terminal_abs` | 真实 stage2 末态（18） |
+| `t_end` | 末时刻 |
+| `schema_version` | 当前 `phys_transition_v1` |
+| `stage2_dynamics_version` | 当前 `stage2_rk4_eq47_v1` |
+| `action_mapping_version` | 当前 `td3_box_log_v1` |
+| `obs_norm_version` | 当前 `obs_scale_0714_v1` |
+
+版本常量见 `rl_td3/matlab/transition_schema_meta.m`。
 
 ---
 
@@ -47,7 +105,7 @@ rl_td3/
 
 ### 2.1 状态 / 动作
 
-- **观测**：13 维（与 `extract_expert_transitions.m` 一致）
+- **观测**：13 维物理态势，经 `obs_norm.OBS_SCALE` 逐维相除后输入网络（不裁剪）
 - **动作**：归一化 `[γ_n, wT_n, wE_n] ∈ [-1,1]³`
 - **固定**：`w=1e4`，`d*=20 m`
 - **反归一化**（Python / MATLAB 必须同步）：
@@ -58,6 +116,11 @@ wT = 10^(wT_n × 1.5 + 3.5)           → [1e2, 1e5]
 wE = 10^(wE_n + 3)                   → [1e2, 1e4]
 ```
 
+`OBS_SCALE`（0714 分位数首版，非旧 `obs_high`）：
+
+```text
+[3e4, 1.2e3, π/2, π, 3e4, 1.2e3, π/2, π, 1.5e4, π/2, π, 1e3, 1]
+```
 ### 2.2 Episode 结构
 
 1. **stage2（RL）**：从规避段起点起，每 `dt=0.1 s` 输出权重，式(47) 制导  
@@ -85,6 +148,13 @@ bonus = +100        if 双防全程 min≥6m 且 r_minT≤10m else 0
 
 > 旧版「每步 ZEM 目标项 / 能量惩罚 / 规避段内 zT≤25 判到达」已废弃。
 
+奖励由 [`rl_td3/reward_projection.py`](../reward_projection.py) 集中投影：
+
+- 过程项：`next_state` 距离 + `intercepted` → `project_process_rewards`
+- 终端项：sidecar 的 `r_minT` + `r_min1/r_min2` → `project_terminal`（`reward_version=r1_bonus_v1`）
+- 缓存 `reward` / `R1` / `bonus` 列为派生；**换系数只重投影，不重放 stage2/stage3**
+- `load_expert_buffer(..., reward_kwargs={proc_coef:0.1})` 可覆盖阈值
+
 ### 2.4 TD3BC
 
 ```text
@@ -105,33 +175,97 @@ actor_loss = -Q(s, π(s)) + λ(t) · ‖π(s_E) - a_E‖²
 - `samples_clean.mat` 在仓库根目录
 - 专家库 `.mat` 路径正确（默认见上表）
 
-### 3.2 生成专家终端奖励缓存（必做）
+### 3.2 旧库：重建对齐 transition（一次性迁移）
 
-BC 末步要与在线环境一样追加 `R1+bonus`，需先缓存：
+以 `trajectories(k).transitions` 为权威源，用 MATLAB 共享核心重放生成 `(s,a,s',r,done)`：
 
 ```powershell
 cd D:\LTY\yan\yanerxia\GAIL
 
-E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/precompute_expert_terminals.py
-# 或指定专家库 / 输出：
-E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/precompute_expert_terminals.py `
-  --expert E:\matlab\result_0714\expert_lib_1000.mat `
-  --out rl_td3/expert_terminal_cache.npz
+# 全量（较久）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/rebuild_expert_data.py
+
+# 冒烟子集
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/rebuild_expert_data.py --max-traj 20 `
+  --out rl_td3/data/expert_transitions_aligned_smoke.mat
 ```
 
-说明：
+也可在 MATLAB 中直接调用 `rebuild_expert_transitions(expert_path, out_path)`。
 
-- 默认 stage3 步长 `--dt 1e-2`（比在线 `1e-3` 快）；要更高保真可 `--dt 1e-3`
-- 换成新专家库后必须**重新**跑本脚本
-- 缺缓存时 `load_expert_buffer` 会直接报错并提示上述命令
+**新库无需本步**：`generate_ps_expert_library` 出库的 `transitions` 已含 `action_norm`/`next_state`/`done`/`intercepted`/`terminal_abs`（见 §1.1）。`expert_sa` 仅 QA。
 
-### 3.3（可选）检查专家库格式
+### 3.3 子集对比 stage3 dt（建议先做）
 
 ```powershell
-E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/load_expert_buffer.py E:\matlab\result_0714\expert_lib_1000.mat
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/compare_stage3_dt.py `
+  --aligned rl_td3/data/expert_transitions_aligned.mat --n-sample 40
 ```
 
-不启动训练；会打印 `expert_sa` 形状、动作范围、过程奖励与缓存摘要。
+正式 stage3 与在线一致，使用 **`dt=1e-3`**。
+
+### 3.4 生成专家终端 sidecar（必做；可断点续跑）
+
+stage3 为**第二阶段**，与主库落盘解耦：
+
+```powershell
+# 旧库：读 aligned
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/precompute_expert_terminals.py `
+  --expert E:\matlab\result_0714\expert_lib_1000.mat `
+  --aligned rl_td3/data/expert_transitions_aligned.mat `
+  --dt 1e-3 `
+  --out rl_td3/data/expert_terminal_cache.npz
+
+# 新库：直接读 transitions.terminal_abs（可省略 --aligned）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/precompute_expert_terminals.py `
+  --expert path\to\new_expert_lib.mat `
+  --dt 1e-3 `
+  --out rl_td3/data/expert_terminal_cache_new.npz `
+  --resume
+```
+
+- 权威：`r_minT` / `reached` / `diverged` / `n_steps_stage3` / `stage3_dt` / `r_min1,2`
+- 派生（`reward_version`）：`R1` / `bonus` / `both_ok` — 不可代替 `r_minT`
+- 拦截跳过 stage3；sidecar 含 `expert_fingerprint` / `stage3_version` 可追溯
+- 换成新专家库或重算末态后必须**重新**预计算；`--resume` 可按指纹续跑
+
+### 3.5 一致性检查
+
+```powershell
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/check_expert_alignment.py
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tests/test_data_alignment.py
+```
+
+### 3.6 新管线小批量验收（pipeline-validation）
+
+```powershell
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tests/test_pipeline_validation.py
+# 报告 → rl_td3/data/pipeline_validation_report.json
+```
+
+**已通过（2026-07-19）**：5 条 phys smoke 库（与 `extract` 共用 stage2 核心，不经 `rebuild_*`）
+
+| 检查 | 结果 |
+|------|------|
+| 新 schema / 版本字段 | OK |
+| `load_expert_buffer` 跳过 rebuild | OK |
+| 逐步 ↔ `env_step`（action_norm / s' / done / intercepted） | OK |
+| 末步 done 唯一；拦截无正终端奖 | OK |
+| 改 `proc_coef` 重投影（不调 MATLAB） | OK |
+| 旧 aligned 路径仍可用 | OK |
+| 正式 `stage3_dt` | `1e-3` |
+
+当前版本戳：
+
+```text
+schema_version          = phys_transition_v1
+stage2_dynamics_version = stage2_rk4_eq47_v1
+action_mapping_version  = td3_box_log_v1
+obs_norm_version        = obs_scale_0714_v1
+stage3_version / dt     = pn_rollout_v1 / 1e-3
+reward_version          = r1_bonus_v1
+```
+
+**结论**：新 `expert_lib` 训练前**不再**需要 `rebuild_*` 全量 stage2 重放；普通奖励实验只做 `reward_projection` 廉价投影。
 
 ---
 
@@ -153,7 +287,7 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py `
 # 自定义专家库 / 终端缓存
 E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py `
   --expert E:\matlab\result_0714\expert_lib_1000.mat `
-  --terminal-cache rl_td3/expert_terminal_cache.npz `
+  --terminal-cache rl_td3/data/expert_terminal_cache.npz `
   --save-dir rl_td3/checkpoints/my_run `
   --name td3_run1
 
@@ -203,7 +337,7 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 | 周期 checkpoint | `{save_dir}/{name}_*_steps.zip` |
 | EvalCallback 日志 | `{save_dir}/eval_logs/` |
 | TensorBoard | `{save_dir}/tb_logs/` |
-| 终端 tee 日志 | `rl_td3/logs（终端输出记录）/{name}_{时间戳}.log`（可用 `--log-file` / `--no-log`） |
+| 终端 tee 日志 | `rl_td3/logs/{name}_{时间戳}.log`（可用 `--log-file` / `--no-log`） |
 
 ### 4.5 训练随机性说明
 
@@ -294,7 +428,7 @@ cd D:\LTY\yan\yanerxia\GAIL
 $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 
 # 1) 终端缓存（专家库变更后必做）
-& $PY rl_td3/precompute_expert_terminals.py
+& $PY rl_td3/tools/precompute_expert_terminals.py
 
 # 2) 冒烟
 & $PY rl_td3/train_td3.py --smoke
@@ -318,13 +452,18 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | 需求 | 文件 |
 |------|------|
 | 式47 | `evasion_helpers.m` → `computeOptimalCmd_duo_target` |
-| state/action 定义 | `expert_trajectory/extract_expert_transitions.m` |
+| 共享一步动力学 | `rl_td3/matlab/stage2_core_init.m` + `stage2_step.m` |
+| 物理 transition schema | `expert_trajectory/extract_expert_transitions.m`；见上文 §1.1 |
 | 训练入口 | `rl_td3/train_td3.py` |
 | TD3+BC | `rl_td3/td3_bc.py` |
 | 环境 / 终端 R1 | `rl_td3/evasion_env.py` |
-| stage2 奖励 | `rl_td3/matlab/env_step.m` |
+| stage2 奖励 | `rl_td3/matlab/stage2_process_reward.m`（`env_step` 调用） |
 | stage3 脱靶 | `rl_td3/matlab/stage3_rollout.m` |
 | BC 预填充 | `rl_td3/load_expert_buffer.py` |
+| 奖励投影 | `rl_td3/reward_projection.py` |
+| 数据管线 CLI | `rl_td3/tools/`（rebuild / precompute / check） |
+| 验收单测 | `rl_td3/tests/` |
+| 派生数据 | `rl_td3/data/` |
 | 评估 | `rl_td3/evaluate_td3.py` |
-| 旧设计对话摘要 | `rl_td3/CONTEXT_TD3_TRAINING.md` |
-| 历史实验结论 | `rl_td3/SESSION_SUMMARY_*.md` |
+| 旧设计对话摘要 | `rl_td3/md document/CONTEXT_TD3_TRAINING.md` |
+| 历史实验结论 | `rl_td3/md document/SESSION_SUMMARY_*.md` |

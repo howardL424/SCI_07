@@ -3,7 +3,7 @@ function results = generate_ps_expert_library(N, opts)
 %   results = generate_ps_expert_library(N, opts)
 %   流程: samples_clean 初态 -> 阶段A RK4 warm-start (solve_warmstart)
 %         -> [阶段B 单打靶 NLP (solve_ss_trajectory)]
-%         -> [extract_expert_transitions 抽 (s,a)]
+%         -> [extract_expert_transitions 抽物理 transition（出库即对齐）]
 %         -> 汇总保存 expert_lib.mat
 %
 %   输入:
@@ -21,9 +21,15 @@ function results = generate_ps_expert_library(N, opts)
 %            .ex_cfg           传给 extract_expert_transitions 的配置
 %   输出 results: 含 trajectories(k) 与统计信息的结构体。
 %
+%   训练权威源 = trajectories(k).transitions（phys_transition_v1），含
+%     action_norm / next_state / done / intercepted / terminal_abs 等。
+%   results.expert_sa 仅兼容/QA（state+原始 action），不作为训练切轨迹依据。
+%   stage3 不在本函数内运行；主库落盘后另跑 precompute_expert_terminals.py sidecar。
+%
 %   expert_lib.mat 格式:
-%     results.expert_sa  [N_total_steps × 17]  第1-13列=state, 14-17列=action
 %     results.trajectories(k).{idx,X,geo,tau,stageB,transitions,ok_use}
+%     results.expert_sa  [N_total_steps × 17]  QA 扁平表（非训练权威）
+%     results.schema_version / stage2_dynamics_version / ...
 %     results.stats.*
 %
 %   路径约定:
@@ -187,14 +193,20 @@ function results = generate_ps_expert_library(N, opts)
         reason_str = get_reason_str(res);
         fprintf('         stageB %s(%s) %s用时%.1fs\n', ok_mode, reason_str, miss_str, dt_b);
 
-        % ---- 提取 (s,a) ----
+        % ---- 提取物理 transition（出库即对齐；不含 stage3）----
         if ok_use
             tr = extract_expert_transitions(tau, res, opts.ex_cfg);
             if ~isempty(tr) && size(tr.state,1) > 0
+                assert_phys_transition(tr, k);
                 trajectories(k).transitions = tr;
+                % expert_sa 仅 QA：原始 state + 物理 action（非 action_norm）
                 sa = [tr.state, tr.action];    % N_steps × 17
                 expert_sa_list{end+1} = sa;    %#ok<AGROW>
-                fprintf('         extracted %d (s,a) pairs\n', size(sa,1));
+                n_int = sum(tr.intercepted(:));
+                fprintf(['         phys transition %d 步  schema=%s  ', ...
+                         'intercept_steps=%d  t_end=%.2f  clip=%d\n'], ...
+                    size(tr.state,1), char(tr.schema_version), n_int, ...
+                    tr.t_end, tr.n_actions_clipped);
             end
         end
 
@@ -218,9 +230,11 @@ function results = generate_ps_expert_library(N, opts)
                 nB_ok, nB_dbg, nB_fail, nA_succ);
         n_sa = numel(expert_sa_list);
         total_steps = sum(cellfun(@(x)size(x,1), expert_sa_list));
-        fprintf('  (s,a): %d 条轨迹提取, 共 %d 步\n', n_sa, total_steps);
+        fprintf('  物理 transition: %d 条轨迹, 共 %d 步（expert_sa 仅 QA）\n', ...
+        n_sa, total_steps);
     end
     fprintf('  用时 %.1f s (%.1f min)\n', elapsed, elapsed/60);
+    fprintf('  提示: stage3 sidecar 请事后运行 precompute_expert_terminals.py\n');
 
     %% -------- 汇总 --------
     results = build_results(trajectories, expert_sa_list, N, ...
@@ -235,9 +249,38 @@ function results = generate_ps_expert_library(N, opts)
 
     %% -------- 最终保存 --------
     if opts.save
+        % 主库先安全落盘（含物理 transition）；不绑定 stage3
         save(opts.save_file, 'results', '-v7.3');
-        fprintf('已保存最终结果 %s  (expert_sa: %d x %d)\n', ...
-                opts.save_file, size(results.expert_sa,1), size(results.expert_sa,2));
+        fprintf('已保存最终结果 %s\n', opts.save_file);
+        fprintf('  训练权威: trajectories(*).transitions  schema=%s\n', ...
+            results.schema_version);
+        fprintf('  expert_sa(QA): %d x %d\n', ...
+            size(results.expert_sa,1), size(results.expert_sa,2));
+        fprintf('  stage3: 未运行（sidecar 另算）\n');
+    end
+end
+
+function assert_phys_transition(tr, k)
+% 新库出库必须带齐权威字段；缺字段立刻失败，避免静默写成旧格式。
+    req = {'state','action','state_abs','t', ...
+           'action_norm','next_state','next_state_abs', ...
+           'done','intercepted','stage2_done', ...
+           'r_min1','r_min2','terminal_abs','t_end', ...
+           'schema_version','stage2_dynamics_version', ...
+           'action_mapping_version','obs_norm_version'};
+    for i = 1:numel(req)
+        if ~isfield(tr, req{i})
+            error('generate_ps_expert_library:BadTransition', ...
+                '轨迹 #%d transitions 缺少字段 %s（phys_transition_v1）', k, req{i});
+        end
+    end
+    if size(tr.next_state, 1) ~= size(tr.state, 1)
+        error('generate_ps_expert_library:BadTransition', ...
+            '轨迹 #%d next_state 行数与 state 不一致', k);
+    end
+    if size(tr.action_norm, 2) ~= 3
+        error('generate_ps_expert_library:BadTransition', ...
+            '轨迹 #%d action_norm 应为 N×3', k);
     end
 end
 
@@ -273,6 +316,33 @@ function results = build_results(trajectories, expert_sa_list, N, ...
     else
         results.expert_sa = zeros(0, 17);
     end
+    % expert_sa 仅兼容/QA；训练权威 = per-trajectory 物理 transition
+    results.expert_sa_role = 'qa_compat_only';
+    results.train_authority = 'per_trajectory_phys_transition';
+    results.stage3_in_library = false;
+
+    meta = transition_schema_meta();
+    results.schema_version          = meta.schema_version;
+    results.stage2_dynamics_version = meta.stage2_dynamics_version;
+    results.action_mapping_version  = meta.action_mapping_version;
+    results.obs_norm_version        = meta.obs_norm_version;
+
+    % 汇总物理层拦截计数（供 sidecar / 验收）
+    n_phys = 0; n_phys_int = 0; n_phys_steps = 0;
+    for i = 1:numel(trajectories)
+        tr = trajectories(i);
+        if ~tr.ok_use || isempty(tr.transitions) || ~isfield(tr.transitions, 'state')
+            continue;
+        end
+        n_phys = n_phys + 1;
+        n_phys_steps = n_phys_steps + size(tr.transitions.state, 1);
+        if isfield(tr.transitions, 'intercepted') && any(tr.transitions.intercepted(:))
+            n_phys_int = n_phys_int + 1;
+        end
+    end
+    results.stats.n_phys_traj = n_phys;
+    results.stats.n_phys_steps = n_phys_steps;
+    results.stats.n_phys_intercepted = n_phys_int;
 end
 
 % =========================================================

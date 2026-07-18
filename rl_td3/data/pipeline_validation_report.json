@@ -1,0 +1,21 @@
+{
+  "status": "passed",
+  "phys_lib": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\expert_lib_phys_smoke.mat",
+  "phys_cache": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\expert_terminal_cache_phys_smoke.npz",
+  "versions": {
+    "schema_version": "phys_transition_v1",
+    "stage2_dynamics_version": "stage2_rk4_eq47_v1",
+    "action_mapping_version": "td3_box_log_v1",
+    "obs_norm_version": "obs_scale_0714_v1",
+    "stage3_version": "pn_rollout_v1",
+    "stage3_dt": 0.001,
+    "reward_version": "r1_bonus_v1",
+    "n_traj": 5,
+    "n_steps": 50
+  },
+  "notes": [
+    "新库训练前无需 rebuild_* 全量 stage2 重放",
+    "普通奖励调整只做 reward_projection 廉价投影",
+    "本验收用 smoke_phys_schema_lib（与 extract 共用 stage2 核心，不跑 IPOPT）"
+  ]
+}

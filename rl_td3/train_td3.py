@@ -13,7 +13,7 @@ train_td3.py — BC 预填充 + 衰减 BC 正则 + TD3 精调训练入口
     python train_td3.py --expert E:/path/to.mat  # 指定专家库路径
     python train_td3.py --smoke                  # 冒烟测试
 
-终端输出默认同时写入 rl_td3/logs（终端输出记录）/{run_name}_{时间戳}.log
+终端输出默认同时写入 rl_td3/logs/{run_name}_{时间戳}.log
 """
 
 from __future__ import annotations
@@ -38,6 +38,7 @@ from stable_baselines3.common.noise import NormalActionNoise
 sys.path.insert(0, str(Path(__file__).parent))
 from evasion_env import EvasionEnv
 from load_expert_buffer import (
+    DEFAULT_ALIGNED_PATH,
     DEFAULT_EXPERT_PATH,
     DEFAULT_TERMINAL_CACHE,
     load_expert_buffer,
@@ -75,7 +76,7 @@ SMOKE_DEFAULTS = dict(
     run_name    = "td3_smoke",
 )
 
-LOG_DIR = Path(__file__).parent / "logs（终端输出记录）"
+LOG_DIR = Path(__file__).parent / "logs"
 
 
 class _Tee:
@@ -181,6 +182,12 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--buf",      type=int,   default=DEFAULTS["buffer_size"])
     p.add_argument("--noise",    type=float, default=DEFAULTS["noise_sigma"])
     p.add_argument("--expert",   type=str,   default=DEFAULT_EXPERT_PATH)
+    p.add_argument(
+        "--aligned",
+        type=str,
+        default=DEFAULT_ALIGNED_PATH,
+        help="MATLAB rebuild_expert_transitions 生成的对齐 transition 文件",
+    )
     p.add_argument("--no-bc",    action="store_true", help="不做专家库 BC 预填充")
     p.add_argument("--save-dir", type=str,   default=DEFAULTS["save_dir"])
     p.add_argument("--name",     type=str,   default=DEFAULTS["run_name"])
@@ -196,7 +203,7 @@ def parse_args() -> argparse.Namespace:
         "--log-file",
         type=str,
         default=None,
-        help="终端输出日志路径（默认 rl_td3/logs（终端输出记录）/{name}_{时间戳}.log）",
+        help="终端输出日志路径（默认 rl_td3/logs/{name}_{时间戳}.log）",
     )
     p.add_argument("--no-log",    action="store_true", help="不写入终端输出日志")
     p.add_argument(
@@ -256,6 +263,7 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     print(f"  BC 正则  : λ0={args.bc_lambda0}, 衰减步数={args.bc_decay_steps:,}")
     print(f"  终端缓存: {args.terminal_cache}")
     print(f"  专家库  : {args.expert}")
+    print(f"  对齐数据: {args.aligned}")
     print(f"  评估 ep 数: {args.n_eval}（每 {DEFAULTS['eval_freq']:,} 步）")
     print(f"  梯度裁剪: {'禁用' if args.grad_clip == 0 else f'±{args.grad_clip}'}")
     print(f"  保存目录: {save_dir}")
@@ -298,6 +306,7 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
             result = load_expert_buffer(
                 model.replay_buffer,
                 mat_path       = args.expert,
+                aligned_path   = args.aligned,
                 max_steps      = bc_max_steps,
                 terminal_cache = args.terminal_cache,
                 verbose        = True,

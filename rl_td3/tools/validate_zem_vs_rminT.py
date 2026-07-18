@@ -1,4 +1,4 @@
-"""
+﻿"""
 零训练量化验证：规避段终点 ZEM_T vs 全段真实终端脱靶量 r_minT。
 
 数据源：expert_lib_1000.mat（warmstart 全段 tau：stage2 式47 + stage3 PN）
@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 EXPERT_MAT = r"E:\matlab\result_0702\expert_lib_1000.mat"
-OUT_DIR = Path(__file__).resolve().parent / "plots"
+OUT_DIR = Path(__file__).resolve().parent.parent / "plots"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 

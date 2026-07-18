@@ -130,6 +130,6 @@ eval reward 采样表：
 | `rl_td3/plots/td3_500k_eval_curves.png` | 评估曲线（reward mean/median + 正奖励比例） |
 | `rl_td3/checkpoints/training_500k_lr1e4/_curves_train.png` | 同上训练曲线（原位置） |
 | `rl_td3/checkpoints/training_500k_lr1e4/_curves_eval.png` | 同上评估曲线（原位置） |
-| `rl_td3/logs（终端输出记录）/monte_carlo_eval_20260708_1852.log` | 100 轮蒙特卡洛原始日志 |
+| `rl_td3/logs/monte_carlo_eval_20260708_1852.log` | 100 轮蒙特卡洛原始日志 |
 | `rl_td3/checkpoints/training_500k_lr1e4/eval_logs/evaluations.npz` | eval 数据 (50 点 × 20 ep) |
 | `rl_td3/checkpoints/training_500k_lr1e4/tb_logs/TD3_1/` | TB 日志 |

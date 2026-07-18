@@ -1,7 +1,7 @@
 """
 evasion_env.py — Gymnasium 环境：双防御者规避 + 目标打击一体化制导律权重训练
 动作空间：[γ_n, wT_n, wE_n] ∈ [-1,1]³（归一化），w 固定 1e4，d*=20m
-状态空间：13维时变态势（见 extract_expert_transitions.m）
+状态空间：13维时变态势，经 obs_norm 固定逐维物理归一化后输入网络
 MATLAB Engine 调用 env_reset.m / env_step.m / stage3_rollout.m
 """
 
@@ -16,28 +16,27 @@ import scipy.io
 import gymnasium as gym
 from gymnasium import spaces
 
+from obs_norm import OBS_BOX_HIGH, OBS_DIM, normalize_obs
+from reward_projection import (
+    DEFAULT_REWARD_CFG,
+    project_terminal,
+    terminal_R1,
+)
+
 # ── 路径配置 ──────────────────────────────────────────────────────────────────
 GAIL_ROOT    = str(Path(__file__).parent.parent.resolve())
 MATLAB_DIR   = str(Path(__file__).parent / "matlab")
 EXPERT_DIR   = str(Path(GAIL_ROOT) / "expert_trajectory")
 SAMPLES_FILE = str(Path(GAIL_ROOT) / "samples_clean.mat")
 
-# ── 常量 ──────────────────────────────────────────────────────────────────────
-OBS_DIM   = 13
-ACT_DIM   = 3       # [gamma_n, wT_n, wE_n]
+# ── 常量（与 reward_projection.DEFAULT_REWARD_CFG 同步，供评估脚本 import）──
+ACT_DIM   = 3
 W_FIXED   = 1e4
-D_STAR    = 20.0    # 期望规避脱靶量 (m)，过程奖励软饱和上限
-KILL_R    = 6.0     # 拦截半径 / 规避成功下限
-STRIKE_OK = 10.0    # 打击成功：r_minT ≤ 10m → +100
-R1_CEIL   = 25.0    # R1 非零上限：r_minT ≤ 25m
-BONUS_BOTH = 100.0  # 规避成功且打击成功额外奖励
-
-
-def terminal_R1(r_minT: float) -> float:
-    """全段后结算：R1 = 80/(5+r_minT) if r_minT≤25 else 0。"""
-    if r_minT <= R1_CEIL:
-        return 80.0 / (5.0 + r_minT)
-    return 0.0
+D_STAR    = DEFAULT_REWARD_CFG.dstar
+KILL_R    = DEFAULT_REWARD_CFG.kill_radius
+STRIKE_OK = DEFAULT_REWARD_CFG.strike_ok
+R1_CEIL   = DEFAULT_REWARD_CFG.r1_ceil
+BONUS_BOTH = DEFAULT_REWARD_CFG.bonus_both
 
 
 class EvasionEnv(gym.Env):
@@ -63,14 +62,10 @@ class EvasionEnv(gym.Env):
         self.matlab_cfg   = matlab_cfg or {}
         self.max_retries  = max_retries
 
-        obs_high = np.array([
-            2e4,  2e3,  np.pi,  np.pi,
-            2e4,  2e3,  np.pi,  np.pi,
-            2e5,  np.pi, np.pi, 1e3,
-            1.0,
-        ], dtype=np.float32)
+        # 网络输入为归一化观测（obs/OBS_SCALE，不裁剪）；Box 仅定义空间
+        obs_bound = np.full(OBS_DIM, OBS_BOX_HIGH, dtype=np.float32)
         self.observation_space = spaces.Box(
-            low=-obs_high, high=obs_high, dtype=np.float32
+            low=-obs_bound, high=obs_bound, dtype=np.float32
         )
         self.action_space = spaces.Box(
             low=-1.0, high=1.0, shape=(ACT_DIM,), dtype=np.float32
@@ -113,14 +108,14 @@ class EvasionEnv(gym.Env):
             if not ok:
                 continue
 
-            obs = np.array(obs_ml, dtype=np.float32).flatten()
+            obs_phys = np.array(obs_ml, dtype=np.float32).flatten()
             self._state_abs = np.array(sabs_ml, dtype=np.float64).flatten()
             self._t         = 0.0
             self._Tev       = float(Tev_ml)
             self._zT0       = float(zT0_ml)
             self._r_min1    = np.inf
             self._r_min2    = np.inf
-            return obs, {"row_idx": int(row_idx)}
+            return normalize_obs(obs_phys), {"row_idx": int(row_idx)}
 
         raise RuntimeError(
             f"[EvasionEnv] {self.max_retries} 次采样均未找到有效规避段，"
@@ -145,8 +140,8 @@ class EvasionEnv(gym.Env):
             nargout=5,
         )
 
-        obs_next = np.array(obs_ml,      dtype=np.float32).flatten()
-        info_vec = np.array(info_ml,     dtype=np.float64).flatten()
+        obs_phys = np.array(obs_ml, dtype=np.float32).flatten()
+        info_vec = np.array(info_ml, dtype=np.float64).flatten()
         reward   = float(rew_ml)
         terminated = bool(term_ml)
 
@@ -190,16 +185,18 @@ class EvasionEnv(gym.Env):
             reached_pn = bool(reached_ml)
             diverged = bool(diverged_ml)
 
-            R1 = terminal_R1(r_minT)
+            R1, bonus, both_ok = project_terminal(
+                r_minT, self._r_min1, self._r_min2, intercepted=False
+            )
             evade_ok = (self._r_min1 >= KILL_R) and (self._r_min2 >= KILL_R)
             strike_ok = r_minT <= STRIKE_OK
-            bonus = BONUS_BOTH if (evade_ok and strike_ok) else 0.0
             reward = reward + R1 + bonus
 
             info.update({
                 "r_minT":    r_minT,
                 "R1":        R1,
                 "bonus":     bonus,
+                "both_ok":   bool(both_ok),
                 "evade_ok":  evade_ok,
                 "strike_ok": strike_ok,
                 "reached":   strike_ok,   # 评估脚本用 reached 表示打击成功
@@ -208,7 +205,7 @@ class EvasionEnv(gym.Env):
                 "zT":        r_minT,      # 评估打印终端精度时用 r_minT
             })
 
-        return obs_next, reward, terminated, False, info
+        return normalize_obs(obs_phys), reward, terminated, False, info
 
     def close(self):
         if hasattr(self, "_eng") and self._eng is not None:
