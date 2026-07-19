@@ -58,12 +58,28 @@ function ok = test_stage2_core_equiv()
         end
     end
 
-    % 动作映射往返
-    [an, ~] = phys_to_action_norm(1.5, 3e3, 5e2);
-    [g, wt, we] = action_norm_to_phys(an);
-    [an2, ~] = phys_to_action_norm(g, wt, we);
-    if max(abs(an(:) - an2(:))) > 1e-12
-        fprintf('[FAIL] action map roundtrip\n');
+    % 动作映射往返（两版本）
+    vers = {'td3_box_log_v1', 'ratio_log_box_v1'};
+    for vi = 1:numel(vers)
+        ver = vers{vi};
+        [an, ~] = phys_to_action_norm(1.5, 3e3, 5e2, ver);
+        [g, wt, we] = action_norm_to_phys(an, ver);
+        [an2, ~] = phys_to_action_norm(g, wt, we, ver);
+        if max(abs(an(:) - an2(:))) > 1e-12
+            fprintf('[FAIL] action map roundtrip (%s)\n', ver);
+            ok = false;
+        end
+    end
+
+    % 旧→新相对权重等价（同一物理参数）
+    [an_old, ~] = phys_to_action_norm(1.5, 3e3, 5e2, 'td3_box_log_v1');
+    [an_new, ~] = phys_to_action_norm(1.5, 3e3, 5e2, 'ratio_log_box_v1');
+    core_old = stage2_core_init(struct('action_mapping_version', 'td3_box_log_v1'));
+    core_new = stage2_core_init(struct('action_mapping_version', 'ratio_log_box_v1'));
+    [~, ~, ~, f_old] = stage2_step(core_old, sabs0, 0.0, Tev, an_old);
+    [~, ~, ~, f_new] = stage2_step(core_new, sabs0, 0.0, Tev, an_new);
+    if max(abs(f_old.a_M(:) - f_new.a_M(:))) > 1e-8
+        fprintf('[FAIL] old/new a_M 不等价: %.3g\n', max(abs(f_old.a_M(:) - f_new.a_M(:))));
         ok = false;
     end
 
@@ -72,8 +88,12 @@ function ok = test_stage2_core_equiv()
         fprintf('[FAIL] schema_version\n');
         ok = false;
     end
+    if ~strcmp(meta.action_mapping_version, 'ratio_log_box_v1')
+        fprintf('[FAIL] action_mapping_version default\n');
+        ok = false;
+    end
 
     if ok
-        fprintf('[OK] stage2_core ↔ env_step 等价 + schema meta\n');
+        fprintf('[OK] stage2_core ↔ env_step 等价 + schema meta + ratio map\n');
     end
 end

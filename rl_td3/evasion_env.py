@@ -1,6 +1,6 @@
 """
 evasion_env.py — Gymnasium 环境：双防御者规避 + 目标打击一体化制导律权重训练
-动作空间：[γ_n, wT_n, wE_n] ∈ [-1,1]³（归一化），w 固定 1e4，d*=20m
+动作空间：归一化 [-1,1]³（默认 ratio_log_box_v1: [ρE_n, ρT_n, γ_n]），w 固定 1e4，d*=20m
 状态空间：13维时变态势，经 obs_norm 固定逐维物理归一化后输入网络
 MATLAB Engine 调用 env_reset.m / env_step.m / stage3_rollout.m
 """
@@ -16,6 +16,12 @@ import scipy.io
 import gymnasium as gym
 from gymnasium import spaces
 
+from action_mapping import (
+    DEFAULT_ACTION_MAPPING,
+    W_FIXED as AM_W_FIXED,
+    action_norm_to_phys,
+    phys_to_action_norm,
+)
 from obs_norm import OBS_BOX_HIGH, OBS_DIM, normalize_obs
 from reward_projection import (
     DEFAULT_REWARD_CFG,
@@ -31,7 +37,7 @@ SAMPLES_FILE = str(Path(GAIL_ROOT) / "samples_clean.mat")
 
 # ── 常量（与 reward_projection.DEFAULT_REWARD_CFG 同步，供评估脚本 import）──
 ACT_DIM   = 3
-W_FIXED   = 1e4
+W_FIXED   = AM_W_FIXED
 D_STAR    = DEFAULT_REWARD_CFG.dstar
 KILL_R    = DEFAULT_REWARD_CFG.kill_radius
 STRIKE_OK = DEFAULT_REWARD_CFG.strike_ok
@@ -55,12 +61,15 @@ class EvasionEnv(gym.Env):
         samples_file: str = SAMPLES_FILE,
         matlab_cfg: Optional[dict] = None,
         max_retries: int = 10,
+        action_mapping: str = DEFAULT_ACTION_MAPPING,
     ):
         super().__init__()
 
         self.samples_file = samples_file
-        self.matlab_cfg   = matlab_cfg or {}
-        self.max_retries  = max_retries
+        self.action_mapping = str(action_mapping)
+        self.matlab_cfg = dict(matlab_cfg or {})
+        self.matlab_cfg.setdefault("action_mapping_version", self.action_mapping)
+        self.max_retries = max_retries
 
         # 网络输入为归一化观测（obs/OBS_SCALE，不裁剪）；Box 仅定义空间
         obs_bound = np.full(OBS_DIM, OBS_BOX_HIGH, dtype=np.float32)
@@ -88,6 +97,7 @@ class EvasionEnv(gym.Env):
         self._zT0: float = 1.0   # 兼容 env_reset 返回值，奖励不再使用
         self._r_min1: float = np.inf
         self._r_min2: float = np.inf
+        self._stage2_core = None  # 懒初始化，供 reset_from_abs
 
     def reset(
         self,
@@ -121,6 +131,40 @@ class EvasionEnv(gym.Env):
             f"[EvasionEnv] {self.max_retries} 次采样均未找到有效规避段，"
             "请检查 samples_clean.mat 或 warm-start 配置。"
         )
+
+    def reset_from_abs(
+        self,
+        state_abs: np.ndarray,
+        *,
+        Tev: float,
+        t: float = 0.0,
+        zT0: float = 1.0,
+    ) -> np.ndarray:
+        """
+        从给定绝对态启动 episode（BC 诊断：专家动作回放 / 同 IC 对照）。
+        返回归一化观测（不经 samples_clean 抽样）。
+        """
+        self._state_abs = np.asarray(state_abs, dtype=np.float64).ravel()
+        if self._state_abs.size != 18:
+            raise ValueError(f"state_abs 须为 18 维，收到 {self._state_abs.size}")
+        self._t = float(t)
+        self._Tev = float(Tev)
+        self._zT0 = float(zT0)
+        self._r_min1 = np.inf
+        self._r_min2 = np.inf
+
+        if self._stage2_core is None:
+            self._stage2_core = self._eng.stage2_core_init(self.matlab_cfg, nargout=1)
+        sabs_ml = matlab.double(self._state_abs.tolist())
+        obs_ml = self._eng.stage2_obs_from_abs(
+            self._stage2_core,
+            sabs_ml,
+            float(self._t),
+            float(self._Tev),
+            nargout=1,
+        )
+        obs_phys = np.array(obs_ml, dtype=np.float32).flatten()
+        return normalize_obs(obs_phys)
 
     def step(self, action: np.ndarray):
         if self._state_abs is None:
@@ -214,17 +258,27 @@ class EvasionEnv(gym.Env):
         super().close()
 
     @staticmethod
-    def norm_action(gamma: float, wT: float, wE: float) -> np.ndarray:
-        """将物理权重参数归一化到 [-1,1]³（与 env_step.m 反归一化对应）。"""
-        gn  = np.clip(gamma / 3.0, -1.0, 1.0)
-        wTn = np.clip((np.log10(np.clip(wT, 1e2, 1e5)) - 3.5) / 1.5, -1.0, 1.0)
-        wEn = np.clip(np.log10(np.clip(wE, 1e2, 1e4)) - 3.0, -1.0, 1.0)
-        return np.array([gn, wTn, wEn], dtype=np.float32)
+    def norm_action(
+        gamma: float,
+        wT: float,
+        wE: float,
+        *,
+        version: str = DEFAULT_ACTION_MAPPING,
+        w: float = W_FIXED,
+    ) -> np.ndarray:
+        """将物理权重参数归一化到 [-1,1]³。"""
+        an, _ = phys_to_action_norm(gamma, wT, wE, version=version, w=w)
+        return np.asarray(an, dtype=np.float32).ravel()
 
     @staticmethod
-    def denorm_action(action_norm: np.ndarray) -> tuple[float, float, float]:
+    def denorm_action(
+        action_norm: np.ndarray,
+        *,
+        version: str = DEFAULT_ACTION_MAPPING,
+        w: float = W_FIXED,
+    ) -> tuple[float, float, float]:
         """将归一化动作反归一化回物理值 (gamma, wT, wE)。"""
-        gamma = float(action_norm[0]) * 3.0
-        wT    = 10 ** (float(action_norm[1]) * 1.5 + 3.5)
-        wE    = 10 ** (float(action_norm[2]) + 3.0)
-        return gamma, wT, wE
+        gamma, wT, wE = action_norm_to_phys(action_norm, version=version, w=w)
+        return float(np.asarray(gamma).ravel()[0]), float(np.asarray(wT).ravel()[0]), float(
+            np.asarray(wE).ravel()[0]
+        )

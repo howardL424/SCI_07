@@ -38,12 +38,28 @@ from stable_baselines3.common.noise import NormalActionNoise
 sys.path.insert(0, str(Path(__file__).parent))
 from evasion_env import EvasionEnv
 from load_expert_buffer import (
+    DATA_DIR,
     DEFAULT_ALIGNED_PATH,
     DEFAULT_EXPERT_PATH,
     DEFAULT_TERMINAL_CACHE,
     load_expert_buffer,
 )
+from action_mapping import DEFAULT_ACTION_MAPPING, ACTION_MAPPING_RATIO, ACTION_MAPPING_TD3_BOX
 from td3_bc import TD3BC
+
+
+def set_global_seed(seed: int) -> None:
+    """固定 NumPy / PyTorch / CUDA / SB3 随机性（训练可复现入口）。"""
+    import random
+
+    from stable_baselines3.common.utils import set_random_seed
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    set_random_seed(seed, using_cuda=torch.cuda.is_available())
 
 
 # ── 训练超参数（合理默认值，可通过 argparse 覆盖）────────────────────────────
@@ -242,24 +258,74 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_TERMINAL_CACHE,
         help="专家终端 R1/+100 缓存 npz（由 precompute_expert_terminals.py 生成）",
     )
+    p.add_argument(
+        "--seed",
+        type=int,
+        default=0,
+        help="统一训练种子（NumPy/PyTorch/SB3/环境）；采样默认与此相同",
+    )
+    p.add_argument(
+        "--sample-seed",
+        type=int,
+        default=None,
+        help="专家采样种子（默认=--seed）",
+    )
+    p.add_argument(
+        "--sample-mode",
+        type=str,
+        default="balanced",
+        choices=["balanced", "prefix"],
+        help="专家预填充采样：balanced=轨迹均衡（默认）；prefix=旧前缀截取",
+    )
+    p.add_argument(
+        "--val-ratio",
+        type=float,
+        default=0.1,
+        help="按轨迹划分 validation 比例（采样元数据；纯 BC 验证用）",
+    )
+    p.add_argument(
+        "--actor-include-intercepted",
+        action="store_true",
+        help="Actor BC 专家标签包含拦截轨迹（默认排除，仅 Replay 可含 −50）",
+    )
+    p.add_argument(
+        "--save-sample-plan",
+        type=str,
+        default=None,
+        help="可选：保存采样计划 npz（默认不写；可用 rl_td3/data/expert_set_99k.npz）",
+    )
+    p.add_argument(
+        "--action-mapping",
+        type=str,
+        default=DEFAULT_ACTION_MAPPING,
+        choices=[ACTION_MAPPING_RATIO, ACTION_MAPPING_TD3_BOX],
+        help="动作映射（默认 ratio_log_box_v1）",
+    )
     return resolve_run_config(p.parse_args())
 
 
-def make_env() -> EvasionEnv:
+def make_env(action_mapping: str = DEFAULT_ACTION_MAPPING) -> EvasionEnv:
     """创建并用 Monitor 包装环境，记录每个 episode 的 reward 和长度。"""
-    env = EvasionEnv()
+    env = EvasionEnv(action_mapping=action_mapping)
     return Monitor(env)
 
 
 def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
-    bc_max_steps = int(DEFAULTS["buffer_size"] * args.bc_ratio) if not args.no_bc else 0
+    # 以实际 buffer 容量计算预填预算（不再写死 DEFAULTS buffer_size）
+    bc_max_steps = int(args.buf * args.bc_ratio) if not args.no_bc else 0
+    sample_seed = args.seed if args.sample_seed is None else args.sample_seed
+    set_global_seed(args.seed)
+
     print("=" * 60)
     print(f"  训练方案: BC 预填充 + 衰减 BC 正则 + TD3")
     print(f"  运行模式: {'冒烟测试' if args.smoke else '正式训练'}")
     print(f"  总步数  : {args.steps:,}")
     print(f"  学习率  : {args.lr}（Actor / Critic 统一）")
     print(f"  运行名称: {args.name}")
+    print(f"  seed    : {args.seed}（sample_seed={sample_seed}）")
     print(f"  BC 预填充: {'否' if args.no_bc else f'是（最多 {bc_max_steps:,} 步，占 buffer {args.bc_ratio:.0%}）'}")
+    print(f"  采样模式: {args.sample_mode}（Actor排除拦截={not args.actor_include_intercepted}）")
+    print(f"  动作映射: {args.action_mapping}")
     print(f"  BC 正则  : λ0={args.bc_lambda0}, 衰减步数={args.bc_decay_steps:,}")
     print(f"  终端缓存: {args.terminal_cache}")
     print(f"  专家库  : {args.expert}")
@@ -270,8 +336,10 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     print("=" * 60)
 
     # ── 创建环境 ─────────────────────────────────────────────────────────────
-    env      = make_env()
-    eval_env = make_env()      # 独立评估环境（避免干扰训练 episode）
+    env = make_env(args.action_mapping)
+    eval_env = make_env(args.action_mapping)  # 独立评估环境（避免干扰训练 episode）
+    env.reset(seed=args.seed)
+    eval_env.reset(seed=args.seed + 1)
 
     # ── 探索噪声（TD3 用高斯噪声代替 DDPG 的 OU 噪声）────────────────────
     n_actions = env.action_space.shape[0]   # = 3
@@ -298,24 +366,43 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
         tensorboard_log = str(save_dir / "tb_logs"),
         bc_lambda0      = args.bc_lambda0,
         bc_decay_steps  = args.bc_decay_steps,
+        seed            = args.seed,
     )
 
     # ── BC 预填充 ReplayBuffer + 注入专家数据集 ───────────────────────────────
     if not args.no_bc:
         try:
+            plan_out = args.save_sample_plan
+            if plan_out is None and args.sample_mode == "balanced" and not args.smoke:
+                # 正式跑默认落一份采样计划，便于对照 BC / 复现
+                plan_out = str(DATA_DIR / f"expert_set_{bc_max_steps}_seed{sample_seed}.npz")
             result = load_expert_buffer(
                 model.replay_buffer,
-                mat_path       = args.expert,
-                aligned_path   = args.aligned,
-                max_steps      = bc_max_steps,
-                terminal_cache = args.terminal_cache,
-                verbose        = True,
+                mat_path=args.expert,
+                aligned_path=args.aligned,
+                max_steps=bc_max_steps,
+                terminal_cache=args.terminal_cache,
+                verbose=True,
+                sample_mode=args.sample_mode,
+                sample_seed=sample_seed,
+                val_ratio=args.val_ratio,
+                actor_exclude_intercepted=not args.actor_include_intercepted,
+                sample_plan_out=plan_out,
+                action_mapping=args.action_mapping,
             )
             model.set_expert_dataset(result.states, result.actions)
             print(
-                f"[train] BC 预填充完成，写入 {result.n_written} 条；"
+                f"[train] BC 预填充完成，Replay 写入 {result.n_written} 条；"
+                f"Actor BC 标签 {len(result.states)} 条；"
                 f"已注入专家数据集供衰减 BC 正则"
             )
+            if result.sample_summary:
+                s = result.sample_summary
+                print(
+                    f"[train] 采样摘要: mode={s.get('sample_mode')} "
+                    f"train轨={s.get('n_train_traj')} val轨={s.get('n_val_traj')} "
+                    f"both_ok_train={s.get('both_ok_train')}"
+                )
         except FileNotFoundError as e:
             print(f"[train] 警告: {e}")
             print("[train] 将跳过 BC 预填充；若 λ0>0 且无专家集，BC 正则不生效。")

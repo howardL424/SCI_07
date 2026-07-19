@@ -32,10 +32,8 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 %   被拦截 (min(r_MD)≤6): reward=-50，过程项归零，terminated=true
 %   规避段结束 (t≥Tev): terminated=true，由 Python 调 stage3_rollout 结算 R1/+100
 %
-%   动作反归一化:
-%     gamma = action_norm(1) * 3             → [-3, 3]
-%     wT    = 10^(action_norm(2)*1.5 + 3.5) → [1e2, 1e5]
-%     wE    = 10^(action_norm(3) + 3)        → [1e2, 1e4]
+%   动作反归一化见 action_norm_to_phys / transition_schema_meta.action_mapping_version
+%   （默认 ratio_log_box_v1: [ρE_n, ρT_n, γ_n]）。
 
     %#ok<*NASGU>
     if nargin < 6 || isempty(cfg_in); cfg_in = struct(); end
@@ -70,6 +68,11 @@ function key = cfg_cache_key(cfg_in)
         else
             parts{i} = sprintf('%s=default', n);
         end
+    end
+    if isfield(cfg_in, 'action_mapping_version') && ~isempty(cfg_in.action_mapping_version)
+        parts{end+1} = sprintf('amap=%s', char(cfg_in.action_mapping_version)); %#ok<AGROW>
+    else
+        parts{end+1} = 'amap=default'; %#ok<AGROW>
     end
     key = strjoin(parts, ';');
 end

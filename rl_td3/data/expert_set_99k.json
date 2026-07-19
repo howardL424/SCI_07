@@ -1,0 +1,37 @@
+{
+  "seed": 0,
+  "budget_requested": 99000,
+  "n_replay_steps": 94753,
+  "n_actor_steps": 73721,
+  "budget_filled_frac": 0.9571010101010101,
+  "n_traj_total": 1287,
+  "n_train_traj": 1158,
+  "n_val_traj": 129,
+  "n_replay_traj_used": 1158,
+  "actor_exclude_intercepted": true,
+  "replay_include_intercepted": true,
+  "force_terminal": true,
+  "n_tgo_bins": 4,
+  "val_ratio": 0.1,
+  "intercept_rate_all": 0.23853923853923853,
+  "intercept_rate_train": 0.23834196891191708,
+  "actor_intercept_step_frac": 0.0,
+  "steps_per_used_traj_mean": 81.82469775474956,
+  "steps_per_used_traj_max": 86,
+  "ok_mode_train": {
+    "ok": 821,
+    "debug": 337
+  },
+  "ok_mode_val": {
+    "ok": 88,
+    "debug": 41
+  },
+  "both_ok_train": 812,
+  "both_ok_val": 91,
+  "evade_ok_train": 882,
+  "strike_ok_train": 812,
+  "expert_path": "E:\\matlab\\result_0714\\expert_lib_1000.mat",
+  "aligned_or_source": "aligned",
+  "terminal_cache": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\data\\expert_terminal_cache.npz",
+  "out": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\data\\expert_set_99k.npz"
+}

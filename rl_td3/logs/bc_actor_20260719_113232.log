@@ -1,0 +1,73 @@
+[train_bc] 终端输出同时写入 D:\LTY\yan\yanerxia\GAIL\rl_td3\logs\bc_actor_20260719_113232.log
+============================================================
+  纯 Actor BC 诊断
+  seed=0  sample_seed=0
+  epochs=80  lr=0.001  batch=256
+  device=cuda  save_dir=rl_td3\checkpoints_bc\bc_diag_seed0
+============================================================
+[train_bc] 加载 transition：expert=E:\matlab\result_0714\expert_lib_1000.mat
+[train_bc] 已载入计划：train_actor=73721 val_actor=11501 val_traj=129
+[train_bc] BC 数据：train=73721  val=11501  expert_both_ok_val=0.705  non_int=0.929
+[epoch 001/80] loss=0.333593
+  [train] n=73721  MSE=0.325199  MAE=0.466680  MAE/act[gamma_n=0.6295 wT_n=0.3355 wE_n=0.4350]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.365727  MAE=0.482701  MAE/act[gamma_n=0.5570 wT_n=0.3585 wE_n=0.5326]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  → 新最佳 val MSE=0.365727，已保存 rl_td3\checkpoints_bc\bc_diag_seed0\bc_actor_best.pt
+[epoch 002/80] loss=0.321611
+  [train] n=73721  MSE=0.315408  MAE=0.448820  MAE/act[gamma_n=0.6050 wT_n=0.3242 wE_n=0.4173]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.364047  MAE=0.471823  MAE/act[gamma_n=0.5442 wT_n=0.3511 wE_n=0.5202]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  → 新最佳 val MSE=0.364047，已保存 rl_td3\checkpoints_bc\bc_diag_seed0\bc_actor_best.pt
+[epoch 003/80] loss=0.313107
+  [train] n=73721  MSE=0.308126  MAE=0.446341  MAE/act[gamma_n=0.6185 wT_n=0.3167 wE_n=0.4038]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.360444  MAE=0.471936  MAE/act[gamma_n=0.5458 wT_n=0.3535 wE_n=0.5164]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  → 新最佳 val MSE=0.360444，已保存 rl_td3\checkpoints_bc\bc_diag_seed0\bc_actor_best.pt
+[epoch 004/80] loss=0.306841
+  [train] n=73721  MSE=0.302637  MAE=0.439518  MAE/act[gamma_n=0.6084 wT_n=0.3107 wE_n=0.3995]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.364432  MAE=0.467826  MAE/act[gamma_n=0.5436 wT_n=0.3477 wE_n=0.5122]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 005/80] loss=0.302347
+  [train] n=73721  MSE=0.299312  MAE=0.428367  MAE/act[gamma_n=0.5963 wT_n=0.3026 wE_n=0.3862]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.364946  MAE=0.460796  MAE/act[gamma_n=0.5373 wT_n=0.3394 wE_n=0.5057]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 006/80] loss=0.297780
+  [train] n=73721  MSE=0.296501  MAE=0.427429  MAE/act[gamma_n=0.6009 wT_n=0.2999 wE_n=0.3815]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.372588  MAE=0.463819  MAE/act[gamma_n=0.5422 wT_n=0.3396 wE_n=0.5097]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 007/80] loss=0.294245
+  [train] n=73721  MSE=0.291566  MAE=0.431557  MAE/act[gamma_n=0.5936 wT_n=0.3075 wE_n=0.3935]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.369858  MAE=0.472933  MAE/act[gamma_n=0.5374 wT_n=0.3542 wE_n=0.5272]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 008/80] loss=0.291247
+  [train] n=73721  MSE=0.288584  MAE=0.419426  MAE/act[gamma_n=0.5867 wT_n=0.2986 wE_n=0.3730]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.369943  MAE=0.466170  MAE/act[gamma_n=0.5374 wT_n=0.3465 wE_n=0.5146]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 009/80] loss=0.288804
+  [train] n=73721  MSE=0.285089  MAE=0.418043  MAE/act[gamma_n=0.5762 wT_n=0.2999 wE_n=0.3780]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.370288  MAE=0.466065  MAE/act[gamma_n=0.5284 wT_n=0.3477 wE_n=0.5221]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 010/80] loss=0.286498
+  [train] n=73721  MSE=0.283913  MAE=0.419822  MAE/act[gamma_n=0.5817 wT_n=0.3000 wE_n=0.3778]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.368000  MAE=0.463885  MAE/act[gamma_n=0.5351 wT_n=0.3423 wE_n=0.5143]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 011/80] loss=0.284215
+  [train] n=73721  MSE=0.285107  MAE=0.412523  MAE/act[gamma_n=0.5676 wT_n=0.2968 wE_n=0.3732]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.381801  MAE=0.465525  MAE/act[gamma_n=0.5276 wT_n=0.3524 wE_n=0.5166]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 012/80] loss=0.281682
+  [train] n=73721  MSE=0.279430  MAE=0.414128  MAE/act[gamma_n=0.5727 wT_n=0.2967 wE_n=0.3730]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.374249  MAE=0.465139  MAE/act[gamma_n=0.5281 wT_n=0.3477 wE_n=0.5196]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 013/80] loss=0.279634
+  [train] n=73721  MSE=0.278101  MAE=0.409773  MAE/act[gamma_n=0.5724 wT_n=0.2945 wE_n=0.3624]  贴边(any)=0.1%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+  [val  ] n=11501  MSE=0.364174  MAE=0.458875  MAE/act[gamma_n=0.5281 wT_n=0.3390 wE_n=0.5095]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 014/80] loss=0.277678
+  [train] n=73721  MSE=0.275901  MAE=0.409550  MAE/act[gamma_n=0.5653 wT_n=0.2954 wE_n=0.3680]  贴边(any)=0.1%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.1%]
+  [val  ] n=11501  MSE=0.384641  MAE=0.468080  MAE/act[gamma_n=0.5251 wT_n=0.3568 wE_n=0.5224]  贴边(any)=0.0%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.0%]
+[epoch 015/80] loss=0.274661
+  [train] n=73721  MSE=0.271556  MAE=0.402863  MAE/act[gamma_n=0.5579 wT_n=0.2904 wE_n=0.3603]  贴边(any)=0.1%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.1%]
+  [val  ] n=11501  MSE=0.382080  MAE=0.465862  MAE/act[gamma_n=0.5223 wT_n=0.3534 wE_n=0.5218]  贴边(any)=0.2%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.2%]
+[epoch 016/80] loss=0.272677
+  [train] n=73721  MSE=0.271822  MAE=0.398922  MAE/act[gamma_n=0.5543 wT_n=0.2852 wE_n=0.3573]  贴边(any)=0.1%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.1%]
+  [val  ] n=11501  MSE=0.379325  MAE=0.456873  MAE/act[gamma_n=0.5247 wT_n=0.3311 wE_n=0.5148]  贴边(any)=0.1%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.1%]
+[epoch 017/80] loss=0.270621
+  [train] n=73721  MSE=0.267006  MAE=0.399451  MAE/act[gamma_n=0.5578 wT_n=0.2877 wE_n=0.3529]  贴边(any)=0.1%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.1%]
+  [val  ] n=11501  MSE=0.370867  MAE=0.458206  MAE/act[gamma_n=0.5280 wT_n=0.3408 wE_n=0.5058]  贴边(any)=0.2%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.2%]
+[epoch 018/80] loss=0.267530
+  [train] n=73721  MSE=0.265772  MAE=0.404641  MAE/act[gamma_n=0.5640 wT_n=0.2884 wE_n=0.3616]  贴边(any)=0.1%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.1%]
+  [val  ] n=11501  MSE=0.383084  MAE=0.471998  MAE/act[gamma_n=0.5334 wT_n=0.3504 wE_n=0.5322]  贴边(any)=0.3%  贴边/维[gamma_n=0.0% wT_n=0.0% wE_n=0.3%]
+[train_bc] early stop @ epoch 18（patience=15）
+
+[train_bc] 报告已写入 rl_td3\checkpoints_bc\bc_diag_seed0\bc_actor_report.json
+[train_bc] 判断门：fail_high_val_error
+  - 验证 MSE 偏高：先做状态/动作可辨识性消融，不要直接调 TD3/奖励/GAIL。
+  - 专家标签基线（val 轨 both_ok）：0.705；未拦截子集：0.929

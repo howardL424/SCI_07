@@ -19,7 +19,9 @@
 | 对齐 transition | 旧库：`rl_td3/data/expert_transitions_aligned.mat`；**新库无需** |
 | 终端奖励缓存 | `rl_td3/data/expert_terminal_cache.npz`（stage3 sidecar；训练前必须有） |
 | 观测归一化 | 固定 `OBS_SCALE`（`obs_norm.py`），专家与在线共用 |
-| 训练随机种子 | **当前无 CLI `--seed`**（训练默认不可复现） |
+| 专家采样 | 默认 **轨迹均衡** 约 99k（`expert_sampling.py`）；禁止扁平前缀截取 |
+| 纯 Actor BC | `train_bc.py`（独立监督；过判断门再 TD3） |
+| 训练随机种子 | `--seed`（默认 `0`），覆盖 NumPy / PyTorch / SB3 / env；`--sample-seed` 可单独定采样 |
 | 评估随机种子 | `--seed`（默认 `0`），控制 `samples_clean` 初态抽样序列 |
 
 ---
@@ -28,27 +30,31 @@
 
 ```
 rl_td3/
-├── train_td3.py / evaluate_td3.py / td3_bc.py   # 训练与评估入口
-├── evasion_env.py / obs_norm.py                  # 在线环境与观测归一化
-├── load_expert_buffer.py / reward_projection.py  # 专家加载与奖励投影
-├── data/                      # 派生数据产物（aligned / sidecar / smoke）
+├── train_td3.py / train_bc.py / evaluate_td3.py / td3_bc.py / bc_actor.py
+├── evasion_env.py / obs_norm.py
+├── load_expert_buffer.py / reward_projection.py / expert_sampling.py
+├── data/                      # 派生数据产物（aligned / sidecar / 99k 采样计划）
 │   ├── expert_transitions_aligned.mat
 │   ├── expert_terminal_cache.npz
+│   ├── expert_set_99k.npz     # 可选：build_expert_set 产出
 │   └── …
 ├── tools/                     # 数据管线 CLI（非训练热路径）
 │   ├── rebuild_expert_data.py
 │   ├── precompute_expert_terminals.py
+│   ├── build_expert_set.py
 │   ├── check_expert_alignment.py
 │   ├── compare_stage3_dt.py
 │   └── validate_zem_vs_rminT.py
 ├── tests/                     # 轻量验收与单测
 │   ├── test_data_alignment.py
 │   ├── test_reward_projection.py
+│   ├── test_expert_sampling.py
+│   ├── test_bc_actor.py
 │   └── test_pipeline_validation.py
 ├── matlab/                    # stage2/stage3 MATLAB 核心
 ├── logs/                      # 终端 tee / rebuild 日志
 ├── md document/               # 用法说明与会话纪要
-├── checkpoints*/              # 训练产物
+├── checkpoints*/ checkpoints_bc/  # TD3 / 纯 BC 产物
 └── plots/
 ```
 
@@ -94,7 +100,7 @@ rl_td3/
 | `t_end` | 末时刻 |
 | `schema_version` | 当前 `phys_transition_v1` |
 | `stage2_dynamics_version` | 当前 `stage2_rk4_eq47_v1` |
-| `action_mapping_version` | 当前 `td3_box_log_v1` |
+| `action_mapping_version` | 当前 `ratio_log_box_v1`（旧库标签加载时可由 `td3_box_log_v1` 确定性重标） |
 | `obs_norm_version` | 当前 `obs_scale_0714_v1` |
 
 版本常量见 `rl_td3/matlab/transition_schema_meta.m`。
@@ -106,15 +112,14 @@ rl_td3/
 ### 2.1 状态 / 动作
 
 - **观测**：13 维物理态势，经 `obs_norm.OBS_SCALE` 逐维相除后输入网络（不裁剪）
-- **动作**：归一化 `[γ_n, wT_n, wE_n] ∈ [-1,1]³`
+- **动作（默认 `ratio_log_box_v1`）**：归一化 `[ρE_n, ρT_n, γ_n] ∈ [-1,1]³`
+  - `ρE = w/wE ∈[1,100]`，`ρE_n = log10(ρE)-1`
+  - `ρT = wT/wE ∈[1e-2,1e3]`，`ρT_n = (log10(ρT)-0.5)/2.5`
+  - `γ ∈[-3,3]`，`γ_n = γ/3`
+- **对照旧映射 `td3_box_log_v1`**：`[γ_n, wT_n, wE_n]`（对数权重盒）
 - **固定**：`w=1e4`，`d*=20 m`
-- **反归一化**（Python / MATLAB 必须同步）：
-
-```text
-γ  = γ_n × 3                         → [-3, 3]
-wT = 10^(wT_n × 1.5 + 3.5)           → [1e2, 1e5]
-wE = 10^(wE_n + 3)                   → [1e2, 1e4]
-```
+- 实现：[`rl_td3/action_mapping.py`](../action_mapping.py) + MATLAB `phys_to_action_norm` / `action_norm_to_phys` / `stage2_step`（式47直接用相对权重）
+- 现有专家库权威动作仍为旧坐标时，加载侧做**确定性重标**（不重跑 IPOPT/stage2/stage3）
 
 `OBS_SCALE`（0714 分位数首版，非旧 `obs_high`）：
 
@@ -267,6 +272,97 @@ reward_version          = r1_bonus_v1
 
 **结论**：新 `expert_lib` 训练前**不再**需要 `rebuild_*` 全量 stage2 重放；普通奖励实验只做 `reward_projection` 廉价投影。
 
+### 3.7 构建约 99k 轨迹均衡专家集（expert-sampling）
+
+**不要**再取扁平表前缀 `expert_sa[:99000]`。默认改为：
+
+- 按轨迹均分配额（长轨不再支配样本）
+- 轨迹内按步序（近似 tgo）分层
+- 强制包含每条已采轨迹的末步
+- train/val **按轨迹 ID** 划分（默认 `val_ratio=0.1`，分层：拦截与否）
+- Replay 与 Actor BC 共用同一采样映射；**Actor 默认排除拦截轨迹**（−50 仍可进 Critic Replay）
+- 预算默认 `buf × bc_ratio`（300k×0.33≈99000）
+
+```powershell
+# 单独构建并落盘采样计划（推荐先跑一遍看摘要）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/build_expert_set.py `
+  --budget 99000 --seed 0 --with-ok-mode `
+  --out rl_td3/data/expert_set_99k.npz
+# → 同目录 expert_set_99k.json 摘要（ok/debug、both_ok、拦截率等）
+
+# 采样单测（合成数据）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tests/test_expert_sampling.py
+```
+
+训练时默认 `sample_mode=balanced`；对照旧行为可用 `--sample-mode prefix`。  
+受控比较 Actor 含拦截占比：默认排除 vs `--actor-include-intercepted`（约全库 24% 拦截轨）。
+
+### 3.8 纯 Actor BC 诊断（controlled-bc）
+
+**现状问题**：`train_td3.py` 只有 Replay 预填充 + TD3 同步衰减 BC 正则，**没有**先把 Actor 训成专家。本步用独立入口只做监督 BC。
+
+```powershell
+# 冒烟（少 epoch、小预算，不写正式目录）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_bc.py --smoke
+
+# 正式诊断（默认读 rl_td3/data/expert_set_99k.npz；按轨 train/val）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_bc.py `
+  --sample-plan rl_td3/data/expert_set_99k.npz `
+  --save-dir rl_td3/checkpoints_bc/bc_diag_seed0 `
+  --name bc_actor --seed 0
+
+# 训练后闭环：MC(samples_clean) + val 轨专家动作回放对照（需 MATLAB）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_bc.py `
+  --sample-plan rl_td3/data/expert_set_99k.npz `
+  --save-dir rl_td3/checkpoints_bc/bc_diag_seed0 `
+  --name bc_actor --seed 0 --closed-loop --eval-episodes 50 --replay-traj 40
+```
+
+记录指标：
+
+| 指标 | 含义 |
+|------|------|
+| train/val MSE | `‖π(s)-a_E‖²` |
+| 逐动作 MAE | γ_n / wT_n / wE_n |
+| 贴边率 | `\|a\|≥0.99`（any / 分维）；并对照专家标签贴边率 |
+| 闭环联合成功率 | BC MC；专家动作回放；同 IC 上 BC |
+
+**判断门**（写入 `*_report.json`，不自动进 TD3）：
+
+- val MSE 持续偏高或闭环明显低于专家回放 → 先做状态/动作可辨识性消融，**不要**直接调 TD3 / 奖励 / GAIL
+- 离线误差可接受、闭环接近专家且动作不坍塌 → 可进入 §4 TD3 精调（用 `*_best.pt` 初始化 Actor）
+
+相关文件：`rl_td3/train_bc.py`、`rl_td3/bc_actor.py`；单测 `rl_td3/tests/test_bc_actor.py`；闭环补跑 `rl_td3/tools/run_bc_closed_loop.py`。
+
+**首轮诊断（2026-07-19，seed=0，旧 `td3_box_log_v1`）**：val MSE≈0.36 → `fail_high_val_error`；BC 贴边≈0%；同 IC 闭环 both_ok 75% vs 专家回放 90%。
+
+**比值对照（2026-07-19，seed=0，`ratio_log_box_v1`）**：
+
+| 项 | 旧坐标 | 比值坐标 |
+|----|--------|----------|
+| best val MSE | 0.360 | 0.321 |
+| γ MAE | 0.546 | 0.549 |
+| 同 IC both_ok（BC / 专家） | 75% / 90% | 75% / 90% |
+| MC both_ok | 50% | 50% |
+| 等价抽检 max\|Δa_M\| | — | 8.7e-9 |
+
+判断：`fail_high_val_error`；γ 未改善、闭环无实质提升 → **不进 TD3**，下一步做**状态空间消融**。产物：`rl_td3/checkpoints_bc/bc_ratio_seed0/`。
+
+```powershell
+# 比值 BC（默认）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_bc.py `
+  --sample-plan rl_td3/data/expert_set_99k.npz `
+  --save-dir rl_td3/checkpoints_bc/bc_ratio_seed0 `
+  --name bc_ratio --seed 0 --action-mapping ratio_log_box_v1 --closed-loop
+
+# 旧映射对照
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_bc.py `
+  --action-mapping td3_box_log_v1 --save-dir rl_td3/checkpoints_bc/bc_diag_seed0 ...
+
+# 旧→新 a_M/s' 等价抽检
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/check_action_mapping_equiv.py
+```
+
 ---
 
 ## 4. 训练使用说明
@@ -313,20 +409,24 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 | `eval_freq` | 10,000 | （代码内） |
 | `n_eval_episodes` | 20 | `--n-eval` |
 | `grad_clip` | ±10.0（元素级 clamp） | `--grad-clip`（0=关） |
-| `bc_ratio` | 0.33（最多写 99,000 条） | `--bc-ratio` |
+| `bc_ratio` | 0.33（最多写 `buf×bc_ratio` 条，默认 99,000） | `--bc-ratio` |
 | `bc_lambda0` | 1.0 | `--bc-lambda0` |
 | `bc_decay_steps` | 150,000 | `--bc-decay-steps` |
+| `seed` | 0 | `--seed` |
+| `sample_mode` | `balanced` | `--sample-mode {balanced,prefix}` |
+| `sample_seed` | 同 `--seed` | `--sample-seed` |
 | checkpoint | 每 50,000 步 | |
 
 `--smoke` 预设：`steps=5000`，`save_dir=rl_td3/checkpoints_smoke`，`name=td3_smoke`。
 
 ### 4.3 训练时实际流程
 
-1. 启动两套 MATLAB Engine（train env + eval env）  
-2. 构建 `TD3BC`，探索噪声 `Normal(0, σ)`  
-3. 除非 `--no-bc`：从专家库写入最多 `buffer_size × bc_ratio` 条，并 `set_expert_dataset`  
+1. `set_global_seed(--seed)`；启动两套 MATLAB Engine（train env + eval env）  
+2. 构建 `TD3BC`（含 `seed`），探索噪声 `Normal(0, σ)`  
+3. 除非 `--no-bc`：按 `balanced` 采样写入最多 `args.buf × bc_ratio` 条到 Replay；`set_expert_dataset` 使用 Actor 子集（默认可无拦截）  
 4. `learn`：`CheckpointCallback` + `EvalCallback`（deterministic）+ 可选梯度裁剪  
-5. 保存最终 `{save_dir}/{name}.zip`；最优策略在 `{save_dir}/best/best_model.zip`
+5. 保存最终 `{save_dir}/{name}.zip`；最优策略在 `{save_dir}/best/best_model.zip`  
+6. 正式训练默认另存采样计划 `rl_td3/data/expert_set_{budget}_seed{s}.npz`
 
 ### 4.4 产物路径
 
@@ -341,8 +441,8 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 
 ### 4.5 训练随机性说明
 
-- **`train_td3.py` 当前没有 `--seed`**，不固定 NumPy / PyTorch / CUDA / SB3 / 环境抽样。
-- 两次「同命令」训练**不保证**数值可复现；对比实验请用相同命令行 + 独立 `--save-dir`，并用蒙特卡洛（固定 `--seed`）比模型质量。
+- **`train_td3.py` 支持 `--seed`**（默认 0）：固定 NumPy / PyTorch / CUDA / SB3 / 训练与评估 env 初态抽样，以及专家采样（除非另设 `--sample-seed`）。
+- 对比实验：相同命令行 + 独立 `--save-dir`；下结论时建议 ≥3 个训练 seed，评估用同一 `--seed`/episodes。
 
 ### 4.6 训练注意点
 
@@ -455,6 +555,7 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | 共享一步动力学 | `rl_td3/matlab/stage2_core_init.m` + `stage2_step.m` |
 | 物理 transition schema | `expert_trajectory/extract_expert_transitions.m`；见上文 §1.1 |
 | 训练入口 | `rl_td3/train_td3.py` |
+| 纯 Actor BC | `rl_td3/train_bc.py` / `rl_td3/bc_actor.py` / `rl_td3/action_mapping.py` |
 | TD3+BC | `rl_td3/td3_bc.py` |
 | 环境 / 终端 R1 | `rl_td3/evasion_env.py` |
 | stage2 奖励 | `rl_td3/matlab/stage2_process_reward.m`（`env_step` 调用） |

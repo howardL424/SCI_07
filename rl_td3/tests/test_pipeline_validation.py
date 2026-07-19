@@ -110,7 +110,7 @@ def test_schema_and_versions() -> dict:
     meta = {
         "schema_version": str(data.get("schema_version")),
         "stage2_dynamics_version": str(data.get("stage2_dynamics_version")),
-        "action_mapping_version": "td3_box_log_v1",
+        "action_mapping_version": "ratio_log_box_v1",
         "obs_norm_version": OBS_NORM_VERSION,
         "stage3_version": str(np.asarray(cache.get("stage3_version", "pn_rollout_v1")).item()
                               if np.asarray(cache.get("stage3_version", "pn_rollout_v1")).ndim == 0

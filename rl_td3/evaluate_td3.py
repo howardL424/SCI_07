@@ -68,7 +68,9 @@ def run_episode(
         step += 1
 
         if render:
-            gamma, wT, wE = EvasionEnv.denorm_action(action)
+            ver = getattr(env, "action_mapping", None)
+            kwargs = {"version": ver} if ver else {}
+            gamma, wT, wE = EvasionEnv.denorm_action(action, **kwargs)
             print(
                 f"  step={step:3d} | r_MD1={info['r_MD1']:7.1f}m "
                 f"r_MD2={info['r_MD2']:7.1f}m r_MT={info['r_MT']:8.1f}m "
@@ -179,7 +181,9 @@ def main():
     for i in range(20):
         obs, _ = env.reset(seed=args.seed) if i == 0 else env.reset()
         action, _ = model.predict(obs, deterministic=True)
-        gamma, wT, wE = EvasionEnv.denorm_action(action)
+        ver = getattr(env, "action_mapping", None)
+        kwargs = {"version": ver} if ver else {}
+        gamma, wT, wE = EvasionEnv.denorm_action(action, **kwargs)
         gammas.append(gamma)
         wTs.append(wT)
         wEs.append(wE)

@@ -25,10 +25,10 @@ todos:
     status: completed
   - id: expert-sampling
     content: 以 per-trajectory 为准构建可复现、轨迹均衡的约 99k 专家集
-    status: pending
+    status: completed
   - id: controlled-bc
     content: 固定训练随机性并运行纯 BC，验证状态到动作映射
-    status: pending
+    status: completed
   - id: td3bc-refine
     content: 用 BC Actor 初始化和 Q 归一化 BC 约束进行 TD3 精调
     status: pending
@@ -310,6 +310,24 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/check_expert_alignmen
 - 判断门：
   - 若 BC 验证误差持续较高或闭环明显低于专家，先进入“状态/动作可辨识性消融”，不要直接调 TD3、奖励或 GAIL。
   - 若 BC 能接近专家且动作不坍塌，再进入 TD3 精调。
+
+### 3.1 执行结果（2026-07-19，seed=0）
+
+入口：`rl_td3/train_bc.py`；产物：`rl_td3/checkpoints_bc/bc_diag_seed0/`。
+
+| 项 | 结果 |
+|----|------|
+| 数据 | train 73721 / val 11501（`expert_set_99k`，Actor 排除拦截） |
+| best val MSE | **0.360**（epoch 3；early stop@18） |
+| val MAE | 0.472；γ/wT/wE ≈ 0.55 / 0.35 / 0.52 |
+| BC 贴边率 | ≈0%（未坍塌到边界） |
+| 专家标签贴边（val） | γ 31% / wT 4% / wE 27% |
+| MC both_ok（20 ep） | 50% |
+| 专家动作回放 both_ok（20 轨） | 90% |
+| 同 IC 上 BC both_ok | 75% |
+| 判断门 | **`fail_high_val_error`** → **先做 §5 状态/动作可辨识性消融**，不进 TD3 精调 |
+
+解读：映射误差大（尤其 γ），策略偏内点、学不到专家贴边动作；闭环同 IC 尚可但离线门未过。下一步按计划做状态消融 / 动作可辨识性，而非调 λ 或进 TD3。
 
 ## 4. BC 初始化后的 TD3 精调
 

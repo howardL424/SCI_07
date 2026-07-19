@@ -39,8 +39,13 @@ DEFAULT_ALIGNED_PATH = str(DATA_DIR / "expert_transitions_aligned.mat")
 @dataclass
 class ExpertLoadResult:
     n_written: int
-    states: np.ndarray   # [N, 13] 归一化后（供 TD3BC）
+    states: np.ndarray   # [N, 13] 归一化后（供 Actor BC；默认可排除拦截）
     actions: np.ndarray  # [N, 3]
+    sample_summary: Optional[dict] = None
+    train_traj_ids: Optional[np.ndarray] = None
+    val_traj_ids: Optional[np.ndarray] = None
+    replay_step_indices: Optional[np.ndarray] = None
+    actor_step_indices: Optional[np.ndarray] = None
 
 
 def _load_results(mat_path: str):
@@ -132,11 +137,11 @@ def _as_NxD(arr, D: int) -> np.ndarray:
 
 
 def _norm_actions(gamma: np.ndarray, wT: np.ndarray, wE: np.ndarray) -> np.ndarray:
-    """将物理权重参数归一化到 [-1,1]³。"""
-    gn = np.clip(gamma / 3.0, -1.0, 1.0)
-    wTn = np.clip((np.log10(np.clip(wT, 1e2, 1e5)) - 3.5) / 1.5, -1.0, 1.0)
-    wEn = np.clip(np.log10(np.clip(wE, 1e2, 1e4)) - 3.0, -1.0, 1.0)
-    return np.stack([gn, wTn, wEn], axis=-1).astype(np.float32)
+    """将物理权重参数归一化到 [-1,1]³（默认当前 DEFAULT_ACTION_MAPPING）。"""
+    from action_mapping import DEFAULT_ACTION_MAPPING, phys_to_action_norm
+
+    an, _ = phys_to_action_norm(gamma, wT, wE, version=DEFAULT_ACTION_MAPPING)
+    return np.asarray(an, dtype=np.float32)
 
 
 def _soft_sat_log_evade(
@@ -225,6 +230,9 @@ def load_aligned_transitions(aligned_path: str) -> dict:
         "r_min1": arr("r_min1", np.float64).ravel(),
         "r_min2": arr("r_min2", np.float64).ravel(),
         "n_actions_clipped": int(np.asarray(_field(aligned, "n_actions_clipped", 0)).ravel()[0]),
+        "action_mapping_version": str(
+            _field(aligned, "action_mapping_version", "td3_box_log_v1")
+        ),
     }
     if out["terminal_abs"].ndim == 1:
         out["terminal_abs"] = out["terminal_abs"].reshape(1, -1)
@@ -394,8 +402,39 @@ def load_phys_transitions_from_expert_lib(expert_path: str) -> dict:
         "stage2_dynamics_version": str(
             _field(results, "stage2_dynamics_version", "stage2_rk4_eq47_v1")
         ),
+        "action_mapping_version": str(
+            _field(results, "action_mapping_version", "td3_box_log_v1")
+        ),
     }
     return out
+
+
+def apply_action_mapping(
+    data: dict,
+    target_version: str,
+    *,
+    source_version: Optional[str] = None,
+    w: float = 1e4,
+) -> dict:
+    """
+    将 data['actions'] 从源映射确定性变换到 target_version（不改 s'/done）。
+    旧 aligned / 0714 库默认源版本 td3_box_log_v1。
+    """
+    from action_mapping import remap_action_norm
+
+    src = source_version or str(data.get("action_mapping_version", "td3_box_log_v1"))
+    acts = np.asarray(data["actions"], dtype=np.float32)
+    if src == target_version:
+        data = dict(data)
+        data["action_mapping_version"] = target_version
+        data["actions_source_version"] = src
+        return data
+    remapped = remap_action_norm(acts, from_version=src, to_version=target_version, w=w)
+    data = dict(data)
+    data["actions"] = remapped
+    data["actions_source_version"] = src
+    data["action_mapping_version"] = target_version
+    return data
 
 
 def load_transition_data(
@@ -627,13 +666,34 @@ def load_expert_buffer(
     validate_expert_sa: bool = True,
     verbose: bool = True,
     reward_cfg: Optional[RewardConfig] = None,
+    *,
+    sample_mode: str = "balanced",
+    sample_seed: int = 0,
+    val_ratio: float = 0.1,
+    n_tgo_bins: int = 4,
+    actor_exclude_intercepted: bool = True,
+    replay_include_intercepted: bool = True,
+    load_ok_modes: bool = False,
+    sample_plan_out: Optional[str] = None,
+    action_mapping: Optional[str] = None,
 ) -> ExpertLoadResult:
     """
     读取专家 (s,a,s',r,done) 写入 replay_buffer。
     新库：直接读物理 transition；旧库：读 aligned。
     奖励由 reward_projection 按物理事实 + sidecar r_minT 投影（不把缓存 reward 当真值）。
     reward_kwargs 可覆盖 RewardConfig 字段（如 proc_coef、bonus_both）。
+    action_mapping：目标动作坐标（默认 ratio_log_box_v1）；源标签确定性重标。
+
+    采样（sample_mode）：
+      - balanced（默认）：按轨迹均衡 + tgo 分层 + 强制末步；train/val 按轨划分
+      - prefix：旧行为，扁平表前缀截取（仅兼容对照）
+    Actor BC 返回的 states/actions 默认可排除拦截轨迹；Replay 仍可含拦截 −50。
     """
+    from action_mapping import DEFAULT_ACTION_MAPPING
+    from expert_sampling import build_expert_sample_plan, load_ok_modes_from_expert
+
+    target_amap = action_mapping or DEFAULT_ACTION_MAPPING
+
     cfg = reward_cfg or DEFAULT_REWARD_CFG
     if reward_kwargs:
         from reward_projection import with_reward_overrides
@@ -655,6 +715,7 @@ def load_expert_buffer(
         else:
             print(f"[load_expert_buffer] 旧库 → 对齐数据：{aligned_path}")
         print(f"[load_expert_buffer] reward_version={cfg.version}")
+        print(f"[load_expert_buffer] action_mapping(target)={target_amap}")
 
     if validate_expert_sa:
         meta = validate_expert_sa_vs_trajectories(mat_path)
@@ -679,6 +740,11 @@ def load_expert_buffer(
                     f"  aligned: {data['expert_path']}\n"
                     f"  expert : {mat_path}"
                 )
+
+    src_map = str(data.get("action_mapping_version", "td3_box_log_v1"))
+    data = apply_action_mapping(data, target_amap, source_version=src_map)
+    if verbose and src_map != target_amap:
+        print(f"[load_expert_buffer] 动作重标：{src_map} → {target_amap}")
 
     states_phys = data["states"]
     next_phys = data["next_states"]
@@ -732,15 +798,85 @@ def load_expert_buffer(
             f"s'={overflow_ratio(next_n)*100:.2f}%"
         )
 
-    n_target = N_total if max_steps is None else min(max_steps, N_total)
+    budget = N_total if max_steps is None else min(int(max_steps), N_total)
+    sample_summary: Optional[dict] = None
+    train_traj_ids: Optional[np.ndarray] = None
+    val_traj_ids: Optional[np.ndarray] = None
+    replay_idx: Optional[np.ndarray] = None
+    actor_idx: Optional[np.ndarray] = None
+
+    if sample_mode == "prefix":
+        replay_idx = np.arange(budget, dtype=np.int64)
+        actor_idx = replay_idx.copy()
+        if actor_exclude_intercepted:
+            # 前缀模式下按 traj_ids 过滤（尽量贴近默认语义）
+            traj_ids_flat = np.asarray(data["traj_ids"], dtype=np.int32).ravel()
+            intercepted = np.asarray(data["intercepted"], dtype=bool).ravel()
+            keep = ~intercepted[traj_ids_flat[replay_idx]]
+            actor_idx = replay_idx[keep]
+        sample_summary = {
+            "sample_mode": "prefix",
+            "n_replay_steps": int(len(replay_idx)),
+            "n_actor_steps": int(len(actor_idx)),
+            "seed": int(sample_seed),
+        }
+        if verbose:
+            print(
+                f"[load_expert_buffer] 采样模式=prefix：Replay {len(replay_idx)}，"
+                f"Actor {len(actor_idx)}"
+            )
+    elif sample_mode == "balanced":
+        ok_modes = None
+        if load_ok_modes:
+            if verbose:
+                print("[load_expert_buffer] 加载 ok_mode（ok/debug）元数据…")
+            ok_modes = load_ok_modes_from_expert(mat_path, data["source_idx"])
+        plan = build_expert_sample_plan(
+            data,
+            budget,
+            seed=sample_seed,
+            val_ratio=val_ratio,
+            n_tgo_bins=n_tgo_bins,
+            force_terminal=True,
+            actor_exclude_intercepted=actor_exclude_intercepted,
+            replay_include_intercepted=replay_include_intercepted,
+            terminal_cache=cache,
+            ok_modes=ok_modes,
+            kill_radius=float(cfg.kill_radius),
+            strike_ok=float(cfg.strike_ok),
+        )
+        replay_idx = plan.step_indices
+        actor_idx = plan.actor_step_indices
+        train_traj_ids = plan.train_traj_ids
+        val_traj_ids = plan.val_traj_ids
+        sample_summary = dict(plan.summary)
+        sample_summary["sample_mode"] = "balanced"
+        if sample_plan_out:
+            plan.save(sample_plan_out)
+            if verbose:
+                print(f"[load_expert_buffer] 采样计划已保存：{sample_plan_out}")
+        if verbose:
+            s = sample_summary
+            print(
+                f"[load_expert_buffer] 采样模式=balanced seed={sample_seed}："
+                f"Replay {s['n_replay_steps']} / Actor {s['n_actor_steps']}；"
+                f"train轨 {s['n_train_traj']} val轨 {s['n_val_traj']}；"
+                f"均步/已用轨={s['steps_per_used_traj_mean']:.1f} "
+                f"max={s['steps_per_used_traj_max']}"
+            )
+    else:
+        raise ValueError(f"未知 sample_mode={sample_mode!r}（支持 balanced|prefix）")
+
+    assert replay_idx is not None and actor_idx is not None
     written = 0
-    for i in range(n_target):
+    for i in replay_idx:
+        ii = int(i)
         replay_buffer.add(
-            obs=states_n[i],
-            next_obs=next_n[i],
-            action=actions_all[i],
-            reward=np.array([rewards_all[i]]),
-            done=np.array([bool(dones_all[i])]),
+            obs=states_n[ii],
+            next_obs=next_n[ii],
+            action=actions_all[ii],
+            reward=np.array([rewards_all[ii]]),
+            done=np.array([bool(dones_all[ii])]),
             infos=[{}],
         )
         written += 1
@@ -753,8 +889,13 @@ def load_expert_buffer(
 
     return ExpertLoadResult(
         n_written=written,
-        states=states_n[:written].copy(),
-        actions=actions_all[:written].copy(),
+        states=states_n[actor_idx].copy(),
+        actions=actions_all[actor_idx].copy(),
+        sample_summary=sample_summary,
+        train_traj_ids=train_traj_ids,
+        val_traj_ids=val_traj_ids,
+        replay_step_indices=replay_idx,
+        actor_step_indices=actor_idx,
     )
 
 

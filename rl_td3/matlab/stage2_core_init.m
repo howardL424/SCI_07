@@ -26,6 +26,8 @@ function core = stage2_core_init(cfg_in)
     d.proc_coef     = 0.05;
     d.intercept_pen = 50.0;   % 仅在线/投影用；物理 transition 不写死 -50
     d.w             = 1e4;
+    meta0 = transition_schema_meta();
+    d.action_mapping_version = meta0.action_mapping_version;
 
     fn = fieldnames(d);
     for k = 1:numel(fn)
@@ -37,7 +39,9 @@ function core = stage2_core_init(cfg_in)
     core = struct();
     core.cfg = cfg_in;
     core.H   = evasion_helpers();
-    core.meta = transition_schema_meta();
+    core.meta = meta0;
+    % cfg 可覆盖 meta 中的动作映射版本（A/B 对照）
+    core.meta.action_mapping_version = char(cfg_in.action_mapping_version);
     core.T_pos   = [0, 0, 0];
     core.T_state = [0, 0, 0, 0, 0, 0];
     core.max_ov_M = 8  * cfg_in.g0;
