@@ -20,7 +20,10 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 %     state_abs_next [18×1] 新绝对状态
 %     reward         标量过程奖励（终端 R1/+100 由 Python 在 stage3 后追加）
 %     terminated     逻辑，本 episode（规避段）是否结束
-%     info_vec       [5×1] [r_MD1; r_MD2; r_MT; intercepted; stage2_done]
+%     info_vec       [9×1]
+%       [r_MD1; r_MD2; r_MT; intercepted; stage2_done;
+%        a_M_sat_y; a_M_sat_z; a_M_raw_y; a_M_raw_z]
+%       （后 4 项供轨迹落盘/画图；旧脚本只读前 5 项仍兼容）
 %
 %   动力学实现委托 stage2_core_init + stage2_step（与专家抽取共用）。
 %   本函数对 helper/config 做 persistent 缓存，避免逐步重建。
@@ -53,8 +56,11 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 
     reward     = stage2_process_reward(core, fact);
     terminated = fact.terminated;
+    a_sat = fact.a_M_sat(:);
+    a_raw = fact.a_M(:);
     info_vec   = [fact.r_MD1; fact.r_MD2; fact.r_MT; ...
-                  double(fact.intercepted); double(fact.stage2_done)];
+                  double(fact.intercepted); double(fact.stage2_done); ...
+                  a_sat(1); a_sat(2); a_raw(1); a_raw(2)];
 end
 
 function key = cfg_cache_key(cfg_in)

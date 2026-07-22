@@ -5,6 +5,9 @@ evaluate_td3.py — 加载训练好的 TD3/TD3BC 模型进行蒙特卡洛评估�
     python evaluate_td3.py --model rl_td3/checkpoints/.../best/best_model
     python evaluate_td3.py --model path/to/model --episodes 100 --seed 0
 
+    # 0711/0715 等旧 checkpoint（raw 观测 + td3_box_log_v1）
+    python evaluate_td3.py --model .../best/best_model --obs-mode raw --action-mapping td3_box_log_v1
+
 --seed：仅首轮 env.reset(seed=...) 固定初态抽样序列；策略用 deterministic=True。
 """
 
@@ -18,6 +21,7 @@ import numpy as np
 from stable_baselines3 import TD3
 
 sys.path.insert(0, str(Path(__file__).parent))
+from action_mapping import DEFAULT_ACTION_MAPPING
 from evasion_env import EvasionEnv, KILL_R, STRIKE_OK
 from td3_bc import TD3BC
 
@@ -28,6 +32,18 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--episodes", type=int, default=100,   help="蒙特卡洛评估轮次")
     p.add_argument("--seed",     type=int, default=0)
     p.add_argument("--render",   action="store_true",     help="打印每步信息（调试用）")
+    p.add_argument(
+        "--obs-mode",
+        choices=["scaled", "raw"],
+        default="scaled",
+        help="scaled=OBS_SCALE（当前默认）；raw=兼容 0711/0715 等旧模型",
+    )
+    p.add_argument(
+        "--action-mapping",
+        type=str,
+        default=DEFAULT_ACTION_MAPPING,
+        help="动作映射版本（旧模型用 td3_box_log_v1）",
+    )
     return p.parse_args()
 
 
@@ -147,7 +163,11 @@ def main():
 
     print(f"[evaluate] 加载模型：{model_path_zip}")
     print(f"[evaluate] 固定种子 seed={args.seed}（首轮 reset 注入 env.np_random）")
-    env = EvasionEnv()
+    print(f"[evaluate] obs_mode={args.obs_mode}  action_mapping={args.action_mapping}")
+    env = EvasionEnv(
+        action_mapping=args.action_mapping,
+        obs_normalize=(args.obs_mode == "scaled"),
+    )
     try:
         model = TD3BC.load(model_path, env=env)
     except Exception:

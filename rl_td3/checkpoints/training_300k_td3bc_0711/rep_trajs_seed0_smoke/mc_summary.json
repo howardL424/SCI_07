@@ -1,0 +1,80 @@
+{
+  "model": "rl_td3/checkpoints/training_300k_td3bc_0711/best/best_model.zip",
+  "action_mapping": "td3_box_log_v1",
+  "obs_mode": "raw",
+  "seed": 0,
+  "episodes": 8,
+  "rates": {
+    "evade_ok": 1.0,
+    "strike_ok": 1.0,
+    "both_ok": 1.0,
+    "intercepted": 0.0,
+    "type_a": 1.0,
+    "type_b": 0.0
+  },
+  "counts": {
+    "evade_ok": 8,
+    "strike_ok": 8,
+    "both_ok": 8,
+    "intercepted": 0,
+    "type_a": 8,
+    "type_b": 0
+  },
+  "selection_rules": {
+    "success": "both_ok, r_minT closest to median of successes",
+    "evade_fail_strike": "evade_ok & not strike_ok, prefer r_minT in [15.0,50.0]",
+    "type_b": "only if all prior picks are type A; else skipped",
+    "type_a_def": "all action_norm std < 0.001",
+    "type_b_def": "not type A, and (all |a|>=0.99 or max std_n>=0.1)"
+  },
+  "field_notes": {
+    "pos_*": "stage2 only: N+1 x 3, [x,y,z] after reset then each step (inertial)",
+    "pos_*_s3": "stage3 PN traj (downsampled ~0.1s): M x 3; may be empty if intercepted",
+    "plot_convention_expert": "plot3(x, z, y) as in generate_ps_expert_library.plot_trajectory",
+    "a_M_body": "stage2 N x 2, saturated lateral cmd [a_y, a_z] used by updateState",
+    "a_M_inertial": "stage2 N x 3, reconstructed inertial accel from (a_y,a_z,theta,psi,V)",
+    "a_M_inertial_s3": "stage3 M x 3, same reconstruction from PN a_M + att_M",
+    "gamma_wT_wE": "stage2 only N, physical weights via action_mapping",
+    "t": "stage2 N+1 (includes t=0); t_step length N aligns with actions/accel",
+    "t_s3": "stage3 times continuing from stage2 end (same clock as t)",
+    "t_switch": "stage2 end time; vertical marker between stage2 and stage3",
+    "trajectory_scope": "3D/accel plots should stitch stage2 + stage3; actions remain stage2-only"
+  },
+  "selected": [
+    {
+      "tier": "success_median",
+      "ep": 1,
+      "reason": "both_ok, r_minT=0.1068 closest to median=0.0842 (n=8)",
+      "fallback": false,
+      "steps": 93,
+      "both_ok": true,
+      "evade_ok": true,
+      "strike_ok": true,
+      "intercepted": false,
+      "diverged": false,
+      "reached_pn": true,
+      "n_steps_stage3": 15305,
+      "r_MD1_min": 48.577746816033894,
+      "r_MD2_min": 52.13328136590405,
+      "r_minT": 0.10680865488006284,
+      "action_type": "A",
+      "std_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bound_frac": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "total_reward": 126.6030094866482
+    },
+    {
+      "tier": "type_b",
+      "ep": null,
+      "reason": "requested but no type-B episode found in MC pool",
+      "fallback": false
+    }
+  ]
+}

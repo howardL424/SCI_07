@@ -1,0 +1,98 @@
+{
+  "model": "rl_td3/checkpoints/training_300k_td3bc_0711/best/best_model.zip",
+  "action_mapping": "td3_box_log_v1",
+  "obs_mode": "raw",
+  "seed": 0,
+  "episodes": 100,
+  "rates": {
+    "evade_ok": 0.94,
+    "strike_ok": 0.64,
+    "both_ok": 0.64,
+    "intercepted": 0.06,
+    "type_a": 0.7,
+    "type_b": 0.3
+  },
+  "counts": {
+    "evade_ok": 94,
+    "strike_ok": 64,
+    "both_ok": 64,
+    "intercepted": 6,
+    "type_a": 70,
+    "type_b": 30
+  },
+  "selection_rules": {
+    "success": "both_ok, r_minT closest to median of successes",
+    "evade_fail_strike": "evade_ok & not strike_ok, prefer r_minT in [15.0,50.0]",
+    "type_b": "only if all prior picks are type A; else skipped",
+    "type_a_def": "all action_norm std < 0.001",
+    "type_b_def": "not type A, and (all |a|>=0.99 or max std_n>=0.1)"
+  },
+  "field_notes": {
+    "pos_*": "N+1 x 3, [x,y,z] after reset then each step (inertial)",
+    "plot_convention_expert": "plot3(x, z, y) as in generate_ps_expert_library.plot_trajectory",
+    "a_M_body": "N x 2, saturated lateral cmd [a_y, a_z] used by updateState",
+    "a_M_inertial": "N x 3, reconstructed inertial accel from (a_y,a_z,theta,psi,V)",
+    "gamma_wT_wE": "N, physical weights via action_mapping",
+    "t": "N+1 (includes t=0); t_step length N aligns with actions/accel"
+  },
+  "selected": [
+    {
+      "tier": "success_median",
+      "ep": 20,
+      "reason": "both_ok, r_minT=0.1319 closest to median=0.1314 (n=64)",
+      "fallback": false,
+      "steps": 80,
+      "both_ok": true,
+      "evade_ok": true,
+      "strike_ok": true,
+      "intercepted": false,
+      "r_MD1_min": 32.03821475474854,
+      "r_MD2_min": 76.08619133476073,
+      "r_minT": 0.13194586955604515,
+      "action_type": "A",
+      "std_n": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bound_frac": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "total_reward": 124.99735903179975
+    },
+    {
+      "tier": "evade_fail_strike",
+      "ep": 0,
+      "reason": "FALLBACK: no r_minT in [15.0,50.0]; closest evade-fail r_minT=550.0000 (n_fail=30)",
+      "fallback": true,
+      "steps": 11,
+      "both_ok": false,
+      "evade_ok": true,
+      "strike_ok": false,
+      "intercepted": false,
+      "r_MD1_min": 110.0,
+      "r_MD2_min": 110.0,
+      "r_minT": 550.0,
+      "action_type": "B",
+      "std_n": [
+        0.0,
+        0.5749595745760689,
+        0.5749595745760689
+      ],
+      "bound_frac": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "total_reward": 1.2937003849612494
+    },
+    {
+      "tier": "type_b",
+      "ep": null,
+      "reason": "skipped: at least one prior pick is already non-A",
+      "fallback": false
+    }
+  ]
+}

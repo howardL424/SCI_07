@@ -1,0 +1,37 @@
+[
+  {
+    "tier": "success_median",
+    "ep": 1,
+    "reason": "both_ok, r_minT=0.1068 closest to median=0.0842 (n=8)",
+    "fallback": false,
+    "steps": 93,
+    "both_ok": true,
+    "evade_ok": true,
+    "strike_ok": true,
+    "intercepted": false,
+    "diverged": false,
+    "reached_pn": true,
+    "n_steps_stage3": 15305,
+    "r_MD1_min": 48.577746816033894,
+    "r_MD2_min": 52.13328136590405,
+    "r_minT": 0.10680865488006284,
+    "action_type": "A",
+    "std_n": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "bound_frac": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "total_reward": 126.6030094866482
+  },
+  {
+    "tier": "type_b",
+    "ep": null,
+    "reason": "requested but no type-B episode found in MC pool",
+    "fallback": false
+  }
+]

@@ -1,0 +1,19 @@
+{
+  "seed": 1,
+  "episodes": 100,
+  "n_steps": 8630,
+  "gamma_pos_frac": 1.0,
+  "gamma_neg_frac": 0.0,
+  "gamma_other_frac": 0.0,
+  "wT_lo_frac": 0.0,
+  "wT_hi_frac": 1.0,
+  "wT_other_frac": 0.0,
+  "wE_lo_frac": 1.0,
+  "wE_hi_frac": 0.0,
+  "wE_other_frac": 0.0,
+  "gamma_mean": 3.0,
+  "wT_mean": 100000.0,
+  "wE_mean": 100.0,
+  "bound_frac_any": 1.0,
+  "bound_frac_all": 1.0
+}
