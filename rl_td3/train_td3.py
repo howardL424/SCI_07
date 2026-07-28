@@ -36,7 +36,7 @@ from stable_baselines3.common.noise import NormalActionNoise
 
 # ── 确保 rl_td3/ 目录在 Python 路径上 ──────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent))
-from evasion_env import EvasionEnv
+from evasion_env import EvasionEnv, SAMPLES_FILE, SAMPLES_VAL_FILE
 from load_expert_buffer import (
     DATA_DIR,
     DEFAULT_ALIGNED_PATH,
@@ -241,6 +241,18 @@ def parse_args() -> argparse.Namespace:
         help="每次评估的 episode 数（默认 20，越大 best_model 越可信）",
     )
     p.add_argument(
+        "--train-samples",
+        type=str,
+        default=SAMPLES_FILE,
+        help="训练 env 初态池（默认 samples_clean.mat）",
+    )
+    p.add_argument(
+        "--eval-samples",
+        type=str,
+        default=SAMPLES_VAL_FILE,
+        help="EvalCallback 初态池（默认 samples_clean_val.mat）",
+    )
+    p.add_argument(
         "--bc-lambda0",
         type=float,
         default=DEFAULTS["bc_lambda0"],
@@ -311,9 +323,12 @@ def parse_args() -> argparse.Namespace:
     return resolve_run_config(p.parse_args())
 
 
-def make_env(action_mapping: str = DEFAULT_ACTION_MAPPING) -> EvasionEnv:
+def make_env(
+    action_mapping: str = DEFAULT_ACTION_MAPPING,
+    samples_file: str = SAMPLES_FILE,
+) -> EvasionEnv:
     """创建并用 Monitor 包装环境，记录每个 episode 的 reward 和长度。"""
-    env = EvasionEnv(action_mapping=action_mapping)
+    env = EvasionEnv(samples_file=samples_file, action_mapping=action_mapping)
     return Monitor(env)
 
 
@@ -338,13 +353,16 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     print(f"  专家库  : {args.expert}")
     print(f"  对齐数据: {args.aligned}")
     print(f"  评估 ep 数: {args.n_eval}（每 {DEFAULTS['eval_freq']:,} 步）")
+    print(f"  训练初态: {args.train_samples}")
+    print(f"  评估初态: {args.eval_samples}（EvalCallback / best_model）")
     print(f"  梯度裁剪: {'禁用' if args.grad_clip == 0 else f'±{args.grad_clip}'}")
     print(f"  保存目录: {save_dir}")
     print("=" * 60)
 
     # ── 创建环境 ─────────────────────────────────────────────────────────────
-    env = make_env(args.action_mapping)
-    eval_env = make_env(args.action_mapping)  # 独立评估环境（避免干扰训练 episode）
+    env = make_env(args.action_mapping, samples_file=args.train_samples)
+    # 独立评估环境：初态只从 val-IC 抽，用于曲线与选 best
+    eval_env = make_env(args.action_mapping, samples_file=args.eval_samples)
     env.reset(seed=args.seed)
     eval_env.reset(seed=args.seed + 1)
 

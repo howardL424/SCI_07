@@ -45,7 +45,7 @@ td3_baseline/
 |----|------|
 | Python | `E:\Python\venvs\rl_pytorch\Scripts\python.exe` |
 | 工作目录 | `D:\LTY\yan\yanerxia\GAIL` |
-| MATLAB Engine | 与 BC-TD3 相同（`samples_clean.mat` 在仓库根） |
+| MATLAB Engine | 与 BC-TD3 相同（训练初态 `samples_clean.mat`；EvalCallback 默认 `samples_clean_val.mat`） |
 | 专家库 / terminal cache | **不需要** |
 
 ---
@@ -60,11 +60,19 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 
 # 冒烟（5k 步 → td3_baseline/checkpoints_smoke）
 & $PY td3_baseline/train_td3_pure.py --smoke
+注：想指定非默认冒烟测试步数，在最后加--steps 20000（想要的步数）即可
 
 # 正式 300k（务必独立 save-dir）
 & $PY td3_baseline/train_td3_pure.py `
   --save-dir td3_baseline/checkpoints/training_300k_$(Get-Date -Format 'yyyyMMdd_HHmm') `
   --name td3_pure --seed 0
+
+# 正式非默认步数（例：260k）——必须同时改 --steps 与独立 save-dir/--name
+& $PY td3_baseline/train_td3_pure.py `
+  --steps 260000 `
+  --save-dir td3_baseline/checkpoints/training_260k_$(Get-Date -Format 'yyyyMMdd_HHmm') `
+  --name td3_pure_260k `
+  --seed 0
 ```
 
 ### 3.2 默认超参
@@ -82,6 +90,8 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | `noise_sigma` | 0.1 | `--noise` |
 | `eval_freq` | 10,000 | （代码内） |
 | `n_eval_episodes` | 20 | `--n-eval` |
+| `train_samples` | `samples_clean.mat` | `--train-samples` |
+| `eval_samples` | `samples_clean_val.mat` | `--eval-samples` |
 | `grad_clip` | ±10.0 | `--grad-clip`（0=关） |
 | `seed` | 0 | `--seed` |
 | `action_mapping` | `ratio_log_box_v1` | `--action-mapping` |
@@ -96,7 +106,7 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | 最终模型 | `{save_dir}/{name}.zip` |
 | 最优模型 | `{save_dir}/best/best_model.zip` |
 | 周期 checkpoint | `{save_dir}/{name}_*_steps.zip` |
-| EvalCallback | `{save_dir}/eval_logs/` |
+| EvalCallback | `{save_dir}/eval_logs/`（每 10k 步 × `--n-eval` ep，初态默认自 `samples_clean_val.mat`） |
 | TensorBoard | `{save_dir}/tb_logs/` |
 | 终端 tee | `td3_baseline/logs/{name}_{时间戳}.log` |
 
@@ -104,16 +114,17 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 
 ## 4. 蒙特卡洛评估
 
-与 BC-TD3 **同一协议**（同 `--seed` / `--episodes` 才可对比）：
+与 BC-TD3 **同一协议**（默认全量 `samples_clean_test`）：
 
 ```powershell
 & $PY td3_baseline/evaluate_td3_pure.py `
-  --model td3_baseline/checkpoints/<你的目录>/best/best_model `
-  --episodes 100 `
-  --seed 0
+  --model td3_baseline/checkpoints/<你的目录>/best/best_model
 ```
 
-也可直接调用 `rl_td3/evaluate_td3.py`（封装仅转发）。
+也可直接调用 `rl_td3/evaluate_td3.py`（封装仅转发）。旧随机协议：`--episodes 100 --seed 0`。
+
+日志默认写入模型所在 training 目录，例如：
+`{save_dir}/monte_carlo_eval_best_seed{seed}_{时间戳}.log`（可用 `--log-file` / `--no-log`）。
 
 成功判据：双防 `r_MD≥6`、打击 `r_minT≤10`、both_ok、拦截 —— 与 BC 文档 §5.3 相同。
 
@@ -121,8 +132,8 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 
 ## 5. 实验建议
 
-1. 与 BC-TD3 主跑使用相同 `steps`、`lr`、`action-mapping`、评估 seed/episodes。
-2. 下结论建议 ≥3 个训练 `--seed`；评估固定同一 `--seed`。
+1. 与 BC-TD3 主跑使用相同 `steps`、`lr`、`action-mapping`；训后 MC 用同一 `--samples`（默认 test）。
+2. 下结论建议 ≥3 个训练 `--seed`；全量 test 评估无需再对齐 MC 抽样种子；非全量评估要对比同一 `--seed`
 3. 产物目录与 `rl_td3/checkpoints` 隔离，避免覆盖。
 
 ---

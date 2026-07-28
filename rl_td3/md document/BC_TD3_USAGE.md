@@ -23,7 +23,9 @@
 | 专家采样 | 默认 **轨迹均衡** 约 99k（`expert_sampling.py`）；禁止扁平前缀截取；**Actor / TD3 专家 MSE 默认只采 `both_ok`**（Replay 仍可含拦截与 stage3 失败） |
 | 纯 Actor BC | `train_bc.py`（独立监督；过判断门再 TD3） |
 | 训练随机种子 | `--seed`（默认 `0`），覆盖 NumPy / PyTorch / SB3 / env；`--sample-seed` 可单独定采样 |
-| 评估随机种子 | `--seed`（默认 `0`），控制 `samples_clean` 初态抽样序列 |
+| 评估随机种子 | 全量 test 模式不依赖抽样种子；`--episodes N` 随机模式时 `--seed` 固定序列 |
+| 训练内评估初态 | 默认 `samples_clean_val.mat`（`--eval-samples`）；训练交互默认 `samples_clean.mat`（`--train-samples`） |
+| 训后 MC 初态 | 默认 `samples_clean_test.mat`，**测完全部有效初态**（`--episodes 0`）；可用 `--episodes N` 回退随机抽 |
 
 ---
 
@@ -178,7 +180,7 @@ actor_loss = -Q(s, π(s)) + λ(t) · ‖π(s_E) - a_E‖²
 
 - 已配置的 `rl_pytorch` 环境（Gymnasium、SB3、PyTorch、MATLAB Engine、`mat73` 等）
 - 本机 MATLAB 可被 Engine 启动
-- `samples_clean.mat` 在仓库根目录
+- `samples_clean.mat`（训练）、`samples_clean_val.mat`（EvalCallback）、`samples_clean_test.mat`（训后 MC）在仓库根目录
 - 专家库 `.mat` 路径正确（默认见上表）
 
 ### 3.2 旧库：重建对齐 transition（一次性迁移）
@@ -403,6 +405,13 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py `
   --save-dir rl_td3/checkpoints/training_300k_YYYYMMDD_HHMM `
   --name td3_300k
 
+# 正式非默认步数（例：260k）——必须同时改 --steps 与独立 save-dir/--name
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py `
+  --steps 260000 `
+  --save-dir rl_td3/checkpoints/training_260k_$(Get-Date -Format 'yyyyMMdd_HHmm') `
+  --name td3_260k `
+  --seed 0
+
 # 自定义专家库 / 终端缓存
 E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py `
   --expert E:\matlab\result_0714\expert_lib_1000.mat `
@@ -431,6 +440,8 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 | `learning_starts` | 有 BC 时为 0；`--no-bc` 时为 1000 | |
 | `eval_freq` | 10,000 | （代码内） |
 | `n_eval_episodes` | 20 | `--n-eval` |
+| `train_samples` | `samples_clean.mat` | `--train-samples` |
+| `eval_samples` | `samples_clean_val.mat` | `--eval-samples` |
 | `grad_clip` | ±10.0（元素级 clamp） | `--grad-clip`（0=关） |
 | `bc_ratio` | 0.33（最多写 `buf×bc_ratio` 条，默认 99,000） | `--bc-ratio` |
 | `bc_lambda0` | 1.0 | `--bc-lambda0` |
@@ -448,7 +459,7 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 1. `set_global_seed(--seed)`；启动两套 MATLAB Engine（train env + eval env）  
 2. 构建 `TD3BC`（含 `seed`），探索噪声 `Normal(0, σ)`  
 3. 除非 `--no-bc`：按 `balanced` 采样写入最多 `args.buf × bc_ratio` 条到 Replay；`set_expert_dataset` 使用 Actor 子集（默认 **`actor_eligible=both_ok`**，可用 `--actor-eligible` / `--actor-include-intercepted` 对照）  
-4. `learn`：`CheckpointCallback` + `EvalCallback`（deterministic）+ 可选梯度裁剪  
+4. `learn`：`CheckpointCallback` + `EvalCallback`（deterministic；初态默认自 `samples_clean_val`）+ 可选梯度裁剪  
 5. 保存最终 `{save_dir}/{name}.zip`；最优策略在 `{save_dir}/best/best_model.zip`  
 6. 正式训练默认另存采样计划 `rl_td3/data/expert_set_{budget}_seed{s}.npz`
 
@@ -459,7 +470,7 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 | 最终模型 | `{save_dir}/{name}.zip` |
 | 最优模型 | `{save_dir}/best/best_model.zip` |
 | 周期 checkpoint | `{save_dir}/{name}_*_steps.zip` |
-| EvalCallback 日志 | `{save_dir}/eval_logs/` |
+| EvalCallback 日志 | `{save_dir}/eval_logs/`（每 10k×`--n-eval`，默认 val-IC） |
 | TensorBoard | `{save_dir}/tb_logs/` |
 | 终端 tee 日志 | `rl_td3/logs/{name}_{时间戳}.log`（可用 `--log-file` / `--no-log`） |
 
@@ -483,48 +494,49 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 ```powershell
 cd D:\LTY\yan\yanerxia\GAIL
 
-# 推荐：评估 best_model，100 轮，固定种子 0（默认）
+# 推荐：评估 best_model，默认测完全部 samples_clean_test 有效初态
 E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/evaluate_td3.py `
-  --model rl_td3/checkpoints/training_300k_20260715_1008/best/best_model `
+  --model rl_td3/checkpoints/training_300k_20260715_1008/best/best_model
+
+# 指定初态池（仍默认测全）
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/evaluate_td3.py `
+  --model .../best/best_model `
+  --samples samples_clean_test.mat
+
+# 旧协议：随机抽 N 轮（有放回），固定种子
+E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/evaluate_td3.py `
+  --model .../best/best_model `
   --episodes 100 `
   --seed 0
 
-# 换种子做另一组可复现抽样
-E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/evaluate_td3.py `
-  --model rl_td3/checkpoints/training_300k_20260715_1008/best/best_model `
-  --episodes 100 `
-  --seed 42
-
-# 调试：打印第 1 轮每步信息
+# 调试：随机 5 轮并打印第 1 轮每步
 E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/evaluate_td3.py `
   --model path/to/model --episodes 5 --seed 0 --render
 ```
 
 `--model` 写不带或带 `.zip` 均可。优先 `TD3BC.load`，失败再回退 `TD3.load`。
 
-### 5.2 固定种子行为（`--seed`）
+终端输出默认 tee 到模型所在 **training 目录**（与历史 MC 日志一致）：
 
-蒙特卡洛每轮会从 `samples_clean.mat` 里**随机抽一行**当初态。能不能复现，取决于这个「抽哪一行」的随机数是否被固定。
+| 评估对象 | 默认日志路径 |
+|----------|--------------|
+| `.../best/best_model` | `{save_dir}/monte_carlo_eval_best_seed{seed}_{时间戳}.log` |
+| `.../{name}`（最终模型） | `{save_dir}/monte_carlo_eval_final_seed{seed}_{时间戳}.log` |
+| `.../{name}_N_steps` | `{save_dir}/monte_carlo_eval_{name}_N_steps_seed{seed}_{时间戳}.log` |
 
-环境里真正用来抽行的是 Gymnasium 的 `env.np_random`，不是全局的 `np.random`。要固定它，必须调用：
+可用 `--log-file` 覆盖路径，或 `--no-log` 关闭写文件。
 
-```python
-env.reset(seed=某个整数)
-```
+### 5.2 默认协议（全量 test-IC）
 
-当前 `evaluate_td3.py` 的做法：
+| 项 | 说明 |
+|----|------|
+| 初态池 | 默认 `samples_clean_test.mat`（`--samples`） |
+| 轮数 | `--episodes 0`（默认）→ 按过滤后有效行**逐条测完**（约 300） |
+| 失败处理 | 某行 warm-start 无 stage2 则跳过并计数，不换其它行 |
+| 策略 | `predict(..., deterministic=True)` |
+| 对比要求 | 同模型对比用同一 `--samples`；全量模式下不必对齐 `--seed`/`--episodes` |
 
-| 行为 | 说明 |
-|------|------|
-| `--seed` 默认 | `0` |
-| MC 第 1 轮 | `env.reset(seed=args.seed)`，把 RNG 钉死 |
-| MC 第 2～N 轮 | `env.reset()`（不传 seed），沿同一随机序列继续往下抽 |
-| 策略 | `predict(..., deterministic=True)`，无探索噪声 |
-| 末尾动作探针 | MC 结束后再用同一 seed 重启 RNG，另抽 20 个初态打印 `(γ,wT,wE)` |
-
-因此：**相同模型 + 相同 `--seed` + 相同 `--episodes` → 同一组初态序列与同一套统计**（MATLAB/硬件无异常时）。
-
-对比不同模型时，务必使用**相同 `--seed` 与 `--episodes`**。
+随机模式（`--episodes N>0`）仍用 Gymnasium RNG：首轮 `reset(seed=...)`，后续沿同一序列有放回抽样。对比随机结果时须相同 `--seed` 与 `--episodes`。
 
 ### 5.3 成功判据（与训练环境一致）
 
@@ -562,11 +574,9 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
   --save-dir rl_td3/checkpoints/training_300k_$(Get-Date -Format 'yyyyMMdd_HHmm') `
   --name td3_300k
 
-# 4) 蒙特卡洛（固定种子，便于写论文/对比）
+# 4) 蒙特卡洛（默认全量 samples_clean_test）
 & $PY rl_td3/evaluate_td3.py `
-  --model rl_td3/checkpoints/<你的目录>/best/best_model `
-  --episodes 100 `
-  --seed 0
+  --model rl_td3/checkpoints/<你的目录>/best/best_model
 ```
 
 ---

@@ -34,6 +34,8 @@ GAIL_ROOT    = str(Path(__file__).parent.parent.resolve())
 MATLAB_DIR   = str(Path(__file__).parent / "matlab")
 EXPERT_DIR   = str(Path(GAIL_ROOT) / "expert_trajectory")
 SAMPLES_FILE = str(Path(GAIL_ROOT) / "samples_clean.mat")
+SAMPLES_VAL_FILE = str(Path(GAIL_ROOT) / "samples_clean_val.mat")
+SAMPLES_TEST_FILE = str(Path(GAIL_ROOT) / "samples_clean_test.mat")
 
 # ── 常量（与 reward_projection.DEFAULT_REWARD_CFG 同步，供评估脚本 import）──
 ACT_DIM   = 3
@@ -177,7 +179,8 @@ class EvasionEnv(gym.Env):
                 f"[EvasionEnv] {samples_file} 过滤全零行后无剩余样本"
             )
         print(
-            f"[EvasionEnv] samples_clean: 保留 {self._n_samples}/{samples_all.shape[0]} 行"
+            f"[EvasionEnv] {Path(samples_file).name}: "
+            f"保留 {self._n_samples}/{samples_all.shape[0]} 行"
             + (f"（已滤除全零 {n_drop} 行）" if n_drop else "")
         )
 
@@ -203,6 +206,41 @@ class EvasionEnv(gym.Env):
             return normalize_obs(x)
         return x.astype(np.float32)
 
+    @property
+    def n_samples(self) -> int:
+        """过滤全零后的有效初态数量。"""
+        return self._n_samples
+
+    def _reset_at_local(self, local_idx: int):
+        """
+        用过滤后库内下标启动 episode。
+        warm-start 失败时返回 None（定点评估勿静默换行）。
+        """
+        local_idx = int(local_idx)
+        if local_idx < 0 or local_idx >= self._n_samples:
+            raise IndexError(
+                f"local_idx={local_idx} 超出范围 [0, {self._n_samples})"
+            )
+        row_idx = int(self._sample_row_ids[local_idx])  # 原始 mat 行号
+        row_ml = matlab.double(self._samples[local_idx].tolist())
+        obs_ml, sabs_ml, Tev_ml, zT0_ml, ok_ml = self._eng.env_reset(
+            row_ml, self.matlab_cfg, nargout=5
+        )
+        if not bool(ok_ml):
+            return None
+
+        obs_phys = np.array(obs_ml, dtype=np.float32).flatten()
+        self._state_abs = np.array(sabs_ml, dtype=np.float64).flatten()
+        self._t = 0.0
+        self._Tev = float(Tev_ml)
+        self._zT0 = float(zT0_ml)
+        self._r_min1 = np.inf
+        self._r_min2 = np.inf
+        return self._format_obs(obs_phys), {
+            "row_idx": row_idx,
+            "local_idx": local_idx,
+        }
+
     def reset(
         self,
         *,
@@ -210,34 +248,27 @@ class EvasionEnv(gym.Env):
         options: Optional[dict] = None,
     ):
         super().reset(seed=seed)
+        options = options or {}
+
+        # 定点初态（训后 MC 测全 test 集）：失败不换行
+        if "local_idx" in options:
+            out = self._reset_at_local(int(options["local_idx"]))
+            if out is None:
+                raise RuntimeError(
+                    f"[EvasionEnv] local_idx={int(options['local_idx'])} "
+                    f"warm-start 无有效规避段（file={self.samples_file}）"
+                )
+            return out
 
         for _ in range(self.max_retries):
             local_idx = int(self.np_random.integers(0, self._n_samples))
-            row_idx = int(self._sample_row_ids[local_idx])  # 原始 mat 行号
-            row_ml = matlab.double(self._samples[local_idx].tolist())
-
-            obs_ml, sabs_ml, Tev_ml, zT0_ml, ok_ml = self._eng.env_reset(
-                row_ml, self.matlab_cfg, nargout=5
-            )
-            ok = bool(ok_ml)
-            if not ok:
-                continue
-
-            obs_phys = np.array(obs_ml, dtype=np.float32).flatten()
-            self._state_abs = np.array(sabs_ml, dtype=np.float64).flatten()
-            self._t         = 0.0
-            self._Tev       = float(Tev_ml)
-            self._zT0       = float(zT0_ml)
-            self._r_min1    = np.inf
-            self._r_min2    = np.inf
-            return self._format_obs(obs_phys), {
-                "row_idx": row_idx,
-                "local_idx": local_idx,
-            }
+            out = self._reset_at_local(local_idx)
+            if out is not None:
+                return out
 
         raise RuntimeError(
             f"[EvasionEnv] {self.max_retries} 次采样均未找到有效规避段，"
-            "请检查 samples_clean.mat 或 warm-start 配置。"
+            f"请检查 {self.samples_file} 或 warm-start 配置。"
         )
 
     def reset_from_abs(
