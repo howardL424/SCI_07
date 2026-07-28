@@ -24,5 +24,6 @@ Thumbs.db
 
 # 大文件 / 模型
 *.mat
+!samples_clean*.mat
 # *.pth
 # *.ckpt
