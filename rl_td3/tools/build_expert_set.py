@@ -47,7 +47,14 @@ def main() -> None:
     p.add_argument(
         "--actor-include-intercepted",
         action="store_true",
-        help="Actor BC 也纳入拦截轨迹（默认排除）",
+        help="Actor BC 也纳入拦截轨迹（等价于 --actor-eligible all）",
+    )
+    p.add_argument(
+        "--actor-eligible",
+        type=str,
+        default="both_ok",
+        choices=["both_ok", "non_intercepted", "all"],
+        help="Actor/TD3 专家 MSE 轨迹资格（默认 both_ok=stage3 质量门）",
     )
     p.add_argument(
         "--replay-exclude-intercepted",
@@ -94,6 +101,9 @@ def main() -> None:
         n_tgo_bins=args.n_tgo_bins,
         force_terminal=True,
         actor_exclude_intercepted=not args.actor_include_intercepted,
+        actor_eligible=(
+            "all" if args.actor_include_intercepted else args.actor_eligible
+        ),
         replay_include_intercepted=not args.replay_exclude_intercepted,
         terminal_cache=cache,
         ok_modes=ok_modes,
@@ -124,6 +134,8 @@ def main() -> None:
         "steps_per_used_traj_max",
         "intercept_rate_train",
         "both_ok_train",
+        "actor_eligible",
+        "actor_stage3_fail_step_frac",
         "ok_mode_train",
     ):
         if k in summary:

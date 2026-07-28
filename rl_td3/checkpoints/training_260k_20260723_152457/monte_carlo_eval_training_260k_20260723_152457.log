@@ -1,0 +1,128 @@
+# model: rl_td3/checkpoints/training_260k_20260723_152457/best/best_model
+# training: training_260k_20260723_152457
+# episodes: 100
+# seeds: 0, 42
+# date: 2026-07-23
+# commands:
+#   E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/evaluate_td3.py --model rl_td3/checkpoints/training_260k_20260723_152457/best/best_model --episodes 100 --seed 0
+#   E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/evaluate_td3.py --model rl_td3/checkpoints/training_260k_20260723_152457/best/best_model --episodes 100 --seed 42
+
+========== seed=0 ==========
+[evaluate] 加载模型：rl_td3/checkpoints/training_260k_20260723_152457/best/best_model.zip
+[evaluate] 固定种子 seed=0（首轮 reset 注入 env.np_random）
+[evaluate] obs_mode=scaled  action_mapping=ratio_log_box_v1
+[EvasionEnv] samples_clean: 保留 2351/3400 行（已滤除全零 1049 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a Monitor wrapper
+Wrapping the env in a DummyVecEnv.
+
+[evaluate] 开始 100 轮蒙特卡洛评估…
+  [ep  10/100] 双防+打击成功率 100.0%  r_MD1_min=25.2m  r_minT=0.06m
+  [ep  20/100] 双防+打击成功率 95.0%  r_MD1_min=55.4m  r_minT=0.03m
+  [ep  30/100] 双防+打击成功率 90.0%  r_MD1_min=30.7m  r_minT=0.17m
+  [ep  40/100] 双防+打击成功率 90.0%  r_MD1_min=37.1m  r_minT=0.07m
+  [ep  50/100] 双防+打击成功率 92.0%  r_MD1_min=20.4m  r_minT=0.23m
+  [ep  60/100] 双防+打击成功率 93.3%  r_MD1_min=42.2m  r_minT=0.14m
+  [ep  70/100] 双防+打击成功率 91.4%  r_MD1_min=30.3m  r_minT=0.10m
+  [ep  80/100] 双防+打击成功率 92.5%  r_MD1_min=34.6m  r_minT=0.08m
+  [ep  90/100] 双防+打击成功率 93.3%  r_MD1_min=18.7m  r_minT=0.24m
+  [ep 100/100] 双防+打击成功率 93.0%  r_MD1_min=26.5m  r_minT=0.20m
+
+============================================================
+  评估结果：TD3 (BC热启动)  （100 轮）
+============================================================
+  双防均规避成功  (d1,d2≥6m)       :  95/100 = 95.0%
+  打击成功        (r_minT≤10m)     :  93/100 = 93.0%
+  规避+打击 全部达标                  :  93/100 = 93.0%
+  被拦截          (r_MD<6m)          :   5/100 = 5.0%
+  最小脱靶距离 D1  mean±std (m)       : 54.3 ± 197.9
+  最小脱靶距离 D2  mean±std (m)       : 36.3 ± 19.3
+  终端脱靶 r_minT  mean±std (m)       : 315.62 ± 2157.27  (n=95)
+  累计奖励         mean±std            : 116.41 ± 36.82
+
+[evaluate] 抽样 20 个初态，输出策略网络动作分布…
+    γ= 1.604  wT=9.83e+06  wE=9.83e+03
+    γ= 2.300  wT=9.97e+06  wE=9.97e+03
+    γ= 2.213  wT=9.96e+06  wE=9.96e+03
+    γ=-2.998  wT=4.34e+00  wE=4.32e+02
+    γ=-2.998  wT=6.44e+00  wE=6.41e+02
+    γ= 2.203  wT=9.99e+06  wE=9.99e+03
+    γ= 2.506  wT=9.88e+06  wE=9.90e+03
+    γ=-2.998  wT=5.02e+00  wE=5.00e+02
+    γ=-2.998  wT=4.94e+00  wE=4.92e+02
+    γ= 2.358  wT=9.98e+06  wE=9.98e+03
+    γ=-2.998  wT=4.90e+00  wE=4.89e+02
+    γ= 1.934  wT=9.87e+06  wE=9.87e+03
+    γ= 1.637  wT=9.59e+06  wE=9.61e+03
+    γ= 2.267  wT=9.98e+06  wE=9.98e+03
+    γ= 2.279  wT=9.83e+06  wE=9.83e+03
+    γ= 2.316  wT=9.95e+06  wE=9.95e+03
+    γ= 2.243  wT=9.76e+06  wE=9.78e+03
+    γ=-2.998  wT=9.80e+00  wE=9.77e+02
+    γ=-2.998  wT=9.09e+00  wE=9.04e+02
+    γ= 1.664  wT=9.82e+06  wE=9.82e+03
+
+  γ  均值=0.327  范围=[-2.998, 2.506]
+  wT 均值=6.42e+06  范围=[4.34e+00, 9.99e+06]
+  wE 均值=6.65e+03  范围=[4.32e+02, 9.99e+03]
+
+========== seed=42 ==========
+[evaluate] 加载模型：rl_td3/checkpoints/training_260k_20260723_152457/best/best_model.zip
+[evaluate] 固定种子 seed=42（首轮 reset 注入 env.np_random）
+[evaluate] obs_mode=scaled  action_mapping=ratio_log_box_v1
+[EvasionEnv] samples_clean: 保留 2351/3400 行（已滤除全零 1049 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a Monitor wrapper
+Wrapping the env in a DummyVecEnv.
+
+[evaluate] 开始 100 轮蒙特卡洛评估…
+  [ep  10/100] 双防+打击成功率 100.0%  r_MD1_min=30.1m  r_minT=0.21m
+  [ep  20/100] 双防+打击成功率 85.0%  r_MD1_min=15.9m  r_minT=0.15m
+  [ep  30/100] 双防+打击成功率 86.7%  r_MD1_min=19.0m  r_minT=0.21m
+  [ep  40/100] 双防+打击成功率 87.5%  r_MD1_min=0.2m  r_minT=nan
+  [ep  50/100] 双防+打击成功率 90.0%  r_MD1_min=52.8m  r_minT=0.24m
+  [ep  60/100] 双防+打击成功率 91.7%  r_MD1_min=50.1m  r_minT=0.10m
+  [ep  70/100] 双防+打击成功率 92.9%  r_MD1_min=43.7m  r_minT=0.16m
+  [ep  80/100] 双防+打击成功率 93.8%  r_MD1_min=34.2m  r_minT=0.10m
+  [ep  90/100] 双防+打击成功率 93.3%  r_MD1_min=31.7m  r_minT=0.25m
+  [ep 100/100] 双防+打击成功率 94.0%  r_MD1_min=17.0m  r_minT=0.12m
+
+============================================================
+  评估结果：TD3 (BC热启动)  （100 轮）
+============================================================
+  双防均规避成功  (d1,d2≥6m)       :  94/100 = 94.0%
+  打击成功        (r_minT≤10m)     :  94/100 = 94.0%
+  规避+打击 全部达标                  :  94/100 = 94.0%
+  被拦截          (r_MD<6m)          :   6/100 = 6.0%
+  最小脱靶距离 D1  mean±std (m)       : 33.2 ± 13.6
+  最小脱靶距离 D2  mean±std (m)       : 42.3 ± 22.0
+  终端脱靶 r_minT  mean±std (m)       : 0.13 ± 0.07  (n=94)
+  累计奖励         mean±std            : 115.77 ± 39.11
+
+[evaluate] 抽样 20 个初态，输出策略网络动作分布…
+    γ=-2.998  wT=4.93e+00  wE=4.92e+02
+    γ=-2.998  wT=4.15e+00  wE=4.14e+02
+    γ= 2.306  wT=9.88e+06  wE=9.90e+03
+    γ= 2.200  wT=9.96e+06  wE=9.96e+03
+    γ= 2.194  wT=9.95e+06  wE=9.95e+03
+    γ=-2.998  wT=1.74e+01  wE=1.73e+03
+    γ=-2.997  wT=6.28e+00  wE=6.26e+02
+    γ= 2.405  wT=9.92e+06  wE=9.92e+03
+    γ= 2.339  wT=9.96e+06  wE=9.96e+03
+    γ= 2.172  wT=9.95e+06  wE=9.95e+03
+    γ=-2.998  wT=4.93e+00  wE=4.92e+02
+    γ=-2.997  wT=1.78e+01  wE=1.77e+03
+    γ=-2.997  wT=6.93e+00  wE=6.91e+02
+    γ= 2.004  wT=9.72e+06  wE=9.73e+03
+    γ= 2.641  wT=9.93e+06  wE=9.93e+03
+    γ=-2.998  wT=5.72e+00  wE=5.70e+02
+    γ= 1.930  wT=9.70e+06  wE=9.71e+03
+    γ=-2.997  wT=6.24e+00  wE=6.20e+02
+    γ= 2.177  wT=9.71e+06  wE=9.71e+03
+    γ=-2.998  wT=2.02e+01  wE=2.01e+03
+
+  γ  均值=-0.380  范围=[-2.998, 2.641]
+  wT 均值=4.93e+06  范围=[4.15e+00, 9.96e+06]
+  wE 均值=5.41e+03  范围=[4.14e+02, 9.96e+03]

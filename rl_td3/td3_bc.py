@@ -29,7 +29,7 @@ class TD3BC(TD3):
         env: Union[GymEnv, str],
         learning_rate: Union[float, Schedule] = 1e-3,
         bc_lambda0: float = 1.0,
-        bc_decay_steps: int = 150_000,
+        bc_decay_steps: int = 200_000,
         **kwargs: Any,
     ):
         self.bc_lambda0 = float(bc_lambda0)

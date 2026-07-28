@@ -1,6 +1,7 @@
 # BC-TD3 训练与蒙特卡洛评估使用说明
 
 > **生成时间**：2026-07-16  
+> **最近对齐**：2026-07-23（Actor 默认 `actor_eligible=both_ok`；`both_ok` 由事实重算）  
 > **与当前代码对齐**；旧版设计对话摘要见 `CONTEXT_TD3_TRAINING.md`  
 > **历史实验和分析改进记录**：同目录 `SESSION_SUMMARY_*.md`
 
@@ -19,7 +20,7 @@
 | 对齐 transition | 旧库：`rl_td3/data/expert_transitions_aligned.mat`；**新库无需** |
 | 终端奖励缓存 | `rl_td3/data/expert_terminal_cache.npz`（stage3 sidecar；训练前必须有） |
 | 观测归一化 | 固定 `OBS_SCALE`（`obs_norm.py`），专家与在线共用 |
-| 专家采样 | 默认 **轨迹均衡** 约 99k（`expert_sampling.py`）；禁止扁平前缀截取 |
+| 专家采样 | 默认 **轨迹均衡** 约 99k（`expert_sampling.py`）；禁止扁平前缀截取；**Actor / TD3 专家 MSE 默认只采 `both_ok`**（Replay 仍可含拦截与 stage3 失败） |
 | 纯 Actor BC | `train_bc.py`（独立监督；过判断门再 TD3） |
 | 训练随机种子 | `--seed`（默认 `0`），覆盖 NumPy / PyTorch / SB3 / env；`--sample-seed` 可单独定采样 |
 | 评估随机种子 | `--seed`（默认 `0`），控制 `samples_clean` 初态抽样序列 |
@@ -167,11 +168,11 @@ actor_loss = -Q(s, π(s)) + λ(t) · ‖π(s_E) - a_E‖²
 λ(t) = λ0 · max(0, 1 - t / T_bc)
 ```
 
-默认：`λ0=1.0`，`T_bc=150_000`（线性衰减到 0）。
+默认：`λ0=1.0`，`T_bc=200_000`（线性衰减到 0）。
 
 ---
 
-## 3. 训练前准备
+## 3. 训练前准备（除3.1外更准确说是改造过程）
 
 ### 3.1 依赖
 
@@ -230,7 +231,9 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/precompute_expert_ter
 
 - 权威：`r_minT` / `reached` / `diverged` / `n_steps_stage3` / `stage3_dt` / `r_min1,2`
 - 派生（`reward_version`）：`R1` / `bonus` / `both_ok` — 不可代替 `r_minT`
-- 拦截跳过 stage3；sidecar 含 `expert_fingerprint` / `stage3_version` 可追溯
+- **采样侧不信任缓存 `both_ok` 列**（2026-07-23）：`build_traj_qualities` 始终用  
+  `¬intercepted ∧ r_min1,2≥kill ∧ r_minT≤strike_ok` 按当前阈值重算；改打击阈值无需重跑 stage3
+- 拦截跳过 stage3；sidecar 可含 `expert_fingerprint` / `stage3_version` 供追溯（加载器当前不做强制指纹门禁）
 - 换成新专家库或重算末态后必须**重新**预计算；`--resume` 可按指纹续跑
 
 ### 3.5 一致性检查
@@ -280,22 +283,42 @@ reward_version          = r1_bonus_v1
 - 轨迹内按步序（近似 tgo）分层
 - 强制包含每条已采轨迹的末步
 - train/val **按轨迹 ID** 划分（默认 `val_ratio=0.1`，分层：拦截与否）
-- Replay 与 Actor BC 共用同一采样映射；**Actor 默认排除拦截轨迹**（−50 仍可进 Critic Replay）
+- Replay 与 Actor BC 共用同一采样映射；**Replay 默认可含拦截（−50）与「安全但 stage3 未命中」轨**
+- **Actor / TD3 专家 MSE 默认 `actor_eligible=both_ok`**（2026-07-23）：只监督双防安全且 `r_minT≤strike_ok` 的轨迹；验收字段 `actor_stage3_fail_step_frac` / `actor_intercept_step_frac` 应为 `0`
 - 预算默认 `buf × bc_ratio`（300k×0.33≈99000）
 
 ```powershell
 # 单独构建并落盘采样计划（推荐先跑一遍看摘要）
 E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tools/build_expert_set.py `
   --budget 99000 --seed 0 --with-ok-mode `
+  --actor-eligible both_ok `
   --out rl_td3/data/expert_set_99k.npz
-# → 同目录 expert_set_99k.json 摘要（ok/debug、both_ok、拦截率等）
+# → 同目录 expert_set_99k.json 摘要（ok/debug、both_ok、actor_stage3_fail_step_frac 等）
 
-# 采样单测（合成数据）
+# 采样单测（合成数据；含 both_ok 过滤与「不信缓存 both_ok」断言）
 E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/tests/test_expert_sampling.py
 ```
 
-训练时默认 `sample_mode=balanced`；对照旧行为可用 `--sample-mode prefix`。  
-受控比较 Actor 含拦截占比：默认排除 vs `--actor-include-intercepted`（约全库 24% 拦截轨）。
+| CLI | 含义 |
+|-----|------|
+| `--actor-eligible both_ok`（默认） | Actor 只取 both_ok |
+| `--actor-eligible non_intercepted` | 旧行为：仅排除拦截，仍含 stage3 失败标签 |
+| `--actor-eligible all` 或 `--actor-include-intercepted` | Actor 含拦截轨（对照用） |
+
+训练时默认 `sample_mode=balanced`；对照旧行为可用 `--sample-mode prefix`。
+
+**当前落盘计划（2026-07-23，seed=0，`both_ok`）**
+
+| 项 | 值 |
+|----|----|
+| Replay 步数 | 94,753 |
+| Actor 步数 | 67,740（此前 non_intercepted 约 73,721；去掉 ~8.11% stage3 失败标签） |
+| `actor_eligible` | `both_ok` |
+| `actor_stage3_fail_step_frac` | `0.0` |
+| `actor_intercept_step_frac` | `0.0` |
+| `both_ok_train` | 812 |
+
+> stage3 作专家质量门：P1（只学 both_ok）直接改善 Actor 标签；完整指纹/打包式 P0 校验暂不强制——专家库与 sidecar 未错配且 `dt=1e-3` 时可先做性能实验。
 
 ### 3.8 纯 Actor BC 诊断（controlled-bc）
 
@@ -411,10 +434,11 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 | `grad_clip` | ±10.0（元素级 clamp） | `--grad-clip`（0=关） |
 | `bc_ratio` | 0.33（最多写 `buf×bc_ratio` 条，默认 99,000） | `--bc-ratio` |
 | `bc_lambda0` | 1.0 | `--bc-lambda0` |
-| `bc_decay_steps` | 150,000 | `--bc-decay-steps` |
+| `bc_decay_steps` | 200,000 | `--bc-decay-steps` |
 | `seed` | 0 | `--seed` |
 | `sample_mode` | `balanced` | `--sample-mode {balanced,prefix}` |
 | `sample_seed` | 同 `--seed` | `--sample-seed` |
+| `actor_eligible` | `both_ok` | `--actor-eligible {both_ok,non_intercepted,all}` |
 | checkpoint | 每 50,000 步 | |
 
 `--smoke` 预设：`steps=5000`，`save_dir=rl_td3/checkpoints_smoke`，`name=td3_smoke`。
@@ -423,7 +447,7 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 
 1. `set_global_seed(--seed)`；启动两套 MATLAB Engine（train env + eval env）  
 2. 构建 `TD3BC`（含 `seed`），探索噪声 `Normal(0, σ)`  
-3. 除非 `--no-bc`：按 `balanced` 采样写入最多 `args.buf × bc_ratio` 条到 Replay；`set_expert_dataset` 使用 Actor 子集（默认可无拦截）  
+3. 除非 `--no-bc`：按 `balanced` 采样写入最多 `args.buf × bc_ratio` 条到 Replay；`set_expert_dataset` 使用 Actor 子集（默认 **`actor_eligible=both_ok`**，可用 `--actor-eligible` / `--actor-include-intercepted` 对照）  
 4. `learn`：`CheckpointCallback` + `EvalCallback`（deterministic）+ 可选梯度裁剪  
 5. 保存最终 `{save_dir}/{name}.zip`；最优策略在 `{save_dir}/best/best_model.zip`  
 6. 正式训练默认另存采样计划 `rl_td3/data/expert_set_{budget}_seed{s}.npz`
@@ -561,6 +585,7 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | stage2 奖励 | `rl_td3/matlab/stage2_process_reward.m`（`env_step` 调用） |
 | stage3 脱靶 | `rl_td3/matlab/stage3_rollout.m` |
 | BC 预填充 | `rl_td3/load_expert_buffer.py` |
+| 专家采样 / Actor 资格 | `rl_td3/expert_sampling.py`（`actor_eligible`；`both_ok` 事实重算） |
 | 奖励投影 | `rl_td3/reward_projection.py` |
 | 数据管线 CLI | `rl_td3/tools/`（rebuild / precompute / check） |
 | 验收单测 | `rl_td3/tests/` |
@@ -568,3 +593,17 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | 评估 | `rl_td3/evaluate_td3.py` |
 | 旧设计对话摘要 | `rl_td3/md document/CONTEXT_TD3_TRAINING.md` |
 | 历史实验结论 | `rl_td3/md document/SESSION_SUMMARY_*.md` |
+
+---
+
+## 8. 纯 TD3 正式对照
+
+论文级无专家基线在独立目录 [`td3_baseline/`](../../td3_baseline/)，**不要**用本节 `--no-bc` 充当正式对照：
+
+| 项 | 说明 |
+|----|------|
+| 训练 | `td3_baseline/train_td3_pure.py`（SB3 原生 `TD3`，无预填、无 BC 正则） |
+| 评估 | `td3_baseline/evaluate_td3_pure.py`（转发本目录 `evaluate_td3.py`） |
+| 用法 | [`td3_baseline/md document/TD3_BASELINE_USAGE.md`](../../td3_baseline/md%20document/TD3_BASELINE_USAGE.md) |
+
+环境、奖励、主超参与 MC 协议与本文档对齐；产物写入 `td3_baseline/checkpoints*`，与 `rl_td3/checkpoints*` 隔离。

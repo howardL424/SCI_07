@@ -1,0 +1,99 @@
+[train] 终端输出同时写入 D:\LTY\yan\yanerxia\GAIL\td3_baseline\logs\td3_pure_smoke_20260726_121122.log
+============================================================
+  训练方案: 纯在线 TD3（无专家预填、无 BC 正则）
+  算法类  : stable_baselines3.TD3
+  运行模式: 冒烟测试
+  总步数  : 5,000
+  学习率  : 0.0001（Actor / Critic 统一）
+  运行名称: td3_pure_smoke
+  seed    : 0
+  动作映射: ratio_log_box_v1
+  learning_starts: 1,000
+  评估 ep 数: 20（每 10,000 步）
+  梯度裁剪: ±10.0
+  保存目录: td3_baseline\checkpoints_smoke
+============================================================
+[EvasionEnv] samples_clean: 保留 2351/3400 行（已滤除全零 1049 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[EvasionEnv] samples_clean: 保留 2351/3400 行（已滤除全零 1049 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Using cuda device
+Wrapping the env in a DummyVecEnv.
+
+[train] 开始纯 TD3 训练，共 5,000 步…
+Logging to td3_baseline\checkpoints_smoke\tb_logs\TD3_1
+[GradClipCallback] 已为 36 个参数张量注册梯度裁剪钩子 (±10.0)
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 87.3     |
+|    ep_rew_mean     | 126      |
+| time/              |          |
+|    episodes        | 10       |
+|    fps             | 92       |
+|    time_elapsed    | 9        |
+|    total_timesteps | 873      |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 85.6     |
+|    ep_rew_mean     | 109      |
+| time/              |          |
+|    episodes        | 20       |
+|    fps             | 75       |
+|    time_elapsed    | 22       |
+|    total_timesteps | 1712     |
+| train/             |          |
+|    actor_loss      | -2.99    |
+|    critic_loss     | 219      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 711      |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 86.1     |
+|    ep_rew_mean     | 109      |
+| time/              |          |
+|    episodes        | 30       |
+|    fps             | 69       |
+|    time_elapsed    | 37       |
+|    total_timesteps | 2582     |
+| train/             |          |
+|    actor_loss      | -6.3     |
+|    critic_loss     | 314      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 1581     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 86.1     |
+|    ep_rew_mean     | 109      |
+| time/              |          |
+|    episodes        | 40       |
+|    fps             | 67       |
+|    time_elapsed    | 51       |
+|    total_timesteps | 3444     |
+| train/             |          |
+|    actor_loss      | -6.62    |
+|    critic_loss     | 73       |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 2443     |
+---------------------------------
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 86.9     |
+|    ep_rew_mean     | 106      |
+| time/              |          |
+|    episodes        | 50       |
+|    fps             | 66       |
+|    time_elapsed    | 65       |
+|    total_timesteps | 4343     |
+| train/             |          |
+|    actor_loss      | -10.5    |
+|    critic_loss     | 146      |
+|    learning_rate   | 0.0001   |
+|    n_updates       | 3342     |
+---------------------------------
+
+[train] 训练完成，最终模型已保存至 td3_baseline\checkpoints_smoke\td3_pure_smoke.zip

@@ -82,7 +82,7 @@ DEFAULTS = dict(
     grad_clip       = 10.0,       # 梯度元素裁剪幅度（±grad_clip），防止 Critic 发散
     bc_ratio        = 0.33,       # BC 预填充占 buffer 的比例（降低 BC 锚定效应）
     bc_lambda0      = 1.0,        # 衰减 BC 正则初始系数 λ0
-    bc_decay_steps  = 150_000,    # λ 线性衰减到 0 的步数（默认总步数一半）
+    bc_decay_steps  = 200_000,    # λ 线性衰减到 0 的步数
 )
 
 # 冒烟测试专用路径（与正式训练 rl_td3/checkpoints 完全隔离）
@@ -250,7 +250,7 @@ def parse_args() -> argparse.Namespace:
         "--bc-decay-steps",
         type=int,
         default=DEFAULTS["bc_decay_steps"],
-        help="BC 正则 λ 线性衰减到 0 的步数（默认 150000）",
+        help="BC 正则 λ 线性衰减到 0 的步数（默认 200000）",
     )
     p.add_argument(
         "--terminal-cache",
@@ -286,7 +286,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--actor-include-intercepted",
         action="store_true",
-        help="Actor BC 专家标签包含拦截轨迹（默认排除，仅 Replay 可含 −50）",
+        help="Actor BC 专家标签包含拦截轨迹（等价于 --actor-eligible all）",
+    )
+    p.add_argument(
+        "--actor-eligible",
+        type=str,
+        default="both_ok",
+        choices=["both_ok", "non_intercepted", "all"],
+        help="Actor/TD3 专家 MSE 轨迹资格（默认 both_ok）",
     )
     p.add_argument(
         "--save-sample-plan",
@@ -324,7 +331,7 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     print(f"  运行名称: {args.name}")
     print(f"  seed    : {args.seed}（sample_seed={sample_seed}）")
     print(f"  BC 预填充: {'否' if args.no_bc else f'是（最多 {bc_max_steps:,} 步，占 buffer {args.bc_ratio:.0%}）'}")
-    print(f"  采样模式: {args.sample_mode}（Actor排除拦截={not args.actor_include_intercepted}）")
+    print(f"  采样模式: {args.sample_mode}（actor_eligible={getattr(args, 'actor_eligible', 'both_ok')}；include_intercepted={args.actor_include_intercepted}）")
     print(f"  动作映射: {args.action_mapping}")
     print(f"  BC 正则  : λ0={args.bc_lambda0}, 衰减步数={args.bc_decay_steps:,}")
     print(f"  终端缓存: {args.terminal_cache}")
@@ -387,6 +394,9 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
                 sample_seed=sample_seed,
                 val_ratio=args.val_ratio,
                 actor_exclude_intercepted=not args.actor_include_intercepted,
+                actor_eligible=(
+                    "all" if args.actor_include_intercepted else args.actor_eligible
+                ),
                 sample_plan_out=plan_out,
                 action_mapping=args.action_mapping,
             )
@@ -401,7 +411,9 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
                 print(
                     f"[train] 采样摘要: mode={s.get('sample_mode')} "
                     f"train轨={s.get('n_train_traj')} val轨={s.get('n_val_traj')} "
-                    f"both_ok_train={s.get('both_ok_train')}"
+                    f"both_ok_train={s.get('both_ok_train')} "
+                    f"actor_eligible={s.get('actor_eligible')} "
+                    f"stage3_fail_frac={s.get('actor_stage3_fail_step_frac')}"
                 )
         except FileNotFoundError as e:
             print(f"[train] 警告: {e}")

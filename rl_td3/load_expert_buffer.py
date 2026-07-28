@@ -39,7 +39,7 @@ DEFAULT_ALIGNED_PATH = str(DATA_DIR / "expert_transitions_aligned.mat")
 @dataclass
 class ExpertLoadResult:
     n_written: int
-    states: np.ndarray   # [N, 13] 归一化后（供 Actor BC；默认可排除拦截）
+    states: np.ndarray   # [N, 13] 归一化后（供 Actor BC；默认 both_ok）
     actions: np.ndarray  # [N, 3]
     sample_summary: Optional[dict] = None
     train_traj_ids: Optional[np.ndarray] = None
@@ -654,7 +654,6 @@ def _load_terminal_cache(
                 print(f"[load_expert_buffer] 警告: {msg}\n  仍将使用该缓存。")
     return {k: data[k] for k in data.files}
 
-
 def load_expert_buffer(
     replay_buffer: ReplayBuffer,
     mat_path: str = DEFAULT_EXPERT_PATH,
@@ -672,6 +671,7 @@ def load_expert_buffer(
     val_ratio: float = 0.1,
     n_tgo_bins: int = 4,
     actor_exclude_intercepted: bool = True,
+    actor_eligible: str = "both_ok",
     replay_include_intercepted: bool = True,
     load_ok_modes: bool = False,
     sample_plan_out: Optional[str] = None,
@@ -687,12 +687,25 @@ def load_expert_buffer(
     采样（sample_mode）：
       - balanced（默认）：按轨迹均衡 + tgo 分层 + 强制末步；train/val 按轨划分
       - prefix：旧行为，扁平表前缀截取（仅兼容对照）
-    Actor BC 返回的 states/actions 默认可排除拦截轨迹；Replay 仍可含拦截 −50。
+    Actor BC / TD3 专家 MSE 默认 actor_eligible=both_ok；Replay 仍可含拦截 / stage3 失败。
     """
     from action_mapping import DEFAULT_ACTION_MAPPING
-    from expert_sampling import build_expert_sample_plan, load_ok_modes_from_expert
+    from expert_sampling import (
+        ACTOR_ELIGIBLE_MODES,
+        build_expert_sample_plan,
+        load_ok_modes_from_expert,
+        resolve_actor_eligible,
+    )
 
     target_amap = action_mapping or DEFAULT_ACTION_MAPPING
+    actor_eligible = resolve_actor_eligible(
+        actor_eligible,
+        actor_exclude_intercepted=actor_exclude_intercepted,
+    )
+    if actor_eligible not in ACTOR_ELIGIBLE_MODES:
+        raise ValueError(
+            f"未知 actor_eligible={actor_eligible!r}，支持 {ACTOR_ELIGIBLE_MODES}"
+        )
 
     cfg = reward_cfg or DEFAULT_REWARD_CFG
     if reward_kwargs:
@@ -716,6 +729,7 @@ def load_expert_buffer(
             print(f"[load_expert_buffer] 旧库 → 对齐数据：{aligned_path}")
         print(f"[load_expert_buffer] reward_version={cfg.version}")
         print(f"[load_expert_buffer] action_mapping(target)={target_amap}")
+        print(f"[load_expert_buffer] actor_eligible={actor_eligible}")
 
     if validate_expert_sa:
         meta = validate_expert_sa_vs_trajectories(mat_path)
@@ -808,14 +822,30 @@ def load_expert_buffer(
     if sample_mode == "prefix":
         replay_idx = np.arange(budget, dtype=np.int64)
         actor_idx = replay_idx.copy()
-        if actor_exclude_intercepted:
-            # 前缀模式下按 traj_ids 过滤（尽量贴近默认语义）
-            traj_ids_flat = np.asarray(data["traj_ids"], dtype=np.int32).ravel()
+        traj_ids_flat = np.asarray(data["traj_ids"], dtype=np.int32).ravel()
+        if actor_eligible == "both_ok":
+            if cache is None or "r_minT" not in cache:
+                raise ValueError("prefix + actor_eligible=both_ok 需要 terminal_cache.r_minT")
+            intercepted = np.asarray(data["intercepted"], dtype=bool).ravel()
+            r_min1 = np.asarray(data["r_min1"], dtype=np.float64).ravel()
+            r_min2 = np.asarray(data["r_min2"], dtype=np.float64).ravel()
+            r_minT = np.asarray(cache["r_minT"], dtype=np.float64).ravel()
+            tids = traj_ids_flat[replay_idx]
+            both_ok = (
+                (~intercepted[tids])
+                & (r_min1[tids] >= float(cfg.kill_radius))
+                & (r_min2[tids] >= float(cfg.kill_radius))
+                & np.isfinite(r_minT[tids])
+                & (r_minT[tids] <= float(cfg.strike_ok))
+            )
+            actor_idx = replay_idx[both_ok]
+        elif actor_eligible == "non_intercepted" or actor_exclude_intercepted:
             intercepted = np.asarray(data["intercepted"], dtype=bool).ravel()
             keep = ~intercepted[traj_ids_flat[replay_idx]]
             actor_idx = replay_idx[keep]
         sample_summary = {
             "sample_mode": "prefix",
+            "actor_eligible": actor_eligible,
             "n_replay_steps": int(len(replay_idx)),
             "n_actor_steps": int(len(actor_idx)),
             "seed": int(sample_seed),
@@ -823,7 +853,7 @@ def load_expert_buffer(
         if verbose:
             print(
                 f"[load_expert_buffer] 采样模式=prefix：Replay {len(replay_idx)}，"
-                f"Actor {len(actor_idx)}"
+                f"Actor {len(actor_idx)}（eligible={actor_eligible}）"
             )
     elif sample_mode == "balanced":
         ok_modes = None
@@ -839,6 +869,7 @@ def load_expert_buffer(
             n_tgo_bins=n_tgo_bins,
             force_terminal=True,
             actor_exclude_intercepted=actor_exclude_intercepted,
+            actor_eligible=actor_eligible,
             replay_include_intercepted=replay_include_intercepted,
             terminal_cache=cache,
             ok_modes=ok_modes,
@@ -862,7 +893,9 @@ def load_expert_buffer(
                 f"Replay {s['n_replay_steps']} / Actor {s['n_actor_steps']}；"
                 f"train轨 {s['n_train_traj']} val轨 {s['n_val_traj']}；"
                 f"均步/已用轨={s['steps_per_used_traj_mean']:.1f} "
-                f"max={s['steps_per_used_traj_max']}"
+                f"max={s['steps_per_used_traj_max']}；"
+                f"actor_eligible={s.get('actor_eligible')} "
+                f"stage3_fail_frac={s.get('actor_stage3_fail_step_frac')}"
             )
     else:
         raise ValueError(f"未知 sample_mode={sample_mode!r}（支持 balanced|prefix）")

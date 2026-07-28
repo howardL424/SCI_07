@@ -1,0 +1,49 @@
+Endo-atmospheric maneuverpenetration strategybased ongenerativeadversarial reinforcement learning 3
+wascombinedtoimprovepenetrationstrategynetwork,result- Thesinglemissilepenetrationadversarialgamecanbechar-
+ing in a faster convergence rate and better online penetration acterizedbyanOODA loop:
+guidance strategyperformance. ① Observe: A single missile obtains the interceptor’s rela-
+Themaincontributions of thismanuscriptare as follows: tive position, velocity, line of sight angle, and line of sight
+angular velocity information through the guidance head or
+(1) An intelligent maneuvering strategy driven by knowl- thethirdoutsideguidance,formingatemporaldetectioninfor-
+edgeanddatacollaborationwasproposed.Themethod mation list.
+combines generative adversarial imitation learning with ② Orient: Attack missile conducts an estimation of pene-
+DDPGreinforcementlearningalgorithm,gavefullplay tration and confrontation capabilities, determines whether it
+totheadvantagesofdatabaseandexploratorylearning, is necessary to confront interceptors, and whether it has the
+thus ensured the convergence and robustness, and abilityto striketarget afterconfronting withinterceptor.
+solved the problem of poor adaptability, long time- ③Decide:Ifconfrontationisrequired,attackmissiledeci-
+consumingandslowconvergenceintraditionalpenetra- destheoptimaltimingandcommandformaneuverconfronta-
+tion strategyoptimization method. tion. If confrontation is not required, attack missile flies
+(2) The initial position and velocity errors as well as the according tothe original plannedguidance command.
+detection,guidanceandcontrolerrorsoftheattackmis- ④ Act: Attack missile maneuvers according to the timing
+sile and the interceptor missile were fully established. and instructions of maneuver confrontation, completes endo-
+Realistic constraints of the maneuver penetration were atmospheric penetration confrontation, and smoothly enter
+alsoconsideredinlearning.Alargenumberofadversar- the mid toterminal guidance handoverarea.
+ialsimulationconditionsweregeneratedthroughMonte According to the analysis of the penetration process, the
+Carlosampling,andRadauPseudospectralmethodwas missile maneuvering confrontation process is a typical Target
+usedto searchfor the optimal solutionoffline. AttackDefend(TAD)problem.25Thus,arelativemotionrela-
+(3) Anincentiverewardfunctionthattakesintoaccountthe tionshipmodelisestablished,asshowninthefollowingfigure.
+target strike in the penetration process was designed to In Fig. 2, A represents the attack missile, D represents the
+solvetheproblemoflong-termsparserewardandaccel- interceptor missile, T represents the target which will be
+eratetheconvergenceofthealgorithmtotackleproblem attacked by A. V and V are respectively the velocity of A
+D
+of sparse reward in the reinforcement learning explo- and D. h and h are respectively the path angle of A and D.
+D
+ration process. k is the line-of-sight angle betweenA andD.R isthe dis-
+AD AD
+tance between A and D.k is the line-of-sight angle between
+AT
+Themanuscriptisorganizedasfollows.Section2describes Aand T.R is the distancebetweenA andT.
+AT
+the endo-atmospheric maneuver penetration problem of The attack missile needs to comprehensively consider the
+hypersonic vehicle and the relationship between optimal con- constraintsofpenetrationandtargetattackandperformopti-
+trol and reinforcement learning. Research methods are malguidance calculation based onitsownballistic character-
+detailedinSection3.SimulationresultsaregiveninSection4. istics,whichisatypicaloptimalcontrolproblem.Tofocuson
+Finally, Section5 concludesthe manuscript. penetrationprobleminglidingphase,thetargetaccuracycon-
+straintisequivalenttotheaccuracyandvelocityconstraintsat
+2.Problem formulation the moment of mid to terminal guidance handover. Under
+those constraints and considering the attack missile’s ability,
+theoptimalpenetrationguidancecommandissolvedtoensure
+The process of the penetration game between a single attack
+the targetcanbe successfully hitafter penetration.
+missile and aninterceptoris shownas Fig.1.
+Fig.1 Singlemissilepenetrationadversarialgameprocess.

@@ -32,11 +32,23 @@ def _synth_data(n_traj: int = 40, seed: int = 1) -> dict:
     ).astype(np.int32)
     rng.shuffle(n_steps)
     intercepted = rng.random(n_traj) < 0.25
+    # 未拦截中约 20% 为 stage3 打击失败（r_minT 过大 → both_ok=False）
+    non_int = ~intercepted
+    stage3_fail = np.zeros(n_traj, dtype=bool)
+    fail_cand = np.where(non_int)[0]
+    if len(fail_cand) > 0:
+        n_fail = max(1, int(round(0.2 * len(fail_cand))))
+        stage3_fail[
+            rng.choice(fail_cand, size=min(n_fail, len(fail_cand)), replace=False)
+        ] = True
     total = int(n_steps.sum())
     states = rng.normal(size=(total, 13))
     traj_ids = np.concatenate(
         [np.full(int(n_steps[i]), i, dtype=np.int32) for i in range(n_traj)]
     )
+    r_minT = np.full(n_traj, 5.0, dtype=np.float64)
+    r_minT[intercepted] = np.nan
+    r_minT[stage3_fail] = 50.0  # > strike_ok
     return {
         "states": states,
         "actions": rng.uniform(-1, 1, size=(total, 3)).astype(np.float32),
@@ -49,7 +61,7 @@ def _synth_data(n_traj: int = 40, seed: int = 1) -> dict:
         "source_idx": np.arange(1, n_traj + 1, dtype=np.int32),
         "r_min1": np.where(intercepted, 3.0, 15.0),
         "r_min2": np.where(intercepted, 3.0, 15.0),
-        "r_minT": np.where(intercepted, np.nan, 10.0),
+        "r_minT": r_minT,
     }
 
 
@@ -89,13 +101,14 @@ def test_force_terminal_and_reproducible():
 
 def test_plan_actor_excludes_intercept():
     data = _synth_data(48, seed=2)
+    both_ok = (
+        (~data["intercepted"].astype(bool))
+        & (data["r_min1"] >= 6)
+        & (data["r_minT"] <= 10)
+    ).astype(np.int8)
     cache = {
         "r_minT": data["r_minT"],
-        "both_ok": (
-            (~data["intercepted"].astype(bool))
-            & (data["r_min1"] >= 6)
-            & (data["r_minT"] <= 20)
-        ).astype(np.int8),
+        "both_ok": both_ok,
     }
     plan = build_expert_sample_plan(
         data,
@@ -103,6 +116,7 @@ def test_plan_actor_excludes_intercept():
         seed=0,
         val_ratio=0.1,
         actor_exclude_intercepted=True,
+        actor_eligible="non_intercepted",
         replay_include_intercepted=True,
         terminal_cache=cache,
         ok_modes=np.asarray(["ok"] * len(data["n_steps"]), dtype=object),
@@ -129,6 +143,43 @@ def test_plan_actor_excludes_intercept():
         assert not np.any(data["intercepted"].astype(bool)[val_actor_traj])
 
 
+def test_plan_actor_eligible_both_ok_zero_stage3_fail():
+    """P1：actor_eligible=both_ok 时 Actor 标签中 stage3-fail 占比应为 0。"""
+    data = _synth_data(48, seed=2)
+    # 故意写入错误的缓存 both_ok，确认采样按事实重算、不信任缓存列
+    cache = {
+        "r_minT": data["r_minT"],
+        "both_ok": np.ones(len(data["n_steps"]), dtype=np.int8),
+    }
+    both_ok_truth = (
+        (~data["intercepted"].astype(bool))
+        & (data["r_min1"] >= 6)
+        & np.isfinite(data["r_minT"])
+        & (data["r_minT"] <= 10)
+    )
+    assert int(both_ok_truth.sum()) < int((~data["intercepted"].astype(bool)).sum())
+    plan = build_expert_sample_plan(
+        data,
+        budget=800,
+        seed=0,
+        val_ratio=0.1,
+        actor_eligible="both_ok",
+        replay_include_intercepted=True,
+        terminal_cache=cache,
+        ok_modes=np.asarray(["ok"] * len(data["n_steps"]), dtype=object),
+    )
+    assert plan.summary["actor_eligible"] == "both_ok"
+    assert plan.summary["actor_stage3_fail_step_frac"] == 0.0
+    assert plan.summary["actor_intercept_step_frac"] == 0.0
+    off = plan.traj_offsets
+    actor_traj = np.searchsorted(off[1:], plan.actor_step_indices, side="right")
+    assert len(actor_traj) > 0
+    assert np.all(both_ok_truth[actor_traj])
+    # Replay 仍可含非 both_ok（拦截或 stage3 失败）
+    replay_traj = np.searchsorted(off[1:], plan.step_indices, side="right")
+    assert np.any(~both_ok_truth[replay_traj])
+
+
 def test_prefix_vs_balanced_coverage():
     """均衡采样覆盖的轨迹数应明显多于同预算前缀截取。"""
     data = _synth_data(60, seed=3)
@@ -148,5 +199,6 @@ if __name__ == "__main__":
     test_quota_not_dominated_by_long()
     test_force_terminal_and_reproducible()
     test_plan_actor_excludes_intercept()
+    test_plan_actor_eligible_both_ok_zero_stage3_fail()
     test_prefix_vs_balanced_coverage()
     print("OK: test_expert_sampling")

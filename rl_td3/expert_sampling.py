@@ -5,7 +5,7 @@ expert_sampling.py — 按轨迹均衡、可复现的专家步采样。
   - 禁止扁平表前缀截取 / 禁止长轨迹支配样本
   - 按轨迹均分配额；轨迹内按 tgo（步序）分层；强制含末步
   - train/val 按轨迹 ID 划分，避免相邻步泄漏
-  - Replay 与 Actor BC 共用同一采样映射；Actor 默认可排除拦截轨迹
+  - Replay 与 Actor BC 共用同一采样映射；Actor 默认仅 both_ok（stage3 质量门）
 """
 
 from __future__ import annotations
@@ -15,6 +15,31 @@ from pathlib import Path
 from typing import Any, Optional
 
 import numpy as np
+
+
+ACTOR_ELIGIBLE_MODES = ("both_ok", "non_intercepted", "all")
+
+
+def resolve_actor_eligible(
+    actor_eligible: Optional[str] = None,
+    *,
+    actor_exclude_intercepted: bool = True,
+) -> str:
+    """
+    解析 Actor 标签资格。
+    优先使用 actor_eligible；若为 None，则按旧开关映射：
+      exclude_intercepted=True  → non_intercepted
+      exclude_intercepted=False → all
+    新默认由调用方显式传 both_ok。
+    """
+    if actor_eligible is not None:
+        mode = str(actor_eligible).strip().lower()
+        if mode not in ACTOR_ELIGIBLE_MODES:
+            raise ValueError(
+                f"未知 actor_eligible={actor_eligible!r}，支持 {ACTOR_ELIGIBLE_MODES}"
+            )
+        return mode
+    return "non_intercepted" if actor_exclude_intercepted else "all"
 
 
 @dataclass
@@ -33,6 +58,21 @@ class TrajQuality:
     r_min1: float
     r_min2: float
     r_minT: float
+
+
+def actor_eligible_mask(
+    qualities: list[TrajQuality],
+    mode: str,
+) -> np.ndarray:
+    """轨迹级 Actor 资格掩码（len = n_traj）。"""
+    mode = resolve_actor_eligible(mode)
+    n = len(qualities)
+    if mode == "all":
+        return np.ones(n, dtype=bool)
+    if mode == "non_intercepted":
+        return np.asarray([not q.intercepted for q in qualities], dtype=bool)
+    # both_ok
+    return np.asarray([bool(q.both_ok) for q in qualities], dtype=bool)
 
 
 @dataclass
@@ -105,13 +145,17 @@ def collect_steps_for_trajs(
     *,
     intercepted: Optional[np.ndarray] = None,
     exclude_intercepted: bool = False,
+    eligible: Optional[np.ndarray] = None,
 ) -> np.ndarray:
-    """收集给定轨迹上的全部全局步下标（可选排除拦截轨）。"""
+    """收集给定轨迹上的全部全局步下标（可选 exclude 拦截，或按 eligible 掩码）。"""
     traj_ids = np.asarray(traj_ids, dtype=np.int32).ravel()
     chunks: list[np.ndarray] = []
     for tid in traj_ids:
         tid_i = int(tid)
-        if exclude_intercepted and intercepted is not None and bool(intercepted[tid_i]):
+        if eligible is not None:
+            if not bool(eligible[tid_i]):
+                continue
+        elif exclude_intercepted and intercepted is not None and bool(intercepted[tid_i]):
             continue
         start = int(offsets[tid_i])
         end = int(offsets[tid_i + 1])
@@ -345,7 +389,7 @@ def build_traj_qualities(
     strike_ok: float = 10.0,
     ok_modes: Optional[np.ndarray] = None,
 ) -> list[TrajQuality]:
-    """从对齐数据 + sidecar 构建轨迹质量表。"""
+    """从对齐数据 + sidecar 的 r_minT 构建轨迹质量表；both_ok 由当前阈值重算。"""
     n_steps = np.asarray(data["n_steps"], dtype=np.int32).ravel()
     n_traj = len(n_steps)
     intercepted = np.asarray(data["intercepted"], dtype=bool).ravel()
@@ -358,10 +402,8 @@ def build_traj_qualities(
 
     if terminal_cache is not None and "r_minT" in terminal_cache:
         r_minT = np.asarray(terminal_cache["r_minT"], dtype=np.float64).ravel()
-        both = np.asarray(terminal_cache.get("both_ok", np.zeros(n_traj)), dtype=bool).ravel()
     else:
         r_minT = np.full(n_traj, np.nan)
-        both = np.zeros(n_traj, dtype=bool)
 
     if ok_modes is None:
         modes = np.asarray(["unknown"] * n_traj, dtype=object)
@@ -372,9 +414,10 @@ def build_traj_qualities(
 
     out: list[TrajQuality] = []
     for i in range(n_traj):
+        # both_ok 始终由原始事实 + 当前阈值重算，不信任 sidecar 缓存的 both_ok
         evade = (float(r_min1[i]) >= kill_radius) and (float(r_min2[i]) >= kill_radius)
         strike = bool(np.isfinite(r_minT[i]) and float(r_minT[i]) <= strike_ok)
-        both_i = bool(both[i]) if i < len(both) else (evade and strike and not bool(intercepted[i]))
+        both_i = (not bool(intercepted[i])) and evade and strike
         out.append(
             TrajQuality(
                 traj_id=i,
@@ -385,7 +428,7 @@ def build_traj_qualities(
                 ok_mode=str(modes[i]),
                 evade_ok=bool(evade) and not bool(intercepted[i]),
                 strike_ok=bool(strike) and not bool(intercepted[i]),
-                both_ok=bool(both_i) and not bool(intercepted[i]),
+                both_ok=bool(both_i),
                 r_min1=float(r_min1[i]),
                 r_min2=float(r_min2[i]),
                 r_minT=float(r_minT[i]) if np.isfinite(r_minT[i]) else float("nan"),
@@ -438,6 +481,7 @@ def build_expert_sample_plan(
     n_tgo_bins: int = 4,
     force_terminal: bool = True,
     actor_exclude_intercepted: bool = True,
+    actor_eligible: str = "both_ok",
     replay_include_intercepted: bool = True,
     terminal_cache: Optional[dict] = None,
     ok_modes: Optional[np.ndarray] = None,
@@ -449,12 +493,17 @@ def build_expert_sample_plan(
 
     - train/val 按轨迹划分（分层：拦截与否）
     - 仅在 train 轨迹上按均衡策略采 `budget` 步写入 Replay
-    - Actor BC 默认只用未拦截 train 轨迹上的已采步
+    - Actor BC / TD3 专家 MSE 默认只取 both_ok 轨迹上的已采步（actor_eligible）
     """
     n_steps = np.asarray(data["n_steps"], dtype=np.int32).ravel()
     intercepted = np.asarray(data["intercepted"], dtype=bool).ravel()
     n_traj = len(n_steps)
     offsets = traj_offsets_from_n_steps(n_steps)
+
+    eligible_mode = resolve_actor_eligible(
+        actor_eligible,
+        actor_exclude_intercepted=actor_exclude_intercepted,
+    )
 
     qualities = build_traj_qualities(
         data,
@@ -463,6 +512,7 @@ def build_expert_sample_plan(
         strike_ok=strike_ok,
         ok_modes=ok_modes,
     )
+    eligible = actor_eligible_mask(qualities, eligible_mode)
 
     train_ids, val_ids = split_traj_ids(
         n_traj,
@@ -485,20 +535,15 @@ def build_expert_sample_plan(
         force_terminal=force_terminal,
     )
 
-    # Actor 训练：同一批 Replay step 中过滤拦截轨
-    if actor_exclude_intercepted:
-        traj_of_step = np.searchsorted(offsets[1:], step_indices, side="right")
-        keep = ~intercepted[traj_of_step]
-        actor_steps = step_indices[keep]
-    else:
-        actor_steps = step_indices.copy()
+    # Actor 训练：同一批 Replay step 中按 actor_eligible 过滤
+    traj_of_step = np.searchsorted(offsets[1:], step_indices, side="right")
+    actor_steps = step_indices[eligible[traj_of_step]]
 
-    # Actor 验证：val 轨全部步（默认排除拦截轨），避免相邻步泄漏到 train
+    # Actor 验证：val 轨全部步（按同一 eligible），避免相邻步泄漏到 train
     val_actor_steps = collect_steps_for_trajs(
         val_ids,
         offsets,
-        intercepted=intercepted,
-        exclude_intercepted=actor_exclude_intercepted,
+        eligible=eligible,
     )
 
     # 统计
@@ -518,6 +563,17 @@ def build_expert_sample_plan(
         tids = np.searchsorted(offsets[1:], steps, side="right")
         return float(intercepted[tids].mean())
 
+    def _actor_stage3_fail_frac(steps: np.ndarray) -> float:
+        """未拦截但非 both_ok（即 stage3 打击失败）步占比。"""
+        if len(steps) == 0:
+            return 0.0
+        tids = np.searchsorted(offsets[1:], steps, side="right")
+        both = np.asarray([qualities[int(t)].both_ok for t in tids], dtype=bool)
+        inter = intercepted[tids]
+        # stage3-fail：安全完成 stage2 但未 both_ok
+        fail = (~inter) & (~both)
+        return float(fail.mean())
+
     # val 轨上专家标签成功率（诊断基线；含拦截轨时 both_ok 应为 0）
     val_q = [qualities[int(t)] for t in val_ids]
     val_non_int = [q for q in val_q if not q.intercepted]
@@ -533,7 +589,10 @@ def build_expert_sample_plan(
         "n_train_traj": int(len(train_ids)),
         "n_val_traj": int(len(val_ids)),
         "n_replay_traj_used": int(np.sum(per_traj_counts > 0)),
-        "actor_exclude_intercepted": bool(actor_exclude_intercepted),
+        "actor_eligible": eligible_mode,
+        "actor_exclude_intercepted": bool(
+            eligible_mode in ("both_ok", "non_intercepted")
+        ),
         "replay_include_intercepted": bool(replay_include_intercepted),
         "force_terminal": bool(force_terminal),
         "n_tgo_bins": int(n_tgo_bins),
@@ -541,7 +600,10 @@ def build_expert_sample_plan(
         "intercept_rate_all": float(intercepted.mean()) if n_traj else 0.0,
         "intercept_rate_train": float(intercepted[train_ids].mean()) if len(train_ids) else 0.0,
         "actor_intercept_step_frac": _actor_intercept_frac(actor_steps),
+        "actor_stage3_fail_step_frac": _actor_stage3_fail_frac(actor_steps),
         "val_actor_intercept_step_frac": _actor_intercept_frac(val_actor_steps),
+        "val_actor_stage3_fail_step_frac": _actor_stage3_fail_frac(val_actor_steps),
+        "n_actor_eligible_train": int(np.sum(eligible[train_ids])),
         "steps_per_used_traj_mean": float(
             per_traj_counts[per_traj_counts > 0].mean()
             if np.any(per_traj_counts > 0)
@@ -609,10 +671,36 @@ def load_sample_plan(path: str | Path) -> ExpertSamplePlan:
     if "val_actor_step_indices" in data.files:
         val_actor = np.asarray(data["val_actor_step_indices"], dtype=np.int64)
     else:
-        exclude = bool(summary.get("actor_exclude_intercepted", True))
-        val_actor = collect_steps_for_trajs(
-            val_traj_ids, offsets, intercepted=intercepted, exclude_intercepted=exclude
+        mode = str(summary.get("actor_eligible", ""))
+        if not mode:
+            mode = resolve_actor_eligible(
+                None,
+                actor_exclude_intercepted=bool(
+                    summary.get("actor_exclude_intercepted", True)
+                ),
+            )
+        both_ok = np.asarray(data["both_ok"], dtype=bool).ravel()
+        eligible = actor_eligible_mask(
+            [
+                TrajQuality(
+                    traj_id=i,
+                    source_idx=i + 1,
+                    n_steps=int(n_steps[i]),
+                    t_end=0.0,
+                    intercepted=bool(intercepted[i]),
+                    ok_mode="unknown",
+                    evade_ok=False,
+                    strike_ok=False,
+                    both_ok=bool(both_ok[i]),
+                    r_min1=0.0,
+                    r_min2=0.0,
+                    r_minT=float("nan"),
+                )
+                for i in range(len(n_steps))
+            ],
+            mode,
         )
+        val_actor = collect_steps_for_trajs(val_traj_ids, offsets, eligible=eligible)
 
     n_q = len(np.asarray(data["traj_id"]).ravel())
     qualities: list[TrajQuality] = []

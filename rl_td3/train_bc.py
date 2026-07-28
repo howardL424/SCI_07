@@ -107,7 +107,14 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--actor-include-intercepted",
         action="store_true",
-        help="Actor 标签含拦截轨迹（默认排除）",
+        help="Actor 标签含拦截轨迹（等价于 --actor-eligible all）",
+    )
+    p.add_argument(
+        "--actor-eligible",
+        type=str,
+        default="both_ok",
+        choices=["both_ok", "non_intercepted", "all"],
+        help="Actor BC 轨迹资格（默认 both_ok）",
     )
     p.add_argument("--with-ok-mode", action="store_true")
     p.add_argument(
@@ -226,6 +233,9 @@ def prepare_bc_data(args: argparse.Namespace) -> dict[str, Any]:
             seed=args.sample_seed,
             val_ratio=args.val_ratio,
             actor_exclude_intercepted=not args.actor_include_intercepted,
+            actor_eligible=(
+                "all" if args.actor_include_intercepted else args.actor_eligible
+            ),
             terminal_cache=cache,
             ok_modes=ok_modes,
             kill_radius=float(DEFAULT_REWARD_CFG.kill_radius),
@@ -317,6 +327,9 @@ def run_training(args: argparse.Namespace, pack: dict[str, Any], save_dir: Path)
                     "batch": args.batch,
                     "budget": args.budget,
                     "actor_exclude_intercepted": not args.actor_include_intercepted,
+                    "actor_eligible": (
+                        "all" if args.actor_include_intercepted else args.actor_eligible
+                    ),
                     "expert": args.expert,
                     "action_mapping": args.action_mapping,
                 },
