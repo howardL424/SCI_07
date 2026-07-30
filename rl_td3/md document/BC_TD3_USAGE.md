@@ -25,6 +25,7 @@
 | 训练随机种子 | `--seed`（默认 `0`），覆盖 NumPy / PyTorch / SB3 / env；`--sample-seed` 可单独定采样 |
 | 评估随机种子 | 全量 test 模式不依赖抽样种子；`--episodes N` 随机模式时 `--seed` 固定序列 |
 | 训练内评估初态 | 默认 `samples_clean_val.mat`（`--eval-samples`）；训练交互默认 `samples_clean.mat`（`--train-samples`） |
+| 训练内评估协议 | **每 25k 步遍历同一组 150 个 val 初态**（`fixed_ic_eval.py`）；固定初态 + `deterministic` ⇒ 评估无采样噪声，`best_model` 可复现。旧的“每 10k 步随机抽 20 局”可用 `--eval-random-ic` 回退 |
 | 训后 MC 初态 | 默认 `samples_clean_test.mat`，**测完全部有效初态**（`--episodes 0`）；可用 `--episodes N` 回退随机抽 |
 
 ---
@@ -34,7 +35,7 @@
 ```
 rl_td3/
 ├── train_td3.py / train_bc.py / evaluate_td3.py / td3_bc.py / bc_actor.py
-├── evasion_env.py / obs_norm.py
+├── evasion_env.py / obs_norm.py / fixed_ic_eval.py
 ├── load_expert_buffer.py / reward_projection.py / expert_sampling.py
 ├── data/                      # 派生数据产物（aligned / sidecar / 99k 采样计划）
 │   ├── expert_transitions_aligned.mat
@@ -438,8 +439,9 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 | `net_arch` | [256, 256] | （代码内） |
 | `noise_sigma` | 0.1 | `--noise` |
 | `learning_starts` | 有 BC 时为 0；`--no-bc` 时为 1000 | |
-| `eval_freq` | 10,000 | （代码内） |
-| `n_eval_episodes` | 20 | `--n-eval` |
+| `eval_freq` | 25,000 | `--eval-freq` |
+| `n_eval_episodes` | 150（固定 val 初态子集；`0`=整池 300） | `--n-eval` |
+| 评估初态取法 | 定序置换取前 N 个，种子 0；清单落 `{save_dir}/eval_logs/eval_ic_pool.json` | `--eval-ic-seed`；`--eval-random-ic` 回退随机抽 |
 | `train_samples` | `samples_clean.mat` | `--train-samples` |
 | `eval_samples` | `samples_clean_val.mat` | `--eval-samples` |
 | `grad_clip` | ±10.0（元素级 clamp） | `--grad-clip`（0=关） |
@@ -452,14 +454,14 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 | `actor_eligible` | `both_ok` | `--actor-eligible {both_ok,non_intercepted,all}` |
 | checkpoint | 每 50,000 步 | |
 
-`--smoke` 预设：`steps=5000`，`save_dir=rl_td3/checkpoints_smoke`，`name=td3_smoke`。
+`--smoke` 预设：`steps=5000`，`save_dir=rl_td3/checkpoints_smoke`，`name=td3_smoke`，且 `eval_freq=1000` / `n_eval=5`（否则冒烟步数内不会触发评估）。
 
 ### 4.3 训练时实际流程
 
 1. `set_global_seed(--seed)`；启动两套 MATLAB Engine（train env + eval env）  
 2. 构建 `TD3BC`（含 `seed`），探索噪声 `Normal(0, σ)`  
 3. 除非 `--no-bc`：按 `balanced` 采样写入最多 `args.buf × bc_ratio` 条到 Replay；`set_expert_dataset` 使用 Actor 子集（默认 **`actor_eligible=both_ok`**，可用 `--actor-eligible` / `--actor-include-intercepted` 对照）  
-4. `learn`：`CheckpointCallback` + `EvalCallback`（deterministic；初态默认自 `samples_clean_val`）+ 可选梯度裁剪  
+4. `learn`：`CheckpointCallback` + `FixedICEvalCallback`（deterministic；每次评估遍历同一组 val 初态）+ 可选梯度裁剪  
 5. 保存最终 `{save_dir}/{name}.zip`；最优策略在 `{save_dir}/best/best_model.zip`  
 6. 正式训练默认另存采样计划 `rl_td3/data/expert_set_{budget}_seed{s}.npz`
 
@@ -470,7 +472,7 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 | 最终模型 | `{save_dir}/{name}.zip` |
 | 最优模型 | `{save_dir}/best/best_model.zip` |
 | 周期 checkpoint | `{save_dir}/{name}_*_steps.zip` |
-| EvalCallback 日志 | `{save_dir}/eval_logs/`（每 10k×`--n-eval`，默认 val-IC） |
+| EvalCallback 日志 | `{save_dir}/eval_logs/`（每 `--eval-freq` 步 × `--n-eval` 局，默认 25k×150 固定 val-IC；同目录 `eval_ic_pool.json` 记录初态清单） |
 | TensorBoard | `{save_dir}/tb_logs/` |
 | 终端 tee 日志 | `rl_td3/logs/{name}_{时间戳}.log`（可用 `--log-file` / `--no-log`） |
 
@@ -483,7 +485,8 @@ E:\Python\venvs\rl_pytorch\Scripts\python.exe rl_td3/train_td3.py --no-bc --step
 
 - 非默认 `--steps` 却仍用默认 `save_dir`/`name` 时，脚本会警告可能覆盖正式产物；并行冒烟请用 `--smoke` 或显式改目录。
 - 专家库若为 MATLAB v7.3，由 `mat73` 读取；**不要改** `.mat` 本体。
-- 部分 `samples_clean` 行 warm-start 后无 stage2，`reset` 最多重试 10 次。
+- 部分 `samples_clean` 行 warm-start 后无 stage2，`reset` 最多重试 10 次；固定评估协议下这类初态会被一次性剔除并打印，不会中断训练。
+- 评估开销随 `--n-eval` 线性增长（约 1 s/局）：默认 25k×150 时，300k 步训练的评估墙钟约 50 min，需计入总时间预算。
 
 ---
 

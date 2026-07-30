@@ -29,7 +29,6 @@ import torch
 from stable_baselines3.common.callbacks import (
     BaseCallback,
     CheckpointCallback,
-    EvalCallback,
 )
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.noise import NormalActionNoise
@@ -37,6 +36,7 @@ from stable_baselines3.common.noise import NormalActionNoise
 # ── 确保 rl_td3/ 目录在 Python 路径上 ──────────────────────────────────────
 sys.path.insert(0, str(Path(__file__).parent))
 from evasion_env import EvasionEnv, SAMPLES_FILE, SAMPLES_VAL_FILE
+from fixed_ic_eval import FixedICEvalCallback, FixedICEvalEnv, save_ic_pool
 from load_expert_buffer import (
     DATA_DIR,
     DEFAULT_ALIGNED_PATH,
@@ -75,8 +75,9 @@ DEFAULTS = dict(
     policy_delay    = 3,          # TD3 延迟策略更新频率（2→3，给 Critic 更多收敛时间）
     net_arch        = [256, 256], # Actor / Critic MLP 结构
     noise_sigma     = 0.1,        # 探索噪声标准差
-    eval_freq       = 10_000,     # 每隔多少步评估一次
-    n_eval_episodes = 20,
+    eval_freq       = 25_000,     # 每隔多少步评估一次（低频 + 大样本）
+    n_eval_episodes = 150,        # 每次评估遍历的固定 val 初态数（0=整池）
+    eval_ic_seed    = 0,          # 固定评估子集的定序置换种子
     save_dir        = "rl_td3/checkpoints",
     run_name        = "td3_evasion_bc",
     grad_clip       = 10.0,       # 梯度元素裁剪幅度（±grad_clip），防止 Critic 发散
@@ -90,6 +91,8 @@ SMOKE_DEFAULTS = dict(
     total_steps = 5_000,
     save_dir    = "rl_td3/checkpoints_smoke",
     run_name    = "td3_smoke",
+    eval_freq   = 1_000,
+    n_eval      = 5,
 )
 
 LOG_DIR = Path(__file__).parent / "logs"
@@ -143,6 +146,11 @@ def resolve_run_config(args: argparse.Namespace) -> argparse.Namespace:
             args.save_dir = SMOKE_DEFAULTS["save_dir"]
         if args.name == DEFAULTS["run_name"]:
             args.name = SMOKE_DEFAULTS["run_name"]
+        # 冒烟步数远小于正式 eval_freq，需下调才能真正走一遍评估路径
+        if args.eval_freq == DEFAULTS["eval_freq"]:
+            args.eval_freq = SMOKE_DEFAULTS["eval_freq"]
+        if args.n_eval == DEFAULTS["n_eval_episodes"]:
+            args.n_eval = SMOKE_DEFAULTS["n_eval"]
     elif args.steps != DEFAULTS["total_steps"] and _uses_production_paths(
         args.save_dir, args.name
     ):
@@ -238,7 +246,27 @@ def parse_args() -> argparse.Namespace:
         "--n-eval",
         type=int,
         default=DEFAULTS["n_eval_episodes"],
-        help="每次评估的 episode 数（默认 20，越大 best_model 越可信）",
+        help=(
+            f"每次评估的 episode 数（默认 {DEFAULTS['n_eval_episodes']}，"
+            "0=遍历整个评估初态池；样本越大 best_model 越可信）"
+        ),
+    )
+    p.add_argument(
+        "--eval-freq",
+        type=int,
+        default=DEFAULTS["eval_freq"],
+        help=f"每隔多少步评估一次（默认 {DEFAULTS['eval_freq']:,}）",
+    )
+    p.add_argument(
+        "--eval-ic-seed",
+        type=int,
+        default=DEFAULTS["eval_ic_seed"],
+        help="固定评估子集的定序置换种子（决定取哪 n_eval 个 val 初态）",
+    )
+    p.add_argument(
+        "--eval-random-ic",
+        action="store_true",
+        help="回退旧协议：每局重新随机抽评估初态（复现历史 run 时用）",
     )
     p.add_argument(
         "--train-samples",
@@ -352,7 +380,11 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     print(f"  终端缓存: {args.terminal_cache}")
     print(f"  专家库  : {args.expert}")
     print(f"  对齐数据: {args.aligned}")
-    print(f"  评估 ep 数: {args.n_eval}（每 {DEFAULTS['eval_freq']:,} 步）")
+    print(
+        f"  评估 ep 数: {args.n_eval if args.n_eval else '整池'}"
+        f"（每 {args.eval_freq:,} 步，"
+        f"{'随机抽初态' if args.eval_random_ic else '固定初态遍历'}）"
+    )
     print(f"  训练初态: {args.train_samples}")
     print(f"  评估初态: {args.eval_samples}（EvalCallback / best_model）")
     print(f"  梯度裁剪: {'禁用' if args.grad_clip == 0 else f'±{args.grad_clip}'}")
@@ -361,10 +393,23 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
 
     # ── 创建环境 ─────────────────────────────────────────────────────────────
     env = make_env(args.action_mapping, samples_file=args.train_samples)
-    # 独立评估环境：初态只从 val-IC 抽，用于曲线与选 best
+    # 独立评估环境：初态只取 val-IC，用于曲线与选 best
     eval_env = make_env(args.action_mapping, samples_file=args.eval_samples)
     env.reset(seed=args.seed)
-    eval_env.reset(seed=args.seed + 1)
+    n_eval_episodes = args.n_eval or int(eval_env.unwrapped.n_samples)
+    if args.eval_random_ic:
+        eval_env.reset(seed=args.seed + 1)
+        print(f"[train] 评估协议: 每次随机抽 {n_eval_episodes} 个 val 初态（旧协议）")
+    else:
+        eval_env = FixedICEvalEnv(
+            eval_env, n_ic=args.n_eval, order_seed=args.eval_ic_seed
+        )
+        n_eval_episodes = len(eval_env.ic_local_idx)
+        save_ic_pool(eval_env, save_dir / "eval_logs" / "eval_ic_pool.json")
+        print(
+            f"[train] 评估协议: 每 {args.eval_freq:,} 步遍历同一组 "
+            f"{n_eval_episodes} 个 val 初态（deterministic，无采样噪声）"
+        )
 
     # ── 探索噪声（TD3 用高斯噪声代替 DDPG 的 OU 噪声）────────────────────
     n_actions = env.action_space.shape[0]   # = 3
@@ -444,10 +489,10 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
         name_prefix = args.name,
         verbose     = 1,
     )
-    eval_cb = EvalCallback(
+    eval_cb = FixedICEvalCallback(
         eval_env            = eval_env,
-        n_eval_episodes     = args.n_eval,
-        eval_freq           = DEFAULTS["eval_freq"],
+        n_eval_episodes     = n_eval_episodes,
+        eval_freq           = args.eval_freq,
         best_model_save_path= str(save_dir / "best"),
         log_path            = str(save_dir / "eval_logs"),
         deterministic       = True,

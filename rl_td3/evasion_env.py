@@ -211,6 +211,11 @@ class EvasionEnv(gym.Env):
         """过滤全零后的有效初态数量。"""
         return self._n_samples
 
+    @property
+    def sample_row_ids(self) -> np.ndarray:
+        """库内下标 → 初态 mat 原始行号的映射（只读副本）。"""
+        return self._sample_row_ids.copy()
+
     def _reset_at_local(self, local_idx: int):
         """
         用过滤后库内下标启动 episode。

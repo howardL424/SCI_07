@@ -45,7 +45,7 @@ td3_baseline/
 |----|------|
 | Python | `E:\Python\venvs\rl_pytorch\Scripts\python.exe` |
 | 工作目录 | `D:\LTY\yan\yanerxia\GAIL` |
-| MATLAB Engine | 与 BC-TD3 相同（训练初态 `samples_clean.mat`；EvalCallback 默认 `samples_clean_val.mat`） |
+| MATLAB Engine | 与 BC-TD3 相同（训练初态 `samples_clean.mat`；EvalCallback 默认 `samples_clean_val.mat` 中固定 150 个初态） |
 | 专家库 / terminal cache | **不需要** |
 
 ---
@@ -88,8 +88,9 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | `policy_delay` | 3 | （代码内） |
 | `net_arch` | [256, 256] | （代码内） |
 | `noise_sigma` | 0.1 | `--noise` |
-| `eval_freq` | 10,000 | （代码内） |
-| `n_eval_episodes` | 20 | `--n-eval` |
+| `eval_freq` | 25,000 | `--eval-freq` |
+| `n_eval_episodes` | 150（固定 val 初态子集；`0`=整池 300） | `--n-eval` |
+| 评估初态取法 | 定序置换取前 N 个，种子 0；清单落 `{save_dir}/eval_logs/eval_ic_pool.json` | `--eval-ic-seed`；`--eval-random-ic` 回退随机抽 |
 | `train_samples` | `samples_clean.mat` | `--train-samples` |
 | `eval_samples` | `samples_clean_val.mat` | `--eval-samples` |
 | `grad_clip` | ±10.0 | `--grad-clip`（0=关） |
@@ -97,7 +98,9 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | `action_mapping` | `ratio_log_box_v1` | `--action-mapping` |
 | checkpoint | 每 50,000 步 | |
 
-`--smoke`：`steps=5000`，`save_dir=td3_baseline/checkpoints_smoke`，`name=td3_pure_smoke`。
+`--smoke`：`steps=5000`，`save_dir=td3_baseline/checkpoints_smoke`，`name=td3_pure_smoke`，且 `eval_freq=1000` / `n_eval=5`（否则冒烟步数内不会触发评估）。
+
+训练内评估为**固定初态协议**（`rl_td3/fixed_ic_eval.py`）：每次评估遍历同一组 val 初态，配合 `deterministic=True` 使评估无采样噪声，`best_model` 不再由抽样运气决定。
 
 ### 3.3 产物
 
@@ -106,7 +109,7 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | 最终模型 | `{save_dir}/{name}.zip` |
 | 最优模型 | `{save_dir}/best/best_model.zip` |
 | 周期 checkpoint | `{save_dir}/{name}_*_steps.zip` |
-| EvalCallback | `{save_dir}/eval_logs/`（每 10k 步 × `--n-eval` ep，初态默认自 `samples_clean_val.mat`） |
+| EvalCallback | `{save_dir}/eval_logs/`（每 `--eval-freq` 步 × `--n-eval` 局，默认 25k×150 固定 val-IC；同目录 `eval_ic_pool.json` 记录初态清单） |
 | TensorBoard | `{save_dir}/tb_logs/` |
 | 终端 tee | `td3_baseline/logs/{name}_{时间戳}.log` |
 
