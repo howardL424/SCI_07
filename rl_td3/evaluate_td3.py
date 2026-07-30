@@ -14,6 +14,8 @@ evaluate_td3.py — 加载训练好的 TD3/TD3BC 模型进行蒙特卡洛评估�
 默认初态池为 samples_clean_test.mat；--episodes 省略或 0 表示测全池。
 终端输出默认 tee 到模型所在 training 目录：
     {training_dir}/monte_carlo_eval_{best|final|...}_seed{seed}_{时间戳}.log
+逐轮指标（散点图用）同步写入同目录同名 .npz：
+    r_MD1_min / r_MD2_min / r_minT （及 evade_ok / strike_ok / both_ok / row_idx / local_idx）
 """
 
 from __future__ import annotations
@@ -103,6 +105,46 @@ def resolve_mc_log_path(
     return training_dir / f"monte_carlo_eval_{tag}_seed{seed}_{ts}.log"
 
 
+def resolve_mc_metrics_path(
+    model: str,
+    seed: int,
+    metrics_file: str | None = None,
+    log_file: str | None = None,
+    log_path: Path | None = None,
+) -> Path:
+    """默认与日志同 stem 的 .npz；可用 --metrics-file 覆盖。"""
+    if metrics_file:
+        return Path(metrics_file)
+    base = log_path if log_path is not None else resolve_mc_log_path(
+        model, seed, log_file
+    )
+    return Path(base).with_suffix(".npz")
+
+
+def save_mc_metrics(results: list[dict], path: Path) -> Path:
+    """将每轮规避距离与打击精度落盘，供后续蒙特卡洛散点图使用。"""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(
+        path,
+        r_MD1_min=np.asarray([r["r_MD1_min"] for r in results], dtype=np.float64),
+        r_MD2_min=np.asarray([r["r_MD2_min"] for r in results], dtype=np.float64),
+        r_minT=np.asarray([r["r_minT"] for r in results], dtype=np.float64),
+        evade_ok=np.asarray([r["evade_ok"] for r in results], dtype=bool),
+        strike_ok=np.asarray([r["strike_ok"] for r in results], dtype=bool),
+        both_ok=np.asarray([r["both_ok"] for r in results], dtype=bool),
+        intercepted=np.asarray([r["intercepted"] for r in results], dtype=bool),
+        row_idx=np.asarray([r["row_idx"] for r in results], dtype=np.int64),
+        local_idx=np.asarray([r["local_idx"] for r in results], dtype=np.int64),
+    )
+    print(
+        f"[evaluate] 逐轮指标已写入 {path}\n"
+        f"           keys: r_MD1_min, r_MD2_min, r_minT, "
+        f"evade_ok, strike_ok, both_ok, intercepted, row_idx, local_idx"
+    )
+    return path
+
+
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="TD3 制导律权重训练模型评估")
     p.add_argument("--model", type=str, required=True, help="模型路径（不含 .zip）")
@@ -142,6 +184,20 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     p.add_argument("--no-log", action="store_true", help="不写入终端输出日志")
+    p.add_argument(
+        "--metrics-file",
+        type=str,
+        default=None,
+        help=(
+            "逐轮 r_MD1_min/r_MD2_min/r_minT 的 npz 路径"
+            "（默认与日志同 stem 的 .npz）"
+        ),
+    )
+    p.add_argument(
+        "--no-metrics",
+        action="store_true",
+        help="不保存逐轮指标 npz",
+    )
     return p.parse_args()
 
 
@@ -262,7 +318,10 @@ def print_stats(label: str, results: list[dict]):
     print(f"  累计奖励         mean±std            : {rw_arr.mean():.2f} ± {rw_arr.std():.2f}")
 
 
-def _run_eval(args: argparse.Namespace) -> None:
+def _run_eval(
+    args: argparse.Namespace,
+    metrics_path: Path | None = None,
+) -> None:
     np.random.seed(args.seed)
 
     model_path = args.model
@@ -340,6 +399,11 @@ def _run_eval(args: argparse.Namespace) -> None:
     label = "TD3 (全量 test-IC)" if sweep_all else "TD3 (随机 MC)"
     print_stats(label, results)
 
+    if metrics_path is not None and results:
+        save_mc_metrics(results, metrics_path)
+    elif metrics_path is not None and not results:
+        print("[evaluate] 无有效 episode，跳过指标落盘")
+
     # 动作分布探针：取池内前 min(20,n) 个有效初态（定点，可复现）
     n_probe = min(20, env.n_samples)
     print(f"\n[evaluate] 探针前 {n_probe} 个初态，输出策略网络动作分布…")
@@ -369,15 +433,27 @@ def _run_eval(args: argparse.Namespace) -> None:
 
 def main():
     args = parse_args()
+    log_path = resolve_mc_log_path(args.model, args.seed, args.log_file)
+    metrics_path = None
+    if not args.no_metrics:
+        metrics_path = resolve_mc_metrics_path(
+            args.model,
+            args.seed,
+            metrics_file=args.metrics_file,
+            log_path=log_path,
+        )
+
     if args.no_log:
-        _run_eval(args)
+        _run_eval(args, metrics_path=metrics_path)
         return
 
-    log_path = resolve_mc_log_path(args.model, args.seed, args.log_file)
     with tee_terminal_log(log_path):
         print(f"[evaluate] 终端输出同时写入 {log_path}")
-        _run_eval(args)
+        if metrics_path is not None:
+            print(f"[evaluate] 逐轮指标将写入 {metrics_path}")
+        _run_eval(args, metrics_path=metrics_path)
 
 
 if __name__ == "__main__":
     main()
+

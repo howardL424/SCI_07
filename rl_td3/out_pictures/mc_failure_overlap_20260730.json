@@ -1,0 +1,75 @@
+{
+  "n_ic": 300,
+  "labels": [
+    "pure_best",
+    "bc_best"
+  ],
+  "fail_row_idx": {
+    "pure_best": [
+      6,
+      30,
+      41,
+      48,
+      62,
+      72,
+      92,
+      97,
+      125,
+      133,
+      172,
+      214,
+      223,
+      256,
+      273,
+      288,
+      295
+    ],
+    "bc_best": [
+      30,
+      84,
+      94,
+      165,
+      189,
+      209,
+      222,
+      233,
+      265,
+      273
+    ]
+  },
+  "fail_counts": {
+    "pure_best": 17,
+    "bc_best": 10
+  },
+  "fail_evade_counts": {
+    "pure_best": 15,
+    "bc_best": 8
+  },
+  "fail_strike_counts": {
+    "pure_best": 2,
+    "bc_best": 2
+  },
+  "pairwise": {
+    "pure_best&bc_best": {
+      "inter": 2,
+      "union": 25,
+      "jaccard": 0.08,
+      "expected_if_independent": 0.5666666666666667
+    }
+  },
+  "k_fail_observed": {
+    "0": 275,
+    "1": 23,
+    "2": 2
+  },
+  "k_fail_expected_independent": {
+    "0": 273.5666666666667,
+    "1": 25.866666666666664,
+    "2": 0.5666666666666667
+  },
+  "all_fail_row_idx": [
+    30,
+    273
+  ],
+  "permutation_p_all_fail": 0.10499475026248688
+}

@@ -1,0 +1,109 @@
+{
+  "n_ic": 300,
+  "labels": [
+    "pure_best",
+    "bc_250k",
+    "bc_best"
+  ],
+  "fail_row_idx": {
+    "pure_best": [
+      6,
+      30,
+      41,
+      48,
+      62,
+      72,
+      92,
+      97,
+      125,
+      133,
+      172,
+      214,
+      223,
+      256,
+      273,
+      288,
+      295
+    ],
+    "bc_250k": [
+      30,
+      66,
+      80,
+      112,
+      137,
+      170,
+      203,
+      209,
+      214,
+      221,
+      223,
+      262,
+      273,
+      293
+    ],
+    "bc_best": [
+      30,
+      84,
+      94,
+      165,
+      189,
+      209,
+      222,
+      233,
+      265,
+      273
+    ]
+  },
+  "fail_counts": {
+    "pure_best": 17,
+    "bc_250k": 14,
+    "bc_best": 10
+  },
+  "fail_evade_counts": {
+    "pure_best": 15,
+    "bc_250k": 13,
+    "bc_best": 8
+  },
+  "fail_strike_counts": {
+    "pure_best": 2,
+    "bc_250k": 1,
+    "bc_best": 2
+  },
+  "pairwise": {
+    "pure_best&bc_250k": {
+      "inter": 4,
+      "union": 27,
+      "jaccard": 0.14814814814814814,
+      "expected_if_independent": 0.7933333333333333
+    },
+    "pure_best&bc_best": {
+      "inter": 2,
+      "union": 25,
+      "jaccard": 0.08,
+      "expected_if_independent": 0.5666666666666667
+    },
+    "bc_250k&bc_best": {
+      "inter": 3,
+      "union": 21,
+      "jaccard": 0.14285714285714285,
+      "expected_if_independent": 0.46666666666666673
+    }
+  },
+  "k_fail_observed": {
+    "0": 266,
+    "1": 29,
+    "2": 3,
+    "3": 2
+  },
+  "k_fail_expected_independent": {
+    "0": 260.80022222222226,
+    "1": 37.426,
+    "2": 1.7473333333333334,
+    "3": 0.026444444444444444
+  },
+  "all_fail_row_idx": [
+    30,
+    273
+  ],
+  "permutation_p_all_fail": 0.0004999750012499375
+}

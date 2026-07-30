@@ -1,0 +1,29 @@
+{
+  "title_tag": "training_260k_20260723_152457",
+  "action_mapping": "ratio_log_box_v1",
+  "seed": 0,
+  "episodes": 300,
+  "n_steps": 26900,
+  "gamma_pos_frac": 0.5410408921933085,
+  "gamma_neg_frac": 0.45895910780669147,
+  "gamma_other_frac": 0.0,
+  "wT_lo_frac": 0.007323420074349442,
+  "wT_hi_frac": 0.06074349442379182,
+  "wT_other_frac": 0.9319330855018587,
+  "wE_lo_frac": 0.1470631970260223,
+  "wE_hi_frac": 0.08802973977695168,
+  "wE_other_frac": 0.7649070631970261,
+  "gamma_mean": -0.06724418879884769,
+  "wT_mean": 1373213.5585793764,
+  "wE_mean": 1706.5826905657955,
+  "bound_frac_dim0": 0.1812639405204461,
+  "bound_frac_dim1": 0.7229739776951672,
+  "bound_frac_dim2": 0.2912639405204461,
+  "bound_frac_any": 0.7494423791821562,
+  "bound_frac_all": 0.11159851301115242,
+  "action_names": [
+    "rhoE_n",
+    "rhoT_n",
+    "gamma_n"
+  ]
+}

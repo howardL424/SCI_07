@@ -1,0 +1,82 @@
+[evaluate] 终端输出同时写入 rl_td3\checkpoints\training_260k_20260723_152457\monte_carlo_eval_best_seed0_20260730_150249.log
+[evaluate] 逐轮指标将写入 rl_td3\checkpoints\training_260k_20260723_152457\monte_carlo_eval_best_seed0_20260730_150249.npz
+[evaluate] 加载模型：rl_td3/checkpoints/training_260k_20260723_152457/best/best_model.zip
+[evaluate] obs_mode=scaled  action_mapping=ratio_log_box_v1
+[evaluate] 初态池：D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat
+[EvasionEnv] samples_clean_test.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+
+[evaluate] 开始评估：全量 test-IC（300 个有效初态）…
+  [done  10 | scanned  10/300] 双防+打击成功率 100.0%  r_MD1_min=31.7m  r_minT=0.16m
+  [done  20 | scanned  20/300] 双防+打击成功率 100.0%  r_MD1_min=51.9m  r_minT=0.15m
+  [done  30 | scanned  30/300] 双防+打击成功率 100.0%  r_MD1_min=30.4m  r_minT=0.22m
+  [done  40 | scanned  40/300] 双防+打击成功率 97.5%  r_MD1_min=56.0m  r_minT=0.01m
+  [done  50 | scanned  50/300] 双防+打击成功率 98.0%  r_MD1_min=39.2m  r_minT=0.11m
+  [done  60 | scanned  60/300] 双防+打击成功率 96.7%  r_MD1_min=42.5m  r_minT=0.23m
+  [done  70 | scanned  70/300] 双防+打击成功率 94.3%  r_MD1_min=48.7m  r_minT=0.05m
+  [done  80 | scanned  80/300] 双防+打击成功率 93.8%  r_MD1_min=5.4m  r_minT=nan
+  [done  90 | scanned  90/300] 双防+打击成功率 93.3%  r_MD1_min=49.6m  r_minT=0.15m
+  [done 100 | scanned 100/300] 双防+打击成功率 94.0%  r_MD1_min=10.6m  r_minT=0.04m
+  [done 110 | scanned 110/300] 双防+打击成功率 94.5%  r_MD1_min=38.6m  r_minT=0.07m
+  [done 120 | scanned 120/300] 双防+打击成功率 94.2%  r_MD1_min=39.7m  r_minT=0.03m
+  [done 130 | scanned 130/300] 双防+打击成功率 93.1%  r_MD1_min=40.4m  r_minT=0.11m
+  [done 140 | scanned 140/300] 双防+打击成功率 93.6%  r_MD1_min=45.7m  r_minT=0.16m
+  [done 150 | scanned 150/300] 双防+打击成功率 93.3%  r_MD1_min=15.7m  r_minT=0.13m
+  [done 160 | scanned 160/300] 双防+打击成功率 93.8%  r_MD1_min=43.7m  r_minT=0.24m
+  [done 170 | scanned 170/300] 双防+打击成功率 93.5%  r_MD1_min=45.4m  r_minT=0.22m
+  [done 180 | scanned 180/300] 双防+打击成功率 92.8%  r_MD1_min=9.4m  r_minT=0.20m
+  [done 190 | scanned 190/300] 双防+打击成功率 93.2%  r_MD1_min=11.8m  r_minT=0.19m
+  [done 200 | scanned 200/300] 双防+打击成功率 93.5%  r_MD1_min=43.9m  r_minT=0.06m
+  [done 210 | scanned 210/300] 双防+打击成功率 93.8%  r_MD1_min=24.6m  r_minT=0.24m
+  [done 220 | scanned 220/300] 双防+打击成功率 93.2%  r_MD1_min=33.3m  r_minT=0.11m
+  [done 230 | scanned 230/300] 双防+打击成功率 93.0%  r_MD1_min=15.6m  r_minT=0.19m
+  [done 240 | scanned 240/300] 双防+打击成功率 92.9%  r_MD1_min=55.9m  r_minT=0.23m
+  [done 250 | scanned 250/300] 双防+打击成功率 93.2%  r_MD1_min=52.4m  r_minT=0.21m
+  [done 260 | scanned 260/300] 双防+打击成功率 93.1%  r_MD1_min=13.7m  r_minT=0.15m
+  [done 270 | scanned 270/300] 双防+打击成功率 93.0%  r_MD1_min=56.1m  r_minT=0.17m
+  [done 280 | scanned 280/300] 双防+打击成功率 92.9%  r_MD1_min=19.8m  r_minT=0.10m
+  [done 290 | scanned 290/300] 双防+打击成功率 93.1%  r_MD1_min=35.3m  r_minT=0.20m
+  [done 300 | scanned 300/300] 双防+打击成功率 93.3%  r_MD1_min=26.9m  r_minT=0.15m
+
+============================================================
+  评估结果：TD3 (全量 test-IC)  （300 轮）
+============================================================
+  双防均规避成功  (d1,d2≥6m)       : 282/300 = 94.0%
+  打击成功        (r_minT≤10m)     : 280/300 = 93.3%
+  规避+打击 全部达标                  : 280/300 = 93.3%
+  被拦截          (r_MD<6m)          :  18/300 = 6.0%
+  最小脱靶距离 D1  mean±std (m)       : 73.8 ± 281.7
+  最小脱靶距离 D2  mean±std (m)       : 44.5 ± 143.0
+  终端脱靶 r_minT  mean±std (m)       : 59.71 ± 990.83  (n=282)
+  累计奖励         mean±std            : 115.42 ± 39.83
+[evaluate] 逐轮指标已写入 rl_td3\checkpoints\training_260k_20260723_152457\monte_carlo_eval_best_seed0_20260730_150249.npz
+           keys: r_MD1_min, r_MD2_min, r_minT, evade_ok, strike_ok, both_ok, intercepted, row_idx, local_idx
+
+[evaluate] 探针前 20 个初态，输出策略网络动作分布…
+    γ=-2.998  wT=7.30e+00  wE=7.26e+02
+    γ=-2.998  wT=1.55e+01  wE=1.54e+03
+    γ=-2.998  wT=4.37e+00  wE=4.35e+02
+    γ=-2.998  wT=5.19e+00  wE=5.17e+02
+    γ=-2.998  wT=1.60e+01  wE=1.59e+03
+    γ= 2.169  wT=9.94e+06  wE=9.95e+03
+    γ= 2.189  wT=9.90e+06  wE=9.91e+03
+    γ=-2.997  wT=5.52e+00  wE=5.50e+02
+    γ=-2.998  wT=7.69e+00  wE=7.65e+02
+    γ=-2.998  wT=5.71e+00  wE=5.68e+02
+    γ=-2.999  wT=4.20e+00  wE=4.18e+02
+    γ=-2.998  wT=5.03e+00  wE=5.00e+02
+    γ=-2.997  wT=4.38e+00  wE=4.37e+02
+    γ=-2.996  wT=6.00e+00  wE=5.98e+02
+    γ=-2.998  wT=1.42e+01  wE=1.42e+03
+    γ= 1.874  wT=9.61e+06  wE=9.61e+03
+    γ=-2.998  wT=7.47e+00  wE=7.46e+02
+    γ=-2.996  wT=1.27e+01  wE=1.27e+03
+    γ=-2.998  wT=4.24e+00  wE=4.23e+02
+    γ=-2.997  wT=5.29e+00  wE=5.27e+02
+
+  γ  均值=-2.236  范围=[-2.999, 2.189]
+  wT 均值=1.47e+06  范围=[4.20e+00, 9.94e+06]
+  wE 均值=2.12e+03  范围=[4.18e+02, 9.95e+03]
