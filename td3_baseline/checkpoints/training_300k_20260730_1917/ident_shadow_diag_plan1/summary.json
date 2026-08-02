@@ -1,0 +1,84 @@
+{
+  "model": "td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model",
+  "episodes": 5,
+  "cfg": {
+    "coeff_mode": "sparse_ffrls",
+    "ident_apply_cmd": false,
+    "sigma_q": 0.0017453292519943296,
+    "sigma_qdot": 0.001,
+    "sigma_theta": 0.0017453292519943296,
+    "sigma_psi": 0.0017453292519943296,
+    "sigma_r": 0.0,
+    "sigma_rdot": 0.0,
+    "kf_qj": 10000.0,
+    "kf_sigma_a0": 50.0,
+    "rls_lambda": 0.98,
+    "rls_mu": 0.001,
+    "rls_P0": 10000.0,
+    "rls_r0": 10000.0,
+    "rls_a0": 50.0,
+    "noise_seed": 0,
+    "action_mapping_version": "ratio_log_box_v1"
+  },
+  "theta_rmse_thresh": 0.5,
+  "theta_hold": 5,
+  "mean_theta_rmse_tail": 2020356.4453225874,
+  "mean_r_rmse_tail": 2.9901357564862054e-15,
+  "mean_rdot_rmse_tail": 4.521668704930359e-15,
+  "mean_rddot_rmse_tail": 486.1430456739355,
+  "mean_a_cmd_rmse_tail": 103.49394548935636,
+  "mean_converge_step": NaN,
+  "converge_rate": 0.0,
+  "per_episode": [
+    {
+      "local_idx": 0,
+      "steps": 78,
+      "converge_step": NaN,
+      "theta_rmse_tail": 112.89273636672368,
+      "r_rmse_tail": 3.2818563180946157e-15,
+      "rdot_rmse_tail": 4.375808424126154e-15,
+      "rddot_rmse_tail": 737.2165268101089,
+      "a_cmd_rmse_tail": 93.87919019408149
+    },
+    {
+      "local_idx": 1,
+      "steps": 96,
+      "converge_step": NaN,
+      "theta_rmse_tail": 726.1544040897076,
+      "r_rmse_tail": 0.0,
+      "rdot_rmse_tail": 0.0,
+      "rddot_rmse_tail": 5.08674746699438,
+      "a_cmd_rmse_tail": 149.01945641559678
+    },
+    {
+      "local_idx": 2,
+      "steps": 78,
+      "converge_step": NaN,
+      "theta_rmse_tail": 264.7020643397884,
+      "r_rmse_tail": 5.743248556665577e-15,
+      "rdot_rmse_tail": 4.375808424126154e-15,
+      "rddot_rmse_tail": 494.05216291788105,
+      "a_cmd_rmse_tail": 102.95133301198334
+    },
+    {
+      "local_idx": 3,
+      "steps": 76,
+      "converge_step": NaN,
+      "theta_rmse_tail": 10100130.298068078,
+      "r_rmse_tail": 4.1023203976182695e-15,
+      "rdot_rmse_tail": 6.563712636189231e-15,
+      "rddot_rmse_tail": 1051.830175294362,
+      "a_cmd_rmse_tail": 98.66776240445712
+    },
+    {
+      "local_idx": 4,
+      "steps": 94,
+      "converge_step": NaN,
+      "theta_rmse_tail": 548.1793400627051,
+      "r_rmse_tail": 1.823253510052564e-15,
+      "rdot_rmse_tail": 7.293014040210256e-15,
+      "rddot_rmse_tail": 142.5296158803308,
+      "a_cmd_rmse_tail": 72.95198542066306
+    }
+  ]
+}

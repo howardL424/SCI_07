@@ -32,6 +32,7 @@ from stable_baselines3 import TD3
 sys.path.insert(0, str(Path(__file__).parent))
 from action_mapping import DEFAULT_ACTION_MAPPING
 from evasion_env import EvasionEnv, KILL_R, SAMPLES_TEST_FILE, STRIKE_OK
+from ident_cfg import add_ident_args, matlab_cfg_from_args
 from td3_bc import TD3BC
 
 
@@ -198,6 +199,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="不保存逐轮指标 npz",
     )
+    add_ident_args(p)
     return p.parse_args()
 
 
@@ -338,10 +340,17 @@ def _run_eval(
     print(f"[evaluate] 加载模型：{model_path_zip}")
     print(f"[evaluate] obs_mode={args.obs_mode}  action_mapping={args.action_mapping}")
     print(f"[evaluate] 初态池：{args.samples}")
+    matlab_cfg = matlab_cfg_from_args(args)
+    print(
+        f"[evaluate] coeff_mode={matlab_cfg['coeff_mode']}  "
+        f"ident_apply_cmd={matlab_cfg['ident_apply_cmd']}  "
+        f"rls_mu={matlab_cfg['rls_mu']}  noise_seed={matlab_cfg['noise_seed']}"
+    )
     env = EvasionEnv(
         samples_file=args.samples,
         action_mapping=args.action_mapping,
         obs_normalize=(args.obs_mode == "scaled"),
+        matlab_cfg=matlab_cfg,
     )
     try:
         model = TD3BC.load(model_path, env=env)

@@ -15,6 +15,7 @@ function H = evasion_helpers()
     H.computeOptimalCmd    = @computeOptimalCmd;
     H.computeOptimalCmd_duo= @computeOptimalCmd_duo;
     H.computeOptimalCmd_duo_target = @computeOptimalCmd_duo_target;
+    H.computeOptimalCmd_duo_target_coeffs = @computeOptimalCmd_duo_target_coeffs;
     H.computePN            = @computePN;
     H.updateState          = @updateState;
     H.saturate             = @saturate;
@@ -202,6 +203,7 @@ function a_M = computeOptimalCmd_duo_target( ...
         a_D1, a_D2, w1, w2, wT, wE, r_star)
     % w1, w2: 双防规避项权重 (a1, a2); wT: 目标打击项权重; r_star: 期望规避脱靶量 d*
     % 三个通道: 1 -> 防御弹D1, 2 -> 防御弹D2, T -> 目标 (目标静止, v_rT=0, d_T*=0)
+    % 本函数解析求 Q/b/v_r 后委托 computeOptimalCmd_duo_target_coeffs。
 
     % ----- 通道1 (D1) -----
     Q1 = sqrt(qd_y1^2 + qd_z1^2 * cos(q_y1)^2);
@@ -224,17 +226,31 @@ function a_M = computeOptimalCmd_duo_target( ...
     [B1T, B2T, ~] = computeBC(q_th, q_ps, theta_M, psi_vM, 0, 0, 0, 0);
     bT = [B1T; B2T];
 
-    % ----- 各通道零控脱靶量 z、varphi、自积分 Phi、附加项 N (式16-21,33) -----
+    a_M = computeOptimalCmd_duo_target_coeffs( ...
+        Q1, b1, v_r1, r1, rdot1, tgo1, tf1, ...
+        Q2, b2, v_r2, r2, rdot2, tgo2, tf2, ...
+        QT, bT, 0.0, r_AT, rdot_AT, tgoT, tfT, ...
+        t, w1, w2, wT, wE, r_star);
+end
+
+% 函数4.7b: 式47 系数注入版（供解析路径与在线辨识共用）
+function a_M = computeOptimalCmd_duo_target_coeffs( ...
+        Q1, b1, v_r1, r1, rdot1, tgo1, tf1, ...
+        Q2, b2, v_r2, r2, rdot2, tgo2, tf2, ...
+        QT, bT, v_rT, r_AT, rdot_AT, tgoT, tfT, ...
+        t, w1, w2, wT, wE, r_star)
+    % 直接接收三通道 Q、b=[B1;B2]、v_r 与 (r,rdot,tgo)，不再解析 computeBC。
+    b1 = b1(:); b2 = b2(:); bT = bT(:);
+    Q1 = max(double(Q1), 0); Q2 = max(double(Q2), 0); QT = max(double(QT), 0);
+
     [z1, phi1, Phi1, N1] = chan_quantities(Q1, tgo1, r1, rdot1, v_r1);
     [z2, phi2, Phi2, N2] = chan_quantities(Q2, tgo2, r2, rdot2, v_r2);
-    [zT, phiT, PhiT, NT] = chan_quantities(QT, tgoT, r_AT, rdot_AT, 0);
+    [zT, phiT, PhiT, NT] = chan_quantities(QT, tgoT, r_AT, rdot_AT, v_rT);
 
-    % ----- 交叉项积分 (式34,35,36) -----
     Phi12 = calc_Phi12(Q1, Q2, tgo1, tgo2);
     Phi1T = calc_Phi12(Q1, QT, tgo1, tgoT);
     Phi2T = calc_Phi12(Q2, QT, tgo2, tgoT);
 
-    % ----- 自/交叉耦合增益 (式38-40), G_ij = w_j (b_i·b_j)/wE -----
     d11 = b1' * b1; d22 = b2' * b2; dTT = bT' * bT;
     d12 = b1' * b2; d1T = b1' * bT; d2T = b2' * bT;
     G11 = w1 * d11 / wE; G22 = w2 * d22 / wE; GTT = wT * dTT / wE;
@@ -242,13 +258,11 @@ function a_M = computeOptimalCmd_duo_target( ...
     G1T = wT * d1T / wE; GT1 = w1 * d1T / wE;
     G2T = wT * d2T / wE; GT2 = w2 * d2T / wE;
 
-    % ----- 右端项 Z (式41); 目标期望脱靶量为 0 -----
     Z1 = z1 - N1 - r_star;
     Z2 = z2 - N2 - r_star;
     ZT = zT - NT - 0;
     Zvec = [Z1; Z2; ZT];
 
-    % ----- 3x3 耦合矩阵 (式42) 与克莱姆法则 (式43-46) -----
     A = [1 + G11*Phi1,  G12*Phi12,    G1T*Phi1T;
          G21*Phi12,     1 + G22*Phi2, G2T*Phi2T;
          GT1*Phi1T,     GT2*Phi2T,    1 + GTT*PhiT];
@@ -258,8 +272,7 @@ function a_M = computeOptimalCmd_duo_target( ...
     Delta2 = det([A(:,1), Zvec, A(:,3)]);
     DeltaT = det([A(:,1), A(:,2), Zvec]);
 
-    % ----- 最优制导指令 (式47) -----
-    I1 = double(t <= tf1); I2 = double(t <= tf2);   % 目标项始终作用
+    I1 = double(t <= tf1); I2 = double(t <= tf2);
     a_M = -(1 / (wE * detA)) * ( ...
             w1 * Delta1 * I1 * (phi1 * b1) + ...
             w2 * Delta2 * I2 * (phi2 * b2) + ...

@@ -41,6 +41,11 @@ from fixed_ic_eval import (  # noqa: E402
     FixedICEvalEnv,
     save_ic_pool,
 )
+from ident_cfg import (  # noqa: E402
+    add_ident_args,
+    matlab_cfg_from_args,
+    save_ident_run_config,
+)
 
 
 def set_global_seed(seed: int) -> None:
@@ -268,14 +273,20 @@ def parse_args() -> argparse.Namespace:
         choices=[ACTION_MAPPING_RATIO, ACTION_MAPPING_TD3_BOX],
         help="动作映射（默认 ratio_log_box_v1）",
     )
+    add_ident_args(p)
     return resolve_run_config(p.parse_args())
 
 
 def make_env(
     action_mapping: str = DEFAULT_ACTION_MAPPING,
     samples_file: str = SAMPLES_FILE,
+    matlab_cfg: dict | None = None,
 ) -> EvasionEnv:
-    env = EvasionEnv(samples_file=samples_file, action_mapping=action_mapping)
+    env = EvasionEnv(
+        samples_file=samples_file,
+        action_mapping=action_mapping,
+        matlab_cfg=matlab_cfg,
+    )
     return Monitor(env)
 
 
@@ -301,11 +312,28 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     print(f"  评估初态: {args.eval_samples}（EvalCallback / best_model）")
     print(f"  梯度裁剪: {'禁用' if args.grad_clip == 0 else f'±{args.grad_clip}'}")
     print(f"  保存目录: {save_dir}")
+    matlab_cfg = matlab_cfg_from_args(args)
+    print(f"  coeff_mode: {matlab_cfg['coeff_mode']}")
+    print(f"  ident_apply_cmd: {matlab_cfg['ident_apply_cmd']}")
+    print(f"  rls_mu / noise_seed: {matlab_cfg['rls_mu']} / {matlab_cfg['noise_seed']}")
     print("=" * 60)
+    save_ident_run_config(
+        save_dir / "ident_run_config.json",
+        matlab_cfg,
+        extra={"run_name": args.name, "seed": args.seed, "steps": args.steps},
+    )
 
-    env = make_env(args.action_mapping, samples_file=args.train_samples)
+    env = make_env(
+        args.action_mapping,
+        samples_file=args.train_samples,
+        matlab_cfg=matlab_cfg,
+    )
     # 独立评估环境：初态只取 val-IC，用于曲线与选 best
-    eval_env = make_env(args.action_mapping, samples_file=args.eval_samples)
+    eval_env = make_env(
+        args.action_mapping,
+        samples_file=args.eval_samples,
+        matlab_cfg=matlab_cfg,
+    )
     env.reset(seed=args.seed)
     n_eval_episodes = args.n_eval or int(eval_env.unwrapped.n_samples)
     if args.eval_random_ic:

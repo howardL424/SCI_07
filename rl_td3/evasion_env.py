@@ -374,6 +374,16 @@ class EvasionEnv(gym.Env):
             "reached":     False,   # 兼容旧评估脚本：打击成功才为 True
             "zT":          r_MT,    # 兼容旧字段名：现为当前 r_MT，非 ZEM
         }
+        # env_step 辨识扩展 [10:32] → Python ident_diag（影子/消融用）
+        if info_vec.size >= 32:
+            info["ident_diag"] = {
+                "r_err": info_vec[9:12].copy(),
+                "rdot_err": info_vec[12:15].copy(),
+                "rddot_err": info_vec[15:18].copy(),
+                "theta_err": info_vec[18:29].copy(),  # 11D: D1(4)+D2(4)+T(3)
+                "did_rls": bool(info_vec[29] > 0.5),
+                "a_cmd_err": info_vec[30:32].copy(),
+            }
 
         # 规避段正常结束 → MATLAB 一次 PN 跑完 stage3，结算终端奖励
         if terminated and stage2_done and not intercepted:

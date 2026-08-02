@@ -1,31 +1,31 @@
-function [obs_next, state_abs_next, t_new, fact] = ...
-        stage2_step(core, state_abs, t, Tev, action_norm)
+function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
+        stage2_step(core, state_abs, t, Tev, action_norm, ident_state)
 %STAGE2_STEP  预初始化核心上的一步 stage2 动力学（物理事实，不含奖励常数）。
 %
 %   [obs_next, state_abs_next, t_new, fact] = ...
 %       stage2_step(core, state_abs, t, Tev, action_norm)
+%   [obs_next, state_abs_next, t_new, fact, ident_state] = ...
+%       stage2_step(core, state_abs, t, Tev, action_norm, ident_state)
 %
 %   输入:
-%     core        stage2_core_init 返回值
-%     state_abs   [18×1] 当前绝对态 [M(6); D1(6); D2(6)]
-%     t           当前时刻 (s)
-%     Tev         规避段时长 (s)
-%     action_norm [3×1] 已映射/裁剪的 TD3 动作 ∈ [-1,1]
+%     core         stage2_core_init 返回值
+%     state_abs    [18×1] 当前绝对态 [M(6); D1(6); D2(6)]
+%     t            当前时刻 (s)
+%     Tev          规避段时长 (s)
+%     action_norm  [3×1] 已映射/裁剪的 TD3 动作 ∈ [-1,1]
+%     ident_state  可选；辨识器显式状态（跨步持久化）
 %
-%   输出 fact 字段:
-%     .r_MD1 .r_MD2 .r_MT
-%     .intercepted  (min(r_MD)≤kill_radius)
-%     .stage2_done  (t_new≥Tev 且未拦截)
-%     .terminated   (intercepted || stage2_done)
-%     .done         同 terminated（schema 别名）
-%     .a_M          [2×1] 饱和前指令（诊断）
-%     .a_M_sat      [2×1] 饱和后指令
-%     .saturated_8g 逻辑，|a_M| 触达 8g 盒
-%     .old_box_feasible 比值反解 (wT,wE) 是否落在旧权重盒（诊断）
+%   coeff_mode (core.cfg):
+%     analytic_truth  — 现有解析真值路径（默认）
+%     analytic_noisy  — 带噪测量代入解析 computeBC
+%     sparse_ffrls    — Kalman + L1 FF-RLS 辨识系数
+%   ident_apply_cmd=false 时仍跑辨识诊断，但指令用 analytic_truth（影子模式）。
 %
 %   硬性约定: 调用方必须先 phys_to_action_norm 再传入；本函数不再二次裁剪。
-%   比值版本 (ratio_log_box_v1) 直接把 ρE、ρT、γ 送入式(47)，等价于
-%   以 wE=1 传入相对权重，避免任意组合再裁旧盒。
+
+    if nargin < 6
+        ident_state = [];
+    end
 
     cfg = core.cfg;
     H   = core.H;
@@ -34,6 +34,16 @@ function [obs_next, state_abs_next, t_new, fact] = ...
         amap = char(cfg.action_mapping_version);
     else
         amap = char(core.meta.action_mapping_version);
+    end
+    if ~isfield(cfg, 'coeff_mode') || isempty(cfg.coeff_mode)
+        coeff_mode = 'analytic_truth';
+    else
+        coeff_mode = char(cfg.coeff_mode);
+    end
+    if ~isfield(cfg, 'ident_apply_cmd')
+        apply_cmd = true;
+    else
+        apply_cmd = logical(cfg.ident_apply_cmd);
     end
 
     M  = state_abs(1:6)';
@@ -46,6 +56,7 @@ function [obs_next, state_abs_next, t_new, fact] = ...
     computeMDDot                 = H.computeMDDot;
     computePN                    = H.computePN;
     computeOptimalCmd_duo_target = H.computeOptimalCmd_duo_target;
+    computeOptimalCmd_duo_target_coeffs = H.computeOptimalCmd_duo_target_coeffs;
     updateState                  = H.updateState;
     saturate                     = H.saturate;
 
@@ -61,6 +72,7 @@ function [obs_next, state_abs_next, t_new, fact] = ...
     [rdot_MD2, qd_y2, qd_z2]   = computeMDDot(M, D2, r_MD2, qy_D2M, qz_D2M);
     [rdot_TM,  qd_yTM, qd_zTM] = computeMDDot(M, T_state, r_TM, qy_TM, qz_TM);
 
+    % 防御弹 PN 始终用真值几何（测量噪声只作用于攻击方制导系数路径）
     a_D1 = saturate(computePN(cfg.KD1, D1(6), qd_y1, qd_z1, D1(4)), core.max_ov_D);
     a_D2 = saturate(computePN(cfg.KD2, D2(6), qd_y2, qd_z2, D2(4)), core.max_ov_D);
 
@@ -70,17 +82,81 @@ function [obs_next, state_abs_next, t_new, fact] = ...
     tf1 = t - r_MD1 / rd1;
     tf2 = t - r_MD2 / rd2;
     tfT = t - r_TM  / rdT;
+    tgo1 = tf1 - t; tgo2 = tf2 - t; tgoT = tfT - t;
 
-    % 式(47) 只依赖相对权重：传入 (w1/wE,w2/wE,wT/wE) 且 wE=1
-    a_M_raw = computeOptimalCmd_duo_target( ...
-        qy_D1M, qz_D1M, qd_y1, qd_z1, r_MD1, rdot_MD1, t, tf1, ...
-        qy_D2M, qz_D2M, qd_y2, qd_z2, r_MD2, rdot_MD2,    tf2, ...
-        qy_TM,  qz_TM,  qd_yTM, qd_zTM, r_TM, rdot_TM,   tfT, ...
-        M(4), M(5), D1(4), D1(5), D2(4), D2(5), ...
-        a_D1, a_D2, r1, r2, rT, 1.0, cfg.dstar);
+    ident_diag = struct();
+    use_analytic = true;
+    c = [];
+
+    if ~strcmp(coeff_mode, 'analytic_truth')
+        if isempty(ident_state)
+            ident_state = stage2_ident_init(cfg);
+        end
+        truth_geo = struct();
+        truth_geo.D1 = struct('r', r_MD1, 'rdot', rdot_MD1, ...
+            'qy', qy_D1M, 'qz', qz_D1M, 'qdy', qd_y1, 'qdz', qd_z1);
+        truth_geo.D2 = struct('r', r_MD2, 'rdot', rdot_MD2, ...
+            'qy', qy_D2M, 'qz', qz_D2M, 'qdy', qd_y2, 'qdz', qd_z2);
+        truth_geo.T  = struct('r', r_TM,  'rdot', rdot_TM,  ...
+            'qy', qy_TM,  'qz', qz_TM,  'qdy', qd_yTM, 'qdz', qd_zTM);
+        truth_geo.theta_M = M(4);  truth_geo.psi_M = M(5);
+        truth_geo.theta_D1 = D1(4); truth_geo.psi_D1 = D1(5);
+        truth_geo.theta_D2 = D2(4); truth_geo.psi_D2 = D2(5);
+
+        [ident_state, coeffs, ident_diag] = stage2_ident_step( ...
+            ident_state, truth_geo, a_D1, a_D2, H);
+
+        if strcmp(coeff_mode, 'analytic_noisy')
+            c = coeffs.analytic_noisy;
+            use_analytic = false;
+        elseif strcmp(coeff_mode, 'sparse_ffrls') && apply_cmd
+            c = coeffs;
+            use_analytic = false;
+        end
+        % sparse_ffrls + ident_apply_cmd=false：影子模式，仍用解析真值指令
+    end
+
+    if use_analytic
+        a_M_raw = computeOptimalCmd_duo_target( ...
+            qy_D1M, qz_D1M, qd_y1, qd_z1, r_MD1, rdot_MD1, t, tf1, ...
+            qy_D2M, qz_D2M, qd_y2, qd_z2, r_MD2, rdot_MD2,    tf2, ...
+            qy_TM,  qz_TM,  qd_yTM, qd_zTM, r_TM, rdot_TM,   tfT, ...
+            M(4), M(5), D1(4), D1(5), D2(4), D2(5), ...
+            a_D1, a_D2, r1, r2, rT, 1.0, cfg.dstar);
+    else
+        % 与解析路径一致：Q*tgo 上限钳制；tgo/tf 仍用真值时间轴
+        Q1c = local_clamp_Q(c.Q1, tgo1);
+        Q2c = local_clamp_Q(c.Q2, tgo2);
+        QTc = local_clamp_Q(c.QT, tgoT);
+        a_M_raw = computeOptimalCmd_duo_target_coeffs( ...
+            Q1c, c.b1, c.vr1, c.r1, c.rdot1, tgo1, tf1, ...
+            Q2c, c.b2, c.vr2, c.r2, c.rdot2, tgo2, tf2, ...
+            QTc, c.bT, c.vrT, c.rT, c.rdotT, tgoT, tfT, ...
+            t, r1, r2, rT, 1.0, cfg.dstar);
+    end
+
+    % 影子诊断：估参指令 vs 本拍实际采用的指令（影子时=解析真值）
+    if strcmp(coeff_mode, 'sparse_ffrls') && isstruct(ident_diag) && ...
+            isfield(ident_diag, 'theta_hat')
+        Q1c = local_clamp_Q(coeffs.Q1, tgo1);
+        Q2c = local_clamp_Q(coeffs.Q2, tgo2);
+        QTc = local_clamp_Q(coeffs.QT, tgoT);
+        a_pred = computeOptimalCmd_duo_target_coeffs( ...
+            Q1c, coeffs.b1, coeffs.vr1, coeffs.r1, coeffs.rdot1, tgo1, tf1, ...
+            Q2c, coeffs.b2, coeffs.vr2, coeffs.r2, coeffs.rdot2, tgo2, tf2, ...
+            QTc, coeffs.bT, coeffs.vrT, coeffs.rT, coeffs.rdotT, tgoT, tfT, ...
+            t, r1, r2, rT, 1.0, cfg.dstar);
+        ident_diag.a_cmd_err = a_pred(:) - a_M_raw(:);
+        ident_diag.a_cmd_pred = a_pred(:);
+    end
+
     a_M = saturate(a_M_raw, core.max_ov_M);
     saturated_8g = any(abs(a_M_raw(:)) > core.max_ov_M + 1e-12) || ...
                    any(abs(a_M(:) - a_M_raw(:)) > 1e-12);
+
+    if ~isempty(ident_state)
+        ident_state = stage2_ident_commit(ident_state, a_M);
+    end
 
     M_new  = updateState(M,  a_M,  dt);
     D1_new = updateState(D1, a_D1, dt);
@@ -117,6 +193,8 @@ function [obs_next, state_abs_next, t_new, fact] = ...
     fact.old_box_feasible = logical(old_ok);
     fact.gamma            = gamma;
     fact.action_mapping_version = amap;
+    fact.coeff_mode       = coeff_mode;
+    fact.ident_diag       = ident_diag;
 end
 
 function [r1, r2, rT, gamma, old_ok] = local_decode_ratios(action_norm, amap, w)
@@ -144,4 +222,11 @@ function [r1, r2, rT, gamma, old_ok] = local_decode_ratios(action_norm, amap, w)
     old_ok = (wT >= 1e2 - 1e-9) && (wT <= 1e5 + 1e-6) && ...
              (wE >= 1e2 - 1e-9) && (wE <= 1e4 + 1e-6) && ...
              (gamma >= -3.0 - 1e-12) && (gamma <= 3.0 + 1e-12);
+end
+
+function Q = local_clamp_Q(Q, tgo)
+    Q = max(double(Q), 0);
+    if abs(tgo) > 1e-12 && Q * tgo > 100
+        Q = 100 / tgo;
+    end
 end
