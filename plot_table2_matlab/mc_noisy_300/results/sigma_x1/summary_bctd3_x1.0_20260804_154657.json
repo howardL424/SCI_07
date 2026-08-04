@@ -1,0 +1,24 @@
+{
+  "algo": "bctd3",
+  "coeff_mode": "analytic_noisy",
+  "sigma_scale": 1.0,
+  "noise_seed0": 0,
+  "model": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\checkpoints\\training_500k_20260728_1455\\best\\best_model",
+  "n": 300,
+  "n_skip": 0,
+  "elapsed_s": 341.963616,
+  "rate_evade": 0.9666666666666667,
+  "rate_strike": 0.96,
+  "rate_both": 0.96,
+  "rate_intercepted": 0.03333333333333333,
+  "metrics_file": "D:\\LTY\\yan\\yanerxia\\GAIL\\plot_table2_matlab\\mc_noisy_300\\results\\sigma_x1\\mc_bctd3_N300_noisy_x1.0_20260804_154657.npz",
+  "cfg": {
+    "coeff_mode": "analytic_noisy",
+    "sigma_q": 0.0017453292519943296,
+    "sigma_qdot": 0.001,
+    "sigma_theta": 0.0017453292519943296,
+    "sigma_psi": 0.0017453292519943296,
+    "sigma_r": 0.0,
+    "sigma_rdot": 0.0
+  }
+}

@@ -1,0 +1,118 @@
+==== 四方法带噪 MC（不带辨识）====
+N=2  σ×1  methods={pn, sine, td3, bctd3}
+samples=D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat
+out=D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1
+
+初态池: D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat
+有效行 300 / 取前 2 条（与 TD3 全量 test-IC 顺序一致）
+判据: evade r_MD≥6m, strike r_minT≤10m
+测量噪声: ON  scale=×1  σ_q=0.001745 rad (0.100°)  σ_qdot=0.001  σ_r=0  hold=0.10s
+
+========== 开始方法: PN (2 局) ==========
+  [  2/  2] evade=0.0%  both=0.0%  | 本局 rMD=[2284.0,5.6] rT=9477.64 [拦截]
+
+------------------------------------------------------------
+  评估结果：PN  （2 轮，耗时 0.0 min）
+------------------------------------------------------------
+  双防均规避成功  (d1,d2≥6m)     :   0/2 = 0.0%
+  打击成功        (r_minT≤10m)   :   0/2 = 0.0%
+  规避+打击 全部达标                :   0/2 = 0.0%
+  被拦截          (r_MD<6m)      :   2/2 = 100.0%
+  最小脱靶距离 D1  mean±std (m)     : 1371.2 ± 1291.0
+  最小脱靶距离 D2  mean±std (m)     : 5.4 ± 0.3
+  终端脱靶 r_minT  mean±std (m)     : 8253.96 ± 1730.55  (n=2)
+------------------------------------------------------------
+已保存: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_pn_N2_noisy_x1_20260804_152058.mat
+
+========== 开始方法: SINE (2 局) ==========
+  [  2/  2] evade=100.0%  both=100.0%  | 本局 rMD=[7.6,6.7] rT=0.08
+
+------------------------------------------------------------
+  评估结果：SINE  （2 轮，耗时 0.0 min）
+------------------------------------------------------------
+  双防均规避成功  (d1,d2≥6m)     :   2/2 = 100.0%
+  打击成功        (r_minT≤10m)   :   2/2 = 100.0%
+  规避+打击 全部达标                :   2/2 = 100.0%
+  被拦截          (r_MD<6m)      :   0/2 = 0.0%
+  最小脱靶距离 D1  mean±std (m)     : 8.4 ± 1.1
+  最小脱靶距离 D2  mean±std (m)     : 7.5 ± 1.1
+  终端脱靶 r_minT  mean±std (m)     : 0.12 ± 0.05  (n=2)
+------------------------------------------------------------
+已保存: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_sine_N2_noisy_x1_20260804_152058.mat
+
+==================== 汇总 ====================
+方法             N         双规避成功          打击成功          联合成功         被拦截
+PN             2      0/2   = 0.0%      0/2   = 0.0%      0/2   = 0.0%      2/2   
+SINE           2      2/2   =100.0%      2/2   =100.0%      2/2   =100.0%      0/2   
+==============================================
+
+调用 Python RL MC:
+"E:\Python\venvs\rl_pytorch\Scripts\python.exe" "D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\run_mc_rl_noisy.py" --algo both --episodes 2 --sigma-scale 1 --noise-seed 0 --seed 0 --samples "D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat" --out-dir "D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1" --progress-every 10
+
+[mc] samples=D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat  episodes=2  σ×1.0  out=D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1 
+ 
+===== TD3 / analytic_noisy / σ×1.0 ===== 
+model: D:\LTY\yan\yanerxia\GAIL\td3_baseline\checkpoints\training_300k_20260730_1917\best\best_model 
+σ_q=0.001745 rad  σ_qdot=0.001  σ_r=0  noise_seed0=0 
+[EvasionEnv] samples_clean_test.mat: 保留 300/438 行（已滤除全零 138 行） 
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候… 
+[EvasionEnv] MATLAB Engine 就绪 
+Wrapping the env with a `Monitor` wrapper 
+Wrapping the env in a DummyVecEnv. 
+  [  2/2] both=100.0%  rMD=[42.1,15.8] rT=0.04 
+ 
+============================================================ 
+  评估结果：TD3 analytic_noisy σ×1.0  （2 轮） 
+============================================================ 
+  双防均规避成功  (d1,d2≥6m)       :   2/2 = 100.0% 
+  打击成功        (r_minT≤10m)     :   2/2 = 100.0% 
+  规避+打击 全部达标                  :   2/2 = 100.0% 
+  被拦截          (r_MD<6m)          :   0/2 = 0.0% 
+  最小脱靶距离 D1  mean±std (m)       : 44.9 ± 2.8 
+  最小脱靶距离 D2  mean±std (m)       : 26.2 ± 10.4 
+  终端脱靶 r_minT  mean±std (m)       : 0.06 ± 0.02  (n=2) 
+  累计奖励         mean±std            : 126.04 ± 1.11 
+[evaluate] 逐轮指标已写入 D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_td3_N2_noisy_x1.0_20260804_152122.npz 
+           keys: r_MD1_min, r_MD2_min, r_minT, evade_ok, strike_ok, both_ok, intercepted, row_idx, local_idx 
+[mc] 已保存: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_td3_N2_noisy_x1.0_20260804_152122.npz 
+ 
+===== BCTD3 / analytic_noisy / σ×1.0 ===== 
+model: D:\LTY\yan\yanerxia\GAIL\rl_td3\checkpoints\training_500k_20260728_1455\best\best_model 
+σ_q=0.001745 rad  σ_qdot=0.001  σ_r=0  noise_seed0=0 
+[EvasionEnv] samples_clean_test.mat: 保留 300/438 行（已滤除全零 138 行） 
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候… 
+[EvasionEnv] MATLAB Engine 就绪 
+Wrapping the env with a `Monitor` wrapper 
+Wrapping the env in a DummyVecEnv. 
+  [  2/2] both=100.0%  rMD=[44.9,9.6] rT=0.02 
+ 
+============================================================ 
+  评估结果：BCTD3 analytic_noisy σ×1.0  （2 轮） 
+============================================================ 
+  双防均规避成功  (d1,d2≥6m)       :   2/2 = 100.0% 
+  打击成功        (r_minT≤10m)     :   2/2 = 100.0% 
+  规避+打击 全部达标                  :   2/2 = 100.0% 
+  被拦截          (r_MD<6m)          :   0/2 = 0.0% 
+  最小脱靶距离 D1  mean±std (m)       : 44.7 ± 0.2 
+  最小脱靶距离 D2  mean±std (m)       : 20.3 ± 10.7 
+  终端脱靶 r_minT  mean±std (m)       : 0.02 ± 0.01  (n=2) 
+  累计奖励         mean±std            : 126.17 ± 1.03 
+[evaluate] 逐轮指标已写入 D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_bctd3_N2_noisy_x1.0_20260804_152133.npz 
+           keys: r_MD1_min, r_MD2_min, r_minT, evade_ok, strike_ok, both_ok, intercepted, row_idx, local_idx 
+[mc] 已保存: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_bctd3_N2_noisy_x1.0_20260804_152133.npz 
+ 
+==================== RL 汇总 ==================== 
+方法            N          双规避           打击           联合 
+td3           2 100.0%       100.0%       100.0% 
+bctd3         2 100.0%       100.0%       100.0% 
+================================================= 
+
+==================== 四方法汇总（σ×1）====================
+方法             N         双规避成功          打击成功          联合成功
+SINE           2  100.0%         100.0%         100.0%
+PN             2    0.0%           0.0%           0.0%
+BCTD3          2  100.0%         100.0%         100.0%
+TD3            2  100.0%         100.0%         100.0%
+===========================================================
+
+日志: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_four_noisy_N2_20260804_152058.log

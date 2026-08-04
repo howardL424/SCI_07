@@ -1,0 +1,224 @@
+==== 四方法带噪 MC（不带辨识）====
+N=300  σ×1  methods={pn, sine, td3, bctd3}
+samples=D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat
+out=D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1
+
+初态池: D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat
+有效行 300 / 取前 300 条（与 TD3 全量 test-IC 顺序一致）
+判据: evade r_MD≥6m, strike r_minT≤10m
+测量噪声: ON  scale=×1  σ_q=0.001745 rad (0.100°)  σ_qdot=0.001  σ_r=0  hold=0.10s
+
+========== 开始方法: PN (300 局) ==========
+  [ 10/300] evade=0.0%  both=0.0%  | 本局 rMD=[359.2,5.4] rT=7789.17 [拦截]
+  [ 20/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.3,1347.4] rT=6849.21 [拦截]
+  [ 30/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.3,1475.9] rT=5987.16 [拦截]
+  [ 40/300] evade=0.0%  both=0.0%  | 本局 rMD=[1054.2,5.3] rT=8426.66 [拦截]
+  [ 50/300] evade=0.0%  both=0.0%  | 本局 rMD=[2848.1,5.8] rT=9989.20 [拦截]
+  [ 60/300] evade=0.0%  both=0.0%  | 本局 rMD=[2681.2,5.0] rT=8537.59 [拦截]
+  [ 70/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.1,1740.5] rT=6431.12 [拦截]
+  [ 80/300] evade=0.0%  both=0.0%  | 本局 rMD=[1312.0,5.7] rT=9073.68 [拦截]
+  [ 90/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.8,1396.6] rT=6713.37 [拦截]
+  [100/300] evade=0.0%  both=0.0%  | 本局 rMD=[1255.3,5.3] rT=8248.27 [拦截]
+  [110/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.6,1393.1] rT=7775.40 [拦截]
+  [120/300] evade=0.0%  both=0.0%  | 本局 rMD=[343.9,5.0] rT=7668.44 [拦截]
+  [130/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.7,57.8] rT=7688.60 [拦截]
+  [140/300] evade=0.0%  both=0.0%  | 本局 rMD=[2926.1,5.4] rT=9569.10 [拦截]
+  [150/300] evade=0.0%  both=0.0%  | 本局 rMD=[1668.7,5.9] rT=9188.18 [拦截]
+  [160/300] evade=0.0%  both=0.0%  | 本局 rMD=[1142.7,5.4] rT=7981.64 [拦截]
+  [170/300] evade=0.0%  both=0.0%  | 本局 rMD=[792.6,5.9] rT=7285.83 [拦截]
+  [180/300] evade=0.0%  both=0.0%  | 本局 rMD=[1340.0,5.3] rT=8946.80 [拦截]
+  [190/300] evade=0.0%  both=0.0%  | 本局 rMD=[1867.3,5.1] rT=8262.68 [拦截]
+  [200/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.4,890.8] rT=7848.71 [拦截]
+  [210/300] evade=0.0%  both=0.0%  | 本局 rMD=[1080.2,5.2] rT=8511.69 [拦截]
+  [220/300] evade=0.0%  both=0.0%  | 本局 rMD=[1065.6,5.2] rT=8364.59 [拦截]
+  [230/300] evade=0.0%  both=0.0%  | 本局 rMD=[718.0,5.5] rT=7573.07 [拦截]
+  [240/300] evade=0.0%  both=0.0%  | 本局 rMD=[175.8,4.9] rT=6962.00 [拦截]
+  [250/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.1,348.5] rT=7315.11 [拦截]
+  [260/300] evade=0.0%  both=0.0%  | 本局 rMD=[2718.2,5.1] rT=8521.83 [拦截]
+  [270/300] evade=0.0%  both=0.0%  | 本局 rMD=[1043.2,5.7] rT=8564.42 [拦截]
+  [280/300] evade=0.0%  both=0.0%  | 本局 rMD=[2025.3,5.7] rT=9570.60 [拦截]
+  [290/300] evade=0.0%  both=0.0%  | 本局 rMD=[84.5,4.9] rT=7237.05 [拦截]
+  [300/300] evade=0.0%  both=0.0%  | 本局 rMD=[5.9,1945.1] rT=6186.36 [拦截]
+
+------------------------------------------------------------
+  评估结果：PN  （300 轮，耗时 0.5 min）
+------------------------------------------------------------
+  双防均规避成功  (d1,d2≥6m)     :   0/300 = 0.0%
+  打击成功        (r_minT≤10m)   :   0/300 = 0.0%
+  规避+打击 全部达标                :   0/300 = 0.0%
+  被拦截          (r_MD<6m)      : 300/300 = 100.0%
+  最小脱靶距离 D1  mean±std (m)     : 746.8 ± 946.6
+  最小脱靶距离 D2  mean±std (m)     : 748.8 ± 979.0
+  终端脱靶 r_minT  mean±std (m)     : 7564.50 ± 1041.29  (n=300)
+------------------------------------------------------------
+已保存: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_pn_N300_noisy_x1_20260804_152154.mat
+
+========== 开始方法: SINE (300 局) ==========
+  [ 10/300] evade=100.0%  both=100.0%  | 本局 rMD=[7.8,8.2] rT=0.22
+  [ 20/300] evade=80.0%  both=80.0%  | 本局 rMD=[6.1,11.3] rT=0.10
+  [ 30/300] evade=76.7%  both=76.7%  | 本局 rMD=[12.6,9.0] rT=0.09
+  [ 40/300] evade=75.0%  both=75.0%  | 本局 rMD=[10.3,6.2] rT=0.24
+  [ 50/300] evade=72.0%  both=72.0%  | 本局 rMD=[5.7,10.0] rT=8718.36 [拦截]
+  [ 60/300] evade=71.7%  both=70.0%  | 本局 rMD=[2804.5,5.7] rT=8622.53 [拦截]
+  [ 70/300] evade=72.9%  both=70.0%  | 本局 rMD=[7.8,11.8] rT=0.18
+  [ 80/300] evade=76.2%  both=72.5%  | 本局 rMD=[8.5,9.0] rT=0.15
+  [ 90/300] evade=74.4%  both=71.1%  | 本局 rMD=[7.1,8.0] rT=0.24
+  [100/300] evade=73.0%  both=70.0%  | 本局 rMD=[7.8,6.4] rT=0.09
+  [110/300] evade=72.7%  both=70.0%  | 本局 rMD=[8.1,10.9] rT=0.05
+  [120/300] evade=74.2%  both=71.7%  | 本局 rMD=[397.4,5.8] rT=7713.21 [拦截]
+  [130/300] evade=73.8%  both=71.5%  | 本局 rMD=[6.3,6.1] rT=0.15
+  [140/300] evade=75.0%  both=72.9%  | 本局 rMD=[12.6,13.4] rT=0.08
+  [150/300] evade=76.7%  both=74.0%  | 本局 rMD=[8.2,12.3] rT=15.27
+  [160/300] evade=76.9%  both=74.4%  | 本局 rMD=[12.5,11.1] rT=0.22
+  [170/300] evade=77.1%  both=74.7%  | 本局 rMD=[12.9,6.7] rT=0.12
+  [180/300] evade=77.2%  both=75.0%  | 本局 rMD=[13.3,8.8] rT=0.04
+  [190/300] evade=76.8%  both=74.7%  | 本局 rMD=[7.7,14.5] rT=0.18
+  [200/300] evade=77.0%  both=74.5%  | 本局 rMD=[8.4,6.5] rT=0.06
+  [210/300] evade=77.1%  both=74.8%  | 本局 rMD=[8.3,10.1] rT=0.24
+  [220/300] evade=76.8%  both=74.5%  | 本局 rMD=[1109.6,5.9] rT=8400.64 [拦截]
+  [230/300] evade=76.5%  both=74.3%  | 本局 rMD=[7.4,8.3] rT=0.21
+  [240/300] evade=76.2%  both=74.2%  | 本局 rMD=[187.0,6.0] rT=6982.58 [拦截]
+  [250/300] evade=75.6%  both=73.6%  | 本局 rMD=[7.0,9.8] rT=0.15
+  [260/300] evade=75.8%  both=73.8%  | 本局 rMD=[9.2,7.7] rT=0.20
+  [270/300] evade=76.3%  both=74.4%  | 本局 rMD=[6.3,6.3] rT=0.13
+  [280/300] evade=76.4%  both=74.6%  | 本局 rMD=[7.2,12.0] rT=0.03
+  [290/300] evade=76.2%  both=74.5%  | 本局 rMD=[13.3,9.7] rT=0.23
+  [300/300] evade=76.3%  both=74.3%  | 本局 rMD=[6.8,8.9] rT=0.02
+
+------------------------------------------------------------
+  评估结果：SINE  （300 轮，耗时 1.0 min）
+------------------------------------------------------------
+  双防均规避成功  (d1,d2≥6m)     : 229/300 = 76.3%
+  打击成功        (r_minT≤10m)   : 223/300 = 74.3%
+  规避+打击 全部达标                : 223/300 = 74.3%
+  被拦截          (r_MD<6m)      :  71/300 = 23.7%
+  最小脱靶距离 D1  mean±std (m)     : 126.0 ± 448.7
+  最小脱靶距离 D2  mean±std (m)     : 51.1 ± 224.4
+  终端脱靶 r_minT  mean±std (m)     : 1708.82 ± 3123.28  (n=300)
+------------------------------------------------------------
+已保存: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_sine_N300_noisy_x1_20260804_152154.mat
+
+==================== 汇总 ====================
+方法             N         双规避成功          打击成功          联合成功         被拦截
+PN           300      0/300 = 0.0%      0/300 = 0.0%      0/300 = 0.0%    300/300 
+SINE         300    229/300 =76.3%    223/300 =74.3%    223/300 =74.3%     71/300 
+==============================================
+
+调用 Python RL MC:
+"E:\Python\venvs\rl_pytorch\Scripts\python.exe" "D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\run_mc_rl_noisy.py" --algo both --episodes 300 --sigma-scale 1 --noise-seed 0 --seed 0 --samples "D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat" --out-dir "D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1" --progress-every 10
+
+[mc] samples=D:\LTY\yan\yanerxia\GAIL\samples_clean_test.mat  episodes=300  σ×1.0  out=D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1 
+ 
+===== TD3 / analytic_noisy / σ×1.0 ===== 
+model: D:\LTY\yan\yanerxia\GAIL\td3_baseline\checkpoints\training_300k_20260730_1917\best\best_model 
+σ_q=0.001745 rad  σ_qdot=0.001  σ_r=0  noise_seed0=0 
+[EvasionEnv] samples_clean_test.mat: 保留 300/438 行（已滤除全零 138 行） 
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候… 
+[EvasionEnv] MATLAB Engine 就绪 
+Wrapping the env with a `Monitor` wrapper 
+Wrapping the env in a DummyVecEnv. 
+  [ 10/300] both=90.0%  rMD=[48.2,33.0] rT=0.13 
+  [ 20/300] both=95.0%  rMD=[22.4,47.5] rT=0.17 
+  [ 30/300] both=96.7%  rMD=[28.5,11.9] rT=0.13 
+  [ 40/300] both=92.5%  rMD=[45.6,24.0] rT=0.10 
+  [ 50/300] both=90.0%  rMD=[4.8,25.5] rT=nan 
+  [ 60/300] both=91.7%  rMD=[20.4,23.0] rT=0.19 
+  [ 70/300] both=92.9%  rMD=[13.4,15.5] rT=0.16 
+  [ 80/300] both=93.8%  rMD=[81.1,46.6] rT=0.16 
+  [ 90/300] both=93.3%  rMD=[22.9,7.0] rT=0.07 
+  [100/300] both=94.0%  rMD=[45.3,16.2] rT=0.01 
+  [110/300] both=93.6%  rMD=[18.6,27.3] rT=0.17 
+  [120/300] both=92.5%  rMD=[42.3,49.4] rT=0.04 
+  [130/300] both=93.1%  rMD=[54.2,50.5] rT=0.01 
+  [140/300] both=93.6%  rMD=[17.6,47.2] rT=0.17 
+  [150/300] both=94.0%  rMD=[60.8,25.1] rT=0.11 
+  [160/300] both=94.4%  rMD=[59.2,29.2] rT=0.06 
+  [170/300] both=94.1%  rMD=[62.0,23.6] rT=0.09 
+  [180/300] both=93.3%  rMD=[33.4,35.3] rT=0.21 
+  [190/300] both=93.7%  rMD=[31.3,12.5] rT=0.23 
+  [200/300] both=94.0%  rMD=[49.2,78.3] rT=0.19 
+  [210/300] both=93.8%  rMD=[24.4,33.1] rT=0.08 
+  [220/300] both=94.1%  rMD=[87.8,37.5] rT=0.10 
+  [230/300] both=93.5%  rMD=[54.5,33.2] rT=0.24 
+  [240/300] both=93.3%  rMD=[48.6,36.8] rT=0.08 
+  [250/300] both=93.6%  rMD=[52.5,70.7] rT=0.22 
+  [260/300] both=92.7%  rMD=[51.6,14.2] rT=0.07 
+  [270/300] both=92.6%  rMD=[64.3,41.6] rT=0.08 
+  [280/300] both=92.5%  rMD=[42.4,23.1] rT=0.16 
+  [290/300] both=92.4%  rMD=[41.3,38.5] rT=0.24 
+  [300/300] both=92.7%  rMD=[6.3,44.2] rT=0.06 
+ 
+============================================================ 
+  评估结果：TD3 analytic_noisy σ×1.0  （300 轮） 
+============================================================ 
+  双防均规避成功  (d1,d2≥6m)       : 280/300 = 93.3% 
+  打击成功        (r_minT≤10m)     : 278/300 = 92.7% 
+  规避+打击 全部达标                  : 278/300 = 92.7% 
+  被拦截          (r_MD<6m)          :  20/300 = 6.7% 
+  最小脱靶距离 D1  mean±std (m)       : 54.7 ± 210.4 
+  最小脱靶距离 D2  mean±std (m)       : 63.3 ± 248.8 
+  终端脱靶 r_minT  mean±std (m)       : 56.25 ± 877.20  (n=280) 
+  累计奖励         mean±std            : 114.34 ± 41.74 
+[evaluate] 逐轮指标已写入 D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_td3_N300_noisy_x1.0_20260804_152937.npz 
+           keys: r_MD1_min, r_MD2_min, r_minT, evade_ok, strike_ok, both_ok, intercepted, row_idx, local_idx 
+[mc] 已保存: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_td3_N300_noisy_x1.0_20260804_152937.npz 
+ 
+===== BCTD3 / analytic_noisy / σ×1.0 ===== 
+model: D:\LTY\yan\yanerxia\GAIL\rl_td3\checkpoints\training_500k_20260728_1455\best\best_model 
+σ_q=0.001745 rad  σ_qdot=0.001  σ_r=0  noise_seed0=0 
+[EvasionEnv] samples_clean_test.mat: 保留 300/438 行（已滤除全零 138 行） 
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候… 
+[EvasionEnv] MATLAB Engine 就绪 
+Wrapping the env with a `Monitor` wrapper 
+Wrapping the env in a DummyVecEnv. 
+  [ 10/300] both=100.0%  rMD=[57.7,29.7] rT=0.18 
+  [ 20/300] both=100.0%  rMD=[32.0,46.9] rT=0.01 
+  [ 30/300] both=100.0%  rMD=[25.4,18.7] rT=0.16 
+  [ 40/300] both=97.5%  rMD=[34.2,19.1] rT=0.03 
+  [ 50/300] both=98.0%  rMD=[16.7,43.4] rT=0.06 
+  [ 60/300] both=98.3%  rMD=[22.9,38.3] rT=0.25 
+  [ 70/300] both=98.6%  rMD=[31.3,16.6] rT=0.06 
+  [ 80/300] both=98.8%  rMD=[57.3,40.8] rT=0.07 
+  [ 90/300] both=97.8%  rMD=[24.4,67.6] rT=0.09 
+  [100/300] both=97.0%  rMD=[23.0,7.1] rT=0.23 
+  [110/300] both=97.3%  rMD=[16.9,33.2] rT=0.05 
+  [120/300] both=97.5%  rMD=[42.2,43.1] rT=0.22 
+  [130/300] both=97.7%  rMD=[34.3,58.9] rT=0.22 
+  [140/300] both=97.9%  rMD=[12.8,44.8] rT=0.08 
+  [150/300] both=97.3%  rMD=[3.1,11.7] rT=nan 
+  [160/300] both=97.5%  rMD=[48.8,14.8] rT=0.01 
+  [170/300] both=97.1%  rMD=[41.1,19.3] rT=0.12 
+  [180/300] both=97.2%  rMD=[13.8,37.2] rT=0.23 
+  [190/300] both=96.8%  rMD=[5.3,23.1] rT=nan 
+  [200/300] both=97.0%  rMD=[18.3,38.0] rT=0.12 
+  [210/300] both=96.2%  rMD=[2.7,21.8] rT=nan 
+  [220/300] both=96.4%  rMD=[79.5,36.8] rT=0.21 
+  [230/300] both=96.1%  rMD=[19.2,17.9] rT=0.10 
+  [240/300] both=95.8%  rMD=[45.4,57.5] rT=0.17 
+  [250/300] both=96.0%  rMD=[18.3,51.8] rT=0.11 
+  [260/300] both=96.2%  rMD=[39.1,29.0] rT=0.17 
+  [270/300] both=95.9%  rMD=[76.1,25.9] rT=0.24 
+  [280/300] both=95.7%  rMD=[20.5,30.2] rT=0.09 
+  [290/300] both=95.9%  rMD=[31.5,32.4] rT=0.22 
+  [300/300] both=96.0%  rMD=[44.0,171.0] rT=0.13 
+ 
+============================================================ 
+  评估结果：BCTD3 analytic_noisy σ×1.0  （300 轮） 
+============================================================ 
+  双防均规避成功  (d1,d2≥6m)       : 290/300 = 96.7% 
+  打击成功        (r_minT≤10m)     : 288/300 = 96.0% 
+  规避+打击 全部达标                  : 288/300 = 96.0% 
+  被拦截          (r_MD<6m)          :  10/300 = 3.3% 
+  最小脱靶距离 D1  mean±std (m)       : 36.6 ± 20.7 
+  最小脱靶距离 D2  mean±std (m)       : 41.8 ± 56.8 
+  终端脱靶 r_minT  mean±std (m)       : 59.76 ± 938.56  (n=290) 
+  累计奖励         mean±std            : 119.92 ± 30.31 
+[evaluate] 逐轮指标已写入 D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_bctd3_N300_noisy_x1.0_20260804_153541.npz 
+           keys: r_MD1_min, r_MD2_min, r_minT, evade_ok, strike_ok, both_ok, intercepted, row_idx, local_idx 
+[mc] 已保存: D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300\results\sigma_x1\mc_bctd3_N300_noisy_x1.0_20260804_153541.npz 
+ 
+==================== RL 汇总 ==================== 
+方法            N          双规避           打击           联合 
+td3         300  93.3%        92.7%        92.7% 
+bctd3       300  96.7%        96.0%        96.0% 
+================================================= 
