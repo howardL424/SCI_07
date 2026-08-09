@@ -28,7 +28,8 @@ function main_mc_pn_sine_300(varargin)
     addParameter(p, 'strike_ok', 10.0, @isnumeric);
     addParameter(p, 'progress_every', 10, @isnumeric);
     addParameter(p, 'enable_noise', false, @(x) islogical(x) || isnumeric(x));
-    addParameter(p, 'sigma_scale', 1.0, @isnumeric);
+    % addParameter(p, 'sigma_scale', 1.0, @isnumeric);   % 原默认：1×
+    addParameter(p, 'sigma_scale', 30.0, @isnumeric);     % 2026-08-06：改为 30×
     addParameter(p, 'noise_seed', 0, @isnumeric);
     addParameter(p, 'noise_hold_dt', 0.1, @isnumeric);
     addParameter(p, 'out_dir', '', @ischar);

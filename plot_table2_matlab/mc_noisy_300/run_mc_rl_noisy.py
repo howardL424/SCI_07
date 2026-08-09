@@ -6,7 +6,8 @@
 用法：
   E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe \\
     plot_table2_matlab/mc_noisy_300/run_mc_rl_noisy.py \\
-    --algo td3 --episodes 300 --sigma-scale 1
+    --algo td3 --episodes 300
+  # 默认 σ×30；显式指定可用 --sigma-scale 1
 
   --algo bctd3  测 BC-TD3
   --algo both   依次测两者
@@ -73,8 +74,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--sigma-scale",
         type=float,
-        default=1.0,
-        help="相对 ident 默认 σ 的统一倍率",
+        # default=1.0,  # 原默认：1× 辨识基准 σ
+        default=30.0,  # 2026-08-06：改为 30×
+        help="相对 ident 默认 σ 的统一倍率（默认 30）",
     )
     p.add_argument("--action-mapping", type=str, default=DEFAULT_ACTION_MAPPING)
     p.add_argument(

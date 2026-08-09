@@ -6,13 +6,13 @@
 
 ```matlab
 cd('D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\table2_noisy_ident')
-main_table2_noisy_ident      % 1× 默认噪声 → figures/、results/
+main_table2_noisy_ident      % 30× 默认噪声 → figures/sigma_x30/、results/sigma_x30/
 main_table2_noisy_ident_x3   % 3× 噪声 → figures/sigma_x3/、results/sigma_x3/
 ```
 
 ## 改噪声大小
 
-默认基准（`preset='plan1'`，`sigma_scale=1`）：
+通道基准（`preset='plan1'`，`sigma_scale=1` 时的单位强度，与 `ident_cfg.py` 一致）：
 
 | 通道 | σ |
 |------|---|
@@ -20,12 +20,12 @@ main_table2_noisy_ident_x3   % 3× 噪声 → figures/sigma_x3/、results/sigma_
 | `σ_q̇` | 0.001 rad/s |
 | `σ_r` / `σ_ṙ` | 0 |
 
-`sigma_scale` 会把上表所有 σ 统一乘倍率（KF 的 R 同步按新 σ 重建）：
+`sigma_scale` 会把上表所有 σ 统一乘倍率（KF 的 R 同步按新 σ 重建）。**现行默认 `sigma_scale=30`**（2026-08-06 由 1 改为 30；原值在代码中注释保留）。定标过程见 `../mc_fixed100/SESSION_SUMMARY_noise_scale_20260806.md`。
 
 ```matlab
 opts = struct();
 opts.preset      = 'plan1';          % 'plan1' | 'range' | 'clean'
-opts.sigma_scale = 5;                % ← 改这里：5 倍噪声
+opts.sigma_scale = 5;                % ← 改这里：例如 5 倍噪声（默认已是 30）
 opts.noise_seed  = 0;
 opts.coeff_mode  = 'analytic_noisy';  % 或 'sparse_ffrls'
 opts.obs_noise   = false;            % true=策略 13 维观测也加噪

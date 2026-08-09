@@ -5,7 +5,7 @@
 %  判据: evade r_MD≥6m；strike r_minT≤10m；both = 两者同时成立
 %
 %  用法:
-%    main_mc_four_noisy_300                      % 默认 N=300, σ×1, 四方法
+%    main_mc_four_noisy_300                      % 默认 N=300, σ×30, 四方法
 %    main_mc_four_noisy_300('N', 2)              % 烟雾
 %    main_mc_four_noisy_300('sigma_scale', 3)    % 3 倍噪声
 %    main_mc_four_noisy_300('methods', {'pn','sine'})  % 只跑基线
@@ -25,7 +25,8 @@ function main_mc_four_noisy_300(varargin)
     addParameter(p, 'methods', {'pn', 'sine', 'td3', 'bctd3'}, ...
         @(c) iscell(c) || ischar(c) || isstring(c));
     addParameter(p, 'samples', fullfile(gail_root, 'samples_clean_test.mat'), @ischar);
-    addParameter(p, 'sigma_scale', 1.0, @isnumeric);
+    % addParameter(p, 'sigma_scale', 1.0, @isnumeric);   % 原默认：1×
+    addParameter(p, 'sigma_scale', 30.0, @isnumeric);     % 2026-08-06：改为 30×
     addParameter(p, 'noise_seed', 0, @isnumeric);
     addParameter(p, 'seed', 0, @isnumeric);
     addParameter(p, 'progress_every', 10, @isnumeric);

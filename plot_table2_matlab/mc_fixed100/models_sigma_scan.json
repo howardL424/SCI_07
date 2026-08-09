@@ -1,0 +1,12 @@
+[
+  {
+    "name": "bctd3_300k",
+    "model": "rl_td3/checkpoints/training_300k_20260730_1917/best/best_model",
+    "prefer_td3bc": true
+  },
+  {
+    "name": "td3_pure_300k",
+    "model": "td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model",
+    "prefer_td3bc": false
+  }
+]

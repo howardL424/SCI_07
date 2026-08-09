@@ -13,7 +13,7 @@ function out = run_table2_noisy_ident(opts)
 %
 %   opts 字段（均可省略）:
 %     .preset       噪声预设，见 noisy_ident_cfg，默认 'plan1'
-%     .sigma_scale  所有 σ 的统一倍率，默认 1
+%     .sigma_scale  所有 σ 的统一倍率，默认 30（原默认 1 已注释保留）
 %     .noise_seed   噪声种子，默认 0
 %     .coeff_mode   'analytic_noisy'（默认）| 'sparse_ffrls'
 %     .obs_noise    策略 13 维观测是否同样加噪，默认 false
@@ -33,7 +33,8 @@ if nargin < 1 || isempty(opts)
     opts = struct();
 end
 opts = local_default(opts, 'preset', 'plan1');
-opts = local_default(opts, 'sigma_scale', 1);
+% opts = local_default(opts, 'sigma_scale', 1);   % 原默认
+opts = local_default(opts, 'sigma_scale', 30);    % 2026-08-06 定标
 opts = local_default(opts, 'noise_seed', 0);
 opts = local_default(opts, 'coeff_mode', 'analytic_noisy');
 opts = local_default(opts, 'obs_noise', false);

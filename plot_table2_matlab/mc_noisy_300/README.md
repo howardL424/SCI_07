@@ -13,10 +13,11 @@ cd('D:\LTY\yan\yanerxia\GAIL\plot_table2_matlab\mc_noisy_300')
 % 烟雾（推荐先跑）
 main_mc_four_noisy_300('N', 2)
 
-% 正式 300 局，1× 默认噪声
+% 正式 300 局，默认 30× 噪声
 main_mc_four_noisy_300
 
-% 3× 噪声
+% 显式 1× / 3×
+main_mc_four_noisy_300('sigma_scale', 1)
 main_mc_four_noisy_300('sigma_scale', 3)
 
 % 只跑基线 / 只跑 RL
@@ -29,19 +30,19 @@ main_mc_four_noisy_300('methods', {'td3','bctd3'})
 ```text
 E:\Python\venvs\rl_pytorch\Scripts\python.exe ^
   plot_table2_matlab/mc_noisy_300/run_mc_rl_noisy.py ^
-  --algo both --episodes 300 --sigma-scale 1
+  --algo both --episodes 300
 ```
 
 也可在原 PN/正弦脚本上单独开噪声接口（默认仍关闭，旧结果可复现）：
 
 ```matlab
 cd('..\mc_baseline_300')
-main_mc_pn_sine_300('enable_noise', true, 'sigma_scale', 1, 'N', 300)
+main_mc_pn_sine_300('enable_noise', true, 'sigma_scale', 30, 'N', 300)
 ```
 
 ## 噪声约定
 
-基准（`sigma_scale=1`，与 `rl_td3/ident_cfg.py` 一致）：
+通道基准（`sigma_scale=1`，与 `rl_td3/ident_cfg.py` 一致）：
 
 | 通道 | σ |
 |------|---|
@@ -49,6 +50,7 @@ main_mc_pn_sine_300('enable_noise', true, 'sigma_scale', 1, 'N', 300)
 | `σ_q̇` | 0.001 rad/s |
 | `σ_r` / `σ_ṙ` | 0 |
 
+- **现行默认 `sigma_scale=30`**（2026-08-06 由 1 改为 30；原值在代码中注释保留）。见 `../mc_fixed100/SESSION_SUMMARY_noise_scale_20260806.md`。
 - `sigma_scale` 统一乘到所有 σ。
 - 每局 `noise_seed = noise_seed0 + (i-1)`，四方法同 IC 对齐。
 - **防御弹 PN 始终真值几何**；攻击方制导用测量加噪。

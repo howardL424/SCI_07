@@ -18,8 +18,10 @@ function ncfg = noisy_ident_cfg(preset, seed, sigma_scale)
 %
 %   seed: 测量噪声可复现种子（hash RNG），默认 0。
 %
-%   sigma_scale: 所有 σ 的统一倍率，默认 1。KF 的 R 阵由 stage2_ident_init 按
-%                同一组 σ 重建，因此滤波器与真实噪声强度保持匹配；kf/rls 超参不缩放。
+%   sigma_scale: 所有 σ 的统一倍率，默认 30（2026-08-06 由 1 改为 30，见
+%                mc_fixed100/SESSION_SUMMARY_noise_scale_20260806.md）。
+%                KF 的 R 阵由 stage2_ident_init 按同一组 σ 重建，因此滤波器与
+%                真实噪声强度保持匹配；kf/rls 超参不缩放。
 %
 %   返回字段可直接合并进 stage2_core_init 的 cfg。
 %
@@ -32,7 +34,8 @@ if nargin < 2 || isempty(seed)
     seed = 0;
 end
 if nargin < 3 || isempty(sigma_scale)
-    sigma_scale = 1;
+    % sigma_scale = 1;   % 原默认：1× 辨识基准 σ
+    sigma_scale = 30;    % 2026-08-06：改为 30×（见 mc_fixed100/SESSION_SUMMARY_noise_scale_20260806.md）
 end
 preset = lower(char(preset));
 sigma_scale = double(sigma_scale);

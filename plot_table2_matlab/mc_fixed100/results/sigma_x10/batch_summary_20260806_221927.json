@@ -1,0 +1,42 @@
+{
+  "ic_pool": "plot_table2_matlab\\mc_fixed100\\results\\sigma_x10\\ic_pool_n100_seed0.json",
+  "n_ic": 100,
+  "models": [
+    {
+      "name": "bctd3_300k",
+      "model": "rl_td3/checkpoints/training_300k_20260730_1917/best/best_model",
+      "n": 100,
+      "n_plan": 100,
+      "n_skip": 0,
+      "elapsed_s": 122.098576,
+      "rate_evade": 0.93,
+      "rate_strike": 0.93,
+      "rate_both": 0.93,
+      "rate_intercepted": 0.07,
+      "metrics_file": "plot_table2_matlab\\mc_fixed100\\results\\sigma_x10\\mc_bctd3_300k_N100_20260806_221718.npz",
+      "obs_mode": "scaled",
+      "action_mapping": "ratio_log_box_v1",
+      "coeff_mode": "analytic_noisy",
+      "sigma_scale": 10.0,
+      "noise_seed0": 0
+    },
+    {
+      "name": "td3_pure_300k",
+      "model": "td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model",
+      "n": 100,
+      "n_plan": 100,
+      "n_skip": 0,
+      "elapsed_s": 123.622151,
+      "rate_evade": 0.95,
+      "rate_strike": 0.95,
+      "rate_both": 0.95,
+      "rate_intercepted": 0.05,
+      "metrics_file": "plot_table2_matlab\\mc_fixed100\\results\\sigma_x10\\mc_td3_pure_300k_N100_20260806_221927.npz",
+      "obs_mode": "scaled",
+      "action_mapping": "ratio_log_box_v1",
+      "coeff_mode": "analytic_noisy",
+      "sigma_scale": 10.0,
+      "noise_seed0": 0
+    }
+  ]
+}
