@@ -1,0 +1,7 @@
+$pdf_mode = 5;  # xelatex
+$bibtex_use = 2;
+$xelatex = 'xelatex -interaction=nonstopmode -synctex=1 %O %S';
+
+# Overleaf 的编译器选择会用命令行参数覆盖上面的 $pdf_mode，
+# 所以把 pdflatex 也指向 xelatex，避免误选 pdfLaTeX 时 ctex 找不到 fandol 字体集。
+$pdflatex = 'xelatex -interaction=nonstopmode -synctex=1 %O %S';

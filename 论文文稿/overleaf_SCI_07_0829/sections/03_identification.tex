@@ -1,0 +1,165 @@
+\section{在线参数辨识}
+\subsection{参数辨识问题构建}
+根据状态空间方程\eqref{eq:12}和\eqref{eq:14}，每个方程的第二行包含非平凡元素。对于规避者-非合作飞行器对，从方程\eqref{eq:10}中提取二阶动力学：
+
+\begin{equation}
+\label{eq:25}
+{\ddot r_{ADi}}(t) = \underbrace {(\dot q_{yi}^2 + \dot q_{zi}^2{{\cos }^2}{q_{yi}})}_{A_{21}^{(i)}} \cdot {r_{A{D_i}}}(t) + {B_{1i}} \cdot {a_{yA}}(t) + {B_{2i}} \cdot {a_{zA}}(t) + {C_{1i}}(t)
+\end{equation}
+同理，对规避方–目标对由式
+
+\eqref{eq:11}\begin{equation}
+\label{eq:26}
+{\ddot r_{AT}}(t) = \underbrace {(\dot q_\theta ^2 + \dot q_\psi ^2{{\cos }^2}{q_\theta })}_{A_{21}^{(T)}} \cdot {r_{AT}}(t) + {B_{1T}} \cdot {a_{yA}}(t) + {B_{2T}} \cdot {a_{zA}}(t)
+\end{equation}
+式\eqref{eq:25}–\eqref{eq:26}对未知参数均为线性。对比式\eqref{eq:25}和式\eqref{eq:3}可知${C_{1i}} =  - {v_{ri}}$，即为第i个非合作飞行器加速度在与规避者视线上的投影。
+
+所有信号在制导周期${t_k} = k\Delta t$内采样。基于${t_k}$时刻参数估计计算的加速度指令在区间$[{t_k},{t_{k + 1}})$内保持不变。由于在${t_k}$时刻重构的输出应与前一采样区间内实际施加的加速度相配对，而不应与${t_k}$时刻正在计算的指令相配对。定义规避方–非合作飞行器对的因果回归（causal regression）模型：
+
+\begin{equation}
+\label{eq:27}
+{y_i}(k) = \phi _i^T(k - 1){\kern 1pt} {\theta _i}(k) + {e_i}(k)
+\end{equation}
+其中
+
+\begin{equation}
+\label{eq:28}
+{y_i}(k) = {\hat \ddot r_{ADi}}(k),\quad {\theta _i} = \left[ {\begin{array}{*{20}{c}}
+  {A_{21}^{(i)}} \\ 
+  {{B_{1i}}} \\ 
+  {{B_{2i}}} \\ 
+  {{C_{1i}}} 
+\end{array}} \right],\quad {\phi _i}(k - 1) = \left[ {\begin{array}{*{20}{c}}
+  {{r_{ADi}}(k - 1)} \\ 
+  {{a_{yA}}(k - 1)} \\ 
+  {{a_{zA}}(k - 1)} \\ 
+  1 
+\end{array}} \right]
+\end{equation}
+对规避方–目标对：
+
+\begin{equation}
+\label{eq:29}
+{y_T}(k) = \phi _T^T(k - 1){\kern 1pt} {\theta _T}(k) + {e_T}(k)
+\end{equation}
+其中
+
+\begin{equation}
+\label{eq:30}
+{y_T}(k) = {\hat \ddot r_{AT}}(k),\quad {\theta _T} = \left[ {\begin{array}{*{20}{c}}
+  {A_{21}^{(T)}} \\ 
+  {{B_{1T}}} \\ 
+  {{B_{2T}}} 
+\end{array}} \right],\quad {\phi _T}(k) = \left[ {\begin{array}{*{20}{c}}
+  {{r_{AT}}(k - 1)} \\ 
+  {{a_{yA}}(k - 1)} \\ 
+  {{a_{zA}}(k - 1)} 
+\end{array}} \right]
+\end{equation}
+式\eqref{eq:28}和\eqref{eq:30}中，${a_{yA}}(k - 1)$和${a_{zA}}(k - 1)$为在区间$[{t_k},{t_{k + 1}})$内实际施加的限幅后加速度，${\hat \ddot r_{ADi}}(k)$、${\hat \ddot r_{AT}}(k)$分别为采用卡尔曼滤波得到的规避者与第i个非合作飞行器、目标的预估相对加速度。残差$e(k)$表示回归残差，主要包括采用Kalman滤波根据距离和距离率估计相对加速度所引入的误差，以及将时变参数在一个制导周期内近似为常数所产生的建模误差。
+% 待确认（原正文批注，已按“距离与距离率不含噪”定稿）：若后续确认该两路量测同样含噪，此处需补充说明其噪声对回归残差的贡献。
+
+结构化辨识利用状态矩阵已知的稀疏模式，即${{\mathbf{A}}_i},{{\mathbf{A}}_T}$的$(1,1),(1,2){\text{,}}(2,2)$元素分别固定为0, 1, 0，${{\mathbf{B}}_i},{{\mathbf{B}}_T}$的第一行均为零。仅估计非平凡元素，从而降低参数维数并保证物理一致性。
+
+在注1a的测量噪声下，回归残差具有噪声，且部分自由参数（尤其是投影系数${B_{1i}},{B_{2i}},{C_i}$以及${B_{1T}},{B_{2T}}$）在某些几何中可能被弱激发。为提高弱激励条件下参数辨识的稳定性，并抑制相对加速度估计误差引起的伪参数分量，在带遗忘因子的最小二乘代价函数中附加${\ell _1}$(Lasso)正则项。对于规避方–非合作飞行器对$(i = 1,2)$
+
+\begin{equation}
+\label{eq:31}
+{J_i}({\theta _i}) = \sum\limits_{k = 1}^N {{\lambda ^{N - k}}} {\left[ {{y_i}(k) - \phi _i^T(k - 1){\theta _i}} \right]^2} + \mu {\left\| {{\theta _i}} \right\|_1}
+\end{equation}
+对规避方-目标对同样构造${J_T}({\theta _T})$，其中$\lambda  \in (0,1]$为遗忘因子，$\mu  \geqslant 0$为稀疏度权重。由于$\phi $的各分量具有不同的物理量纲，实际实现中采用归一化变量：
+
+\begin{equation}
+\label{eq:32}
+\bar \phi  = {S^{ - 1}}\phi ,\quad {\theta ^{{\text{sc}}}} = S\theta ,\quad {S_i} = {\text{diag}}({r_0},{a_0},{a_0},1),\quad {S_T} = {\text{diag}}({r_0},{a_0},{a_0})
+\end{equation}
+其中，${r_0}$和${a_0}$分别为标称距离尺度和加速度尺度。该变换保持预测量不变，即${\bar \phi ^T}{\theta ^{{\text{sc}}}}{\text{ = }}{\phi ^T}\theta $。在以下递推中，为简洁起见省略上标“sc”，所有变量均默认为归一化变量。
+
+\begin{problem}[结构稀疏参数辨识]
+给定相对距离、距离率以及规避方实际施加的加速度，在已知矩阵结构约束下，基于式\eqref{eq:31}在线估计${\theta _i}(i = 1,2)$和${\theta _T}$。
+\end{problem}
+\subsection{带${\ell _1}$近端更新的稀疏FF-RLS}
+由于交会过程中视线几何关系持续变化，采用遗忘因子递推最小二乘（FF-RLS）算法。遗忘因子$\lambda  \in (0,1]$对旧数据作指数折扣，使估计器能在各制导周期内适应参数变化。对规避方–非合作飞行器对$(i = 1,2)$，其二次更新为：
+
+\begin{equation}
+\label{eq:33}
+{{\mathbf{K}}_i}(k) = \frac{{{{\mathbf{P}}_i}(k - 1){\kern 1pt} {\phi _i}(k - 1)}}{{\lambda  + \phi _i^T(k - 1){\kern 1pt} {{\mathbf{P}}_i}(k - 1){\kern 1pt} {\phi _i}(k - 1)}}
+\end{equation}
+\begin{equation}
+\label{eq:34}
+{\widehat \theta _i}(k) = {\widehat \theta _i}(k - 1) + {{\mathbf{K}}_i}(k)[{y_i}(k) - \phi _i^T(k - 1){\kern 1pt} {\widehat \theta _i}(k - 1)]
+\end{equation}
+\begin{equation}
+\label{eq:35}
+{{\mathbf{P}}_i}(k) = \frac{1}{\lambda }[{\mathbf{I}} - {{\mathbf{K}}_i}(k){\kern 1pt} \phi _i^T(k - 1)]{\kern 1pt} {{\mathbf{P}}_i}(k - 1)
+\end{equation}
+其中${{\mathbf{K}}_i}(k)$为增益矩阵，${{\mathbf{P}}_i}(k)$为估计误差协方差矩阵，${\widehat \theta _i}(k)$为第$k$步参数估计。规避方–目标对${\widehat \theta _T}(k)$的更新方程形式相同，只需将各项下标i替换为T。在RLS更新后，通过一次软阈值操作施加${\ell _1}$惩罚：
+
+\begin{equation}
+\label{eq:36}
+{\widehat \theta _i}(k) = {\mathcal{S}_\eta }({\overline \theta  _i}(k))
+\end{equation}
+其中，${[{\mathcal{S}_\eta }(v)]_j} = {\text{sign}}({v_j})\max (|{v_j}| - \eta ,0),\quad \eta  = \frac{\mu }{2}$.
+
+对${\bar \theta _T}(k)$采用相同操作。该单步近端更新是式\eqref{eq:31}极小化问题的在线近似。由于${A_{21}}$是平方项之和，并通过$\dot Q = \sqrt {{A_{21}}} $进入制导律，其估计值应投影到物理可行域：
+
+\begin{equation}
+\label{eq:37}
+\hat A_{21}^{(c)}(k) \leftarrow {\text{max}}(\hat A_{21}^{(c)}(k),0),\quad c \in \{ 1,2,T\}
+\end{equation}
+参数估计值由式\eqref{eq:13}和式\eqref{eq:15}的解析表达式初始化，初始值由初始测量值计算；同时令${{\mathbf{P}}_i}(0) = {\delta ^{ - 1}}{\mathbf{I}}$和${{\mathbf{P}}_T}(0) = {\delta ^{ - 1}}{\mathbf{I}}$，其中$\delta  \ll 1$。对于非合作飞行器通道，${C_{1i}}$的初始值求解需采用由PN模型式\eqref{eq:9}得到的非合作飞行器加速度。
+
+假定机载传感器能够准确获得相对距离和距离率，但不能直接测量相对加速度$\ddot r$。由于对离散距离率直接进行数值差分会引入离散化误差，因此对每个距离通道采用三状态常加速度Kalman滤波器：
+
+\begin{equation}
+\label{eq:38}
+\xi (k) = {[r(k),\dot r(k),\ddot r(k)]^T},\quad {z_\xi }(k) = {[r(k),\dot r(k)]^T}
+\end{equation}
+滤波器转移状态矩阵为\[{{\mathbf{F}}_\xi } = \left[ {\begin{array}{*{20}{c}}
+  1&{\Delta t}&{\tfrac{1}{2}\Delta {t^2}} \\ 
+  0&1&{\Delta t} \\ 
+  0&0&1 
+\end{array}} \right]\]，量测矩阵为\[{{\mathbf{H}}_\xi } = \begin{bmatrix}
+  1 & 0 & 0 \\
+  0 & 1 & 0
+\end{bmatrix}\]，并将相对加加速度建模为白噪声。滤波器后验估计的第三个分量作为回归输出，即$y(k) = [0,0,1]\widehat \xi (k|k)$
+
+最后，将辨识得到的参数重新组装为状态空间矩阵：
+
+\begin{equation}
+\label{eq:39}
+{\widehat {\mathbf{A}}_i} = \left[ {\begin{array}{*{20}{c}}
+  0&1 \\ 
+  {\hat A_{21}^{(i)}}&0 
+\end{array}} \right],\quad {\widehat {\mathbf{B}}_i} = \left[ {\begin{array}{*{20}{c}}
+  0&0 \\ 
+  {{{\hat B}_{1i}}}&{{{\hat B}_{2i}}} 
+\end{array}} \right],\quad {\widehat {\mathbf{C}}_i} = \left[ {\begin{array}{*{20}{c}}
+  0 \\ 
+  {{{\hat C}_{1i}}} 
+\end{array}} \right]
+\end{equation}
+\begin{equation}
+\label{eq:40}
+{\widehat {\mathbf{A}}_T} = \left[ {\begin{array}{*{20}{c}}
+  0&1 \\ 
+  {\hat A_{21}^{(T)}}&0 
+\end{array}} \right],\quad {\widehat {\mathbf{B}}_T} = \left[ {\begin{array}{*{20}{c}}
+  0&0 \\ 
+  {{{\hat B}_{1T}}}&{{{\hat B}_{2T}}} 
+\end{array}} \right]
+\end{equation}
+制导律关于第i个非合作飞行器所需的量由下式获得：
+
+\begin{equation}
+\label{eq:41}
+{\hat Q_i} = \sqrt {\hat A_{21}^{(i)}} ,\quad {\widehat b_i} = {\left[ {{{\hat B}_{1i}},{{\hat B}_{2i}}} \right]^T},\quad {\hat v_{ri}} =  - {\hat C_{1i}}
+\end{equation}
+关于目标的所需的量由下式获得：
+
+\begin{equation}
+\label{eq:42}
+{\hat Q_T} = \sqrt {\hat A_{21}^{(T)}} ,\quad {\widehat b_i} = {\left[ {{{\hat B}_{1T}},{{\hat B}_{2T}}} \right]^T}
+\end{equation}
+这些估计量替代解析计算得到的对应量，用于最优制导律\eqref{eq:66}与积分增益\eqref{eq:52}-\eqref{eq:55}计算，形成闭环辨识–制导架构。
+
