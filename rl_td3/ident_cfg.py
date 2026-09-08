@@ -11,16 +11,20 @@ from typing import Any, Dict, Optional
 IDENT_CLI_DEFAULTS = dict(
     coeff_mode="analytic_truth",
     ident_apply_cmd=True,
-    sigma_q=0.1 * 3.141592653589793 / 180.0,  # 0.1 deg
-    sigma_qdot=0.001,
-    sigma_theta=0.1 * 3.141592653589793 / 180.0,
-    sigma_psi=0.1 * 3.141592653589793 / 180.0,
-    sigma_r=0.0,  # 2026-08-01：由占位 10.0 改为 0（无距离测量噪声）
-    sigma_rdot=0.0,  # 2026-08-01：由占位 1.0 改为 0
+    sigma_scale=30.0,
+    sigma_q=3.0 * 3.141592653589793 / 180.0,  # 0.1 deg × 30
+    sigma_qdot=0.03,  # 0.001 rad/s × 30
+    sigma_theta=3.0 * 3.141592653589793 / 180.0,
+    sigma_psi=3.0 * 3.141592653589793 / 180.0,
+    sigma_r=0.0,  # 第2节量测约定：距离精确
+    sigma_rdot=0.0,  # 第2节量测约定：距离率精确
     kf_qj=1.0e4,
     kf_sigma_a0=50.0,
+    kf_sigma_r=10.0,  # KF 设计标准差，不注入实际量测
+    kf_sigma_rdot=0.5,
     rls_lambda=0.98,
-    rls_mu=1.0e-3,  # 2026-08-01：曾误改为 0（依据已作废的 5.2 结论），已回退
+    rls_mu=1.0e-3,  # 式(31)目标权重，保留用于记录
+    rls_eta=0.1,  # 2026-09-08：20 IC 离线标定候选
     rls_P0=1.0e4,
     rls_r0=1.0e4,
     rls_a0=50.0,
@@ -42,6 +46,12 @@ def add_ident_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--ident-shadow",
         action="store_true",
         help="影子模式：跑 Kalman/RLS 诊断但不改指令（仅 sparse_ffrls 有意义）",
+    )
+    g.add_argument(
+        "--sigma-scale",
+        type=float,
+        default=IDENT_CLI_DEFAULTS["sigma_scale"],
+        help="噪声标定倍率元数据；默认30，sigma-* 参数保存的是已缩放最终值",
     )
     g.add_argument("--sigma-q", type=float, default=IDENT_CLI_DEFAULTS["sigma_q"])
     g.add_argument("--sigma-qdot", type=float, default=IDENT_CLI_DEFAULTS["sigma_qdot"])
@@ -66,13 +76,31 @@ def add_ident_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--kf-sigma-a0", type=float, default=IDENT_CLI_DEFAULTS["kf_sigma_a0"]
     )
     g.add_argument(
+        "--kf-sigma-r",
+        type=float,
+        default=IDENT_CLI_DEFAULTS["kf_sigma_r"],
+        help="KF内部距离设计标准差(m)，不改变实际量测噪声",
+    )
+    g.add_argument(
+        "--kf-sigma-rdot",
+        type=float,
+        default=IDENT_CLI_DEFAULTS["kf_sigma_rdot"],
+        help="KF内部距离率设计标准差(m/s)，不改变实际量测噪声",
+    )
+    g.add_argument(
         "--rls-lambda", type=float, default=IDENT_CLI_DEFAULTS["rls_lambda"]
     )
     g.add_argument(
         "--rls-mu",
         type=float,
         default=IDENT_CLI_DEFAULTS["rls_mu"],
-        help="L1 soft-threshold 强度；0=关闭正则（默认 1e-3）",
+        help="式(31)稀疏度权重（运行记录；递推阈值由 --rls-eta 指定）",
+    )
+    g.add_argument(
+        "--rls-eta",
+        type=float,
+        default=IDENT_CLI_DEFAULTS["rls_eta"],
+        help="缩放域逐元素软阈值；0=关闭收缩",
     )
     g.add_argument("--rls-P0", type=float, default=IDENT_CLI_DEFAULTS["rls_P0"])
     g.add_argument("--rls-r0", type=float, default=IDENT_CLI_DEFAULTS["rls_r0"])
@@ -96,19 +124,23 @@ def matlab_cfg_from_args(
     cfg: Dict[str, Any] = {
         "coeff_mode": str(args.coeff_mode),
         "ident_apply_cmd": apply_cmd,
-        "sigma_q": float(args.sigma_q),
-        "sigma_qdot": float(args.sigma_qdot),
-        "sigma_theta": float(args.sigma_theta),
-        "sigma_psi": float(args.sigma_psi),
-        "sigma_r": float(args.sigma_r),
-        "sigma_rdot": float(args.sigma_rdot),
-        "kf_qj": float(args.kf_qj),
-        "kf_sigma_a0": float(args.kf_sigma_a0),
-        "rls_lambda": float(args.rls_lambda),
-        "rls_mu": float(args.rls_mu),
-        "rls_P0": float(args.rls_P0),
-        "rls_r0": float(args.rls_r0),
-        "rls_a0": float(args.rls_a0),
+        "sigma_scale": float(getattr(args, "sigma_scale", IDENT_CLI_DEFAULTS["sigma_scale"])),
+        "sigma_q": float(getattr(args, "sigma_q", IDENT_CLI_DEFAULTS["sigma_q"])),
+        "sigma_qdot": float(getattr(args, "sigma_qdot", IDENT_CLI_DEFAULTS["sigma_qdot"])),
+        "sigma_theta": float(getattr(args, "sigma_theta", IDENT_CLI_DEFAULTS["sigma_theta"])),
+        "sigma_psi": float(getattr(args, "sigma_psi", IDENT_CLI_DEFAULTS["sigma_psi"])),
+        "sigma_r": float(getattr(args, "sigma_r", IDENT_CLI_DEFAULTS["sigma_r"])),
+        "sigma_rdot": float(getattr(args, "sigma_rdot", IDENT_CLI_DEFAULTS["sigma_rdot"])),
+        "kf_qj": float(getattr(args, "kf_qj", IDENT_CLI_DEFAULTS["kf_qj"])),
+        "kf_sigma_a0": float(getattr(args, "kf_sigma_a0", IDENT_CLI_DEFAULTS["kf_sigma_a0"])),
+        "kf_sigma_r": float(getattr(args, "kf_sigma_r", IDENT_CLI_DEFAULTS["kf_sigma_r"])),
+        "kf_sigma_rdot": float(getattr(args, "kf_sigma_rdot", IDENT_CLI_DEFAULTS["kf_sigma_rdot"])),
+        "rls_lambda": float(getattr(args, "rls_lambda", IDENT_CLI_DEFAULTS["rls_lambda"])),
+        "rls_mu": float(getattr(args, "rls_mu", IDENT_CLI_DEFAULTS["rls_mu"])),
+        "rls_eta": float(getattr(args, "rls_eta", IDENT_CLI_DEFAULTS["rls_eta"])),
+        "rls_P0": float(getattr(args, "rls_P0", IDENT_CLI_DEFAULTS["rls_P0"])),
+        "rls_r0": float(getattr(args, "rls_r0", IDENT_CLI_DEFAULTS["rls_r0"])),
+        "rls_a0": float(getattr(args, "rls_a0", IDENT_CLI_DEFAULTS["rls_a0"])),
         "noise_seed": int(args.noise_seed),
     }
     if action_mapping is not None:

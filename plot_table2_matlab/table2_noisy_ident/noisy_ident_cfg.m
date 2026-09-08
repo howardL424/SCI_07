@@ -10,8 +10,8 @@ function ncfg = noisy_ident_cfg(preset, seed, sigma_scale)
 %   默认值保持一致，便于两边结果直接对照。
 %
 %   preset:
-%     'plan1'  (默认) 现行辨识默认值：σ_q=σ_θ=σ_ψ=0.1°，σ_q̇=0.001 rad/s，
-%                     σ_r=σ_ṙ=0（2026-08-01 起距离通道无噪）
+%     'plan1'  (默认) 基准：σ_q=σ_θ=σ_ψ=0.1°，σ_q̇=0.001 rad/s，
+%                     σ_r=σ_ṙ=0；再乘默认 sigma_scale=30
 %     'range'         Plan 1 历史占位值：在 'plan1' 基础上 σ_r=10 m、σ_ṙ=1 m/s，
 %                     KF 不退化，可用于观察距离量测噪声的影响
 %     'clean'         全部 σ=0，用于验证带噪管线在零噪声下退化为解析真值
@@ -20,8 +20,7 @@ function ncfg = noisy_ident_cfg(preset, seed, sigma_scale)
 %
 %   sigma_scale: 所有 σ 的统一倍率，默认 30（2026-08-06 由 1 改为 30，见
 %                mc_fixed100/SESSION_SUMMARY_noise_scale_20260806.md）。
-%                KF 的 R 阵由 stage2_ident_init 按同一组 σ 重建，因此滤波器与
-%                真实噪声强度保持匹配；kf/rls 超参不缩放。
+%                KF 的 R 使用独立设计标准差 kf_sigma_r/rdot，不随实际 σ 缩放。
 %
 %   返回字段可直接合并进 stage2_core_init 的 cfg。
 %
@@ -56,8 +55,11 @@ ncfg.sigma_rdot  = 0.0;
 
 ncfg.kf_qj       = 1.0e4;
 ncfg.kf_sigma_a0 = 50.0;
+ncfg.kf_sigma_r  = 10.0;
+ncfg.kf_sigma_rdot = 0.5;
 ncfg.rls_lambda  = 0.98;
 ncfg.rls_mu      = 1.0e-3;
+ncfg.rls_eta     = 0.1;
 ncfg.rls_P0      = 1.0e4;
 ncfg.rls_r0      = 1.0e4;
 ncfg.rls_a0      = 50.0;

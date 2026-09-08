@@ -1,7 +1,7 @@
 # 纯 TD3 对照基线使用说明
 
 > **生成时间**：2026-07-26  
-> **更新**：2026-08-01（Plan 1：稀疏 FF-RLS 参数辨识接入，仅纯 TD3 暴露）  
+> **更新**：2026-09-08（默认噪声改为标定 ×30；显式 `rls_eta`；验证仍未通过，勿重训）  
 > **用途**：论文 / 正式实验中相对 BC-TD3 的无专家对照  
 > **共享环境与协议**：与 [`rl_td3/md document/BC_TD3_USAGE.md`](../../rl_td3/md%20document/BC_TD3_USAGE.md) 一致  
 > **改动过程 / 验证待办（跨对话上下文）**：[`PLAN1_IDENT_CHANGELOG_AND_TODO.md`](PLAN1_IDENT_CHANGELOG_AND_TODO.md)
@@ -161,7 +161,7 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 1. 与 BC-TD3 主跑使用相同 `steps`、`lr`、`action-mapping`；训后 MC 用同一 `--samples`（默认 test）。
 2. 下结论建议 ≥3 个训练 `--seed`；全量 test 评估无需再对齐 MC 抽样种子；非全量评估要对比同一 `--seed`
 3. 产物目录与 `rl_td3/checkpoints` 隔离，避免覆盖。
-4. **参数辨识**：先在固定 checkpoint 上做 §7.4 配对消融；只有 `sparse_ffrls` 相对 `analytic_noisy` 稳定改善后，再考虑带辨识重训纯 TD3。勿先改专家库 / BC-TD3（Plan 2）。
+4. **参数辨识**：2026-09-08 的 30 IC 配对消融**未通过**（见 changelog §8.4）。在用户拍板前**不要**用 `sparse_ffrls` 重训纯 TD3，也勿改专家库 / BC-TD3（Plan 2）。
 
 ---
 
@@ -194,7 +194,7 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 | `sparse_ffrls` | Kalman 预处理 + 固定遗忘因子 RLS + L1 soft-threshold |
 
 - **影子模式**：`--ident-shadow` → `ident_apply_cmd=false`：仍跑 KF/RLS 诊断，但指令用解析真值（只记录不控制）。
-- **因果时序**：本拍 RLS 用上一拍滤波 `r` 与上一拍饱和 `a_M`；首拍仅 warm-start，不做 RLS；episode `t=0` 与配置变化时重置辨识状态。
+- **因果时序**：本拍 RLS 用上一拍**量测** `r` 与上一拍饱和 `a_M`；首拍仅 PN 解析 warm-start（`K_D=4`，不用真值 `a_D`），不做 RLS；episode `t=0` 与配置变化时重置辨识状态。
 
 ### 7.2 CLI 参数（训练 / 评估共用）
 
@@ -204,15 +204,18 @@ $PY = "E:\Python\venvs\rl_pytorch\Scripts\python.exe"
 |------|------|------|
 | `--coeff-mode` | `analytic_truth` | 上表三选一 |
 | `--ident-shadow` | off | 影子：估参但不改指令 |
-| `--sigma-q` | `0.1°`（rad） | LOS 角度测量 σ |
-| `--sigma-qdot` | `0.001` rad/s | LOS 角速率 σ |
-| `--sigma-theta` / `--sigma-psi` | 同 `σ_q` | 姿态角测量 σ（临时同量级） |
-| `--sigma-r` | `0` m | 距离 σ（占位 10→0）。⚠ σ=0 使 KF 的 `R≈0` 而退化，待重定 |
-| `--sigma-rdot` | `0` m/s | 距离率 σ（占位 1→0）。⚠ 同上 |
+| `--sigma-scale` | `30` | 噪声标定倍率元数据；`sigma-*` 存的是已缩放最终值 |
+| `--sigma-q` | `3°`（rad） | LOS 角度测量 σ（0.1° × 30） |
+| `--sigma-qdot` | `0.03` rad/s | LOS 角速率 σ（0.001 × 30） |
+| `--sigma-theta` / `--sigma-psi` | 同 `σ_q` | 姿态角测量 σ |
+| `--sigma-r` | `0` m | 距离 σ（第2节约定精确；不注入量测） |
+| `--sigma-rdot` | `0` m/s | 距离率 σ（同上） |
 | `--kf-qj` | `1e4` | Kalman 白 jerk 强度（滤波器参数，非植物过程噪声） |
 | `--kf-sigma-a0` | `50` | 加速度初协方差尺度 |
+| `--kf-sigma-r` / `--kf-sigma-rdot` | `10` / `0.5` | KF **设计**标准差，与实际 σ 解耦 |
 | `--rls-lambda` | `0.98` | 遗忘因子 |
-| `--rls-mu` | `1e-3` | L1 强度；`0`=关闭（曾误改为 0，已回退；μ 净贡献待有效配置下重判） |
+| `--rls-mu` | `1e-3` | 式(31)稀疏度权重（记录用） |
+| `--rls-eta` | `0.1` | 缩放域软阈值；`0`=关闭收缩（20 IC 标定候选） |
 | `--rls-P0` | `1e4` | RLS 初协方差 |
 | `--rls-r0` / `--rls-a0` | `1e4` / `50` | 回归量缩放 |
 | `--noise-seed` | `0` | 测量噪声可复现种子（hash RNG，不污染 MATLAB 全局 RNG） |
@@ -228,7 +231,7 @@ cd D:\LTY\yan\yanerxia\GAIL
 # 仅评估：同一 best_model，换系数路径（不重训）
 & $PY td3_baseline/evaluate_td3_pure.py `
   --model td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model `
-  --coeff-mode sparse_ffrls --rls-mu 1e-3 --noise-seed 0
+  --coeff-mode sparse_ffrls --rls-eta 0.1 --noise-seed 0
 
 & $PY td3_baseline/evaluate_td3_pure.py `
   --model td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model `
@@ -239,11 +242,11 @@ cd D:\LTY\yan\yanerxia\GAIL
   --model td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model `
   --coeff-mode analytic_truth
 
-# 带辨识闭环训练（仅在配对消融显示稳定收益后再做）
+# 带辨识闭环训练（2026-09-08 验证未通过，禁止执行，仅留语法）
 & $PY td3_baseline/train_td3_pure.py `
   --save-dir td3_baseline/checkpoints/training_300k_ffrls_$(Get-Date -Format 'yyyyMMdd_HHmm') `
   --name td3_pure_ffrls --seed 0 `
-  --coeff-mode sparse_ffrls --rls-mu 1e-3 --noise-seed 0
+  --coeff-mode sparse_ffrls --rls-eta 0.1 --noise-seed 0
 ```
 
 ### 7.4 同 IC / 同噪声配对消融
@@ -251,13 +254,13 @@ cd D:\LTY\yan\yanerxia\GAIL
 脚本：`td3_baseline/run_ident_ablation_pure.py`  
 对同一 checkpoint、前 N 个 test IC、每局 `noise_seed + local_idx`，依次跑：
 
-`analytic_truth` → `analytic_noisy` → `sparse_ffrls(μ)` →（可选）`sparse_ffrls(μ=0)`
+`analytic_truth` → `analytic_noisy` → `sparse_ffrls(η)` →（可选）`sparse_ffrls(η=0)`
 
 ```powershell
 & $PY td3_baseline/run_ident_ablation_pure.py `
   --model td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model `
-  --episodes 5 --noise-seed 0 --also-mu0 `
-  --out-dir td3_baseline/checkpoints/training_300k_20260730_1917/ident_ablation_plan1
+  --episodes 30 --noise-seed 0 --also-eta0 `
+  --out-dir td3_baseline/checkpoints/training_300k_20260730_1917/ident_ablation_N30_20260908
 ```
 
 产物：`summary.json`、`metrics_{mode}.npz`。
@@ -272,6 +275,17 @@ cd D:\LTY\yan\yanerxia\GAIL
 | sparse_ffrls (μ=0) | 100% | 370 / 185 |
 
 解读：相对 `analytic_noisy`，稀疏 FF-RLS 恢复了 both_ok，但脱靶距离明显偏大（更保守）。μ>0 与 μ=0 接近。是否“改善”需看更大样本与参数 RMSE / 指令平滑度，不能只看 both_ok。
+
+**2026-09-08 正式 30 IC**（`sigma_scale=30`，`η=0.1`，产物 `ident_ablation_N30_20260908/`）：
+
+| 模式 | both_ok | 平均 r_MD1 / r_MD2 | 平均 r_minT |
+|------|---------|---------------------|-------------|
+| analytic_truth | 96.7% | 34.6 / 34.3 | 0.10 |
+| analytic_noisy | 90.0% | 24.0 / 105.3 | 0.13 |
+| sparse_ffrls (η=0.1) | 93.3% | 148.9 / 132.4 | 0.13 |
+| sparse_ffrls (η=0) | 93.3% | 184.3 / 190.0 | 20.3 |
+
+结论：**未通过**重训门槛。both_ok 略升，但 miss 系统性偏大；影子 θ RMSE 未收敛。详见 `PLAN1_IDENT_CHANGELOG_AND_TODO.md` §8。
 
 ### 7.4.1 影子逐步诊断
 
@@ -311,7 +325,7 @@ cd D:\LTY\yan\yanerxia\GAIL
   "addpath('rl_td3/matlab'); addpath('.'); addpath('expert_trajectory'); ok=test_stage2_ident(); exit(~ok);"
 ```
 
-覆盖：`analytic_truth` 回归、无噪 KF、合成 FF-RLS、因果时序、episode 重置、coeffs 数值入口等价。
+覆盖：`analytic_truth` 回归、无噪 KF、合成 FF-RLS、因果时序、episode 重置、coeffs 数值入口等价、式(13)/(15) 恒等式、PN warm-start 无真值 `a_D`、KF 设计协方差灵敏度、显式 η 与 A21 投影。
 
 ### 7.6 设计边界（首版故意不做）
 

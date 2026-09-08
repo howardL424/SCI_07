@@ -1,6 +1,7 @@
 # Plan 1 改动过程总结与后续验证待办
 
 > **日期**：2026-08-01  
+> **更新**：2026-09-08（论文第2/3节对齐复现；**验证仍未通过**，见 §8）  
 > **范围**：纯 TD3 稀疏 FF-RLS 参数辨识（Plan 1）  
 > **用途**：供后续对话快速恢复上下文；**勿当作已验证通过的结论**  
 > **用法文档**：[`TD3_BASELINE_USAGE.md`](TD3_BASELINE_USAGE.md) §7  
@@ -277,21 +278,19 @@ A21、B1、B2 都是纯几何/姿态量，可由 `q, q̇, θ_M, ψ_M` 直接解�
 **在此之前需要修正的遗留项**
 
 - [x] `rls_mu` 默认曾误改为 `0` → **已回退为 `1e-3`**；μ 净贡献仍须在有效配置下重判
-- [ ] `σ_r/σ_ṙ = 0` 需重新考虑：要么恢复非零，要么把 KF 的 `R` 与真实 σ **解耦**、作为独立设计参数（当前二者绑定，是 ② 的直接成因）；**按用户要求暂保持 0**
-- [ ] `rls_P0=1e4` 在缺激励方向会发散，需配 trace-limit 或改设计
+- [x] `σ_r/σ_ṙ = 0` 的 KF 退化：2026-09-08 已把 KF 设计协方差 `kf_sigma_r/rdot` 与实际量测 σ 解耦；物理量测仍为 0（第2节约定）
+- [ ] `rls_P0=1e4` 在缺激励方向会发散，需配 trace-limit 或改设计（用户明确暂不加 C；实测 `P_cond` 仍可达 10³–10⁴）
 
 ### 5.3 扩大闭环配对消融
 
-> **暂缓**：§5.2.1 已证明当前 `sparse_ffrls` 的辨识目标设定有结构性问题（参数强时变 + 缺激励），
-> 且 `analytic_noisy` 基线含 `a_D` 真值泄漏。在这两点修正前扩大样本量只会更精确地测量一个
-> 已知失效的配置，不能作为“通过/不通过”的依据。
+> **2026-09-08 已跑 N=30**（见 §8.3）。`a_D` 真值泄漏已修；11 维回归仍按论文原样。结论：**未通过**。
 
-- [ ] 同一 checkpoint / 同一 test IC 集 / 同一 `noise_seed` 协议
-- [ ] 模式：`analytic_truth` | `analytic_noisy` | `sparse_ffrls(μ)` | `sparse_ffrls(μ=0)`
-- [ ] 样本量：至少 30–50 IC（理想全量 test）
-- [ ] 指标：both_ok、拦截率、`r_min1/2/T`、加速度总变差、饱和率、能量
-- [ ] **通过门槛（Plan 1）**：`sparse_ffrls` 相对 `analytic_noisy` 在参数 RMSE **或** 闭环指标上稳定改善  
-      （仅 both_ok↑ 但 miss 系统性恶化 → 视为未通过，继续调参）
+- [x] 同一 checkpoint / 同一 test IC 集 / 同一 `noise_seed` 协议
+- [x] 模式：`analytic_truth` | `analytic_noisy` | `sparse_ffrls(η=0.1)` | `sparse_ffrls(η=0)`
+- [x] 样本量：30 IC（`ident_ablation_N30_20260908`）
+- [x] 指标：both_ok、`r_min1/2/T`、加速度总变差、饱和率、能量
+- [x] **通过门槛（Plan 1）**：`sparse_ffrls` 相对 `analytic_noisy` 在参数 RMSE **或** 闭环指标上稳定改善  
+      （仅 both_ok↑ 但 miss 系统性恶化 → 视为未通过）→ **未通过**，详见 §8.4
 
 ### 5.4 通过后才做
 
@@ -352,3 +351,75 @@ $MODEL = "td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model"
 3. 验证未通过前：**不重训**、**不启动 Plan 2**、**不擅自加 PE 等机制**。  
 4. 改辨识逻辑时同步更新本文件「改动清单」与待办勾选。  
 5. Python 解释器固定：`E:\Python\venvs\rl_pytorch\Scripts\python.exe`。
+
+---
+
+## 8. 2026-09-08 论文第2/3节对齐复现
+
+> **规格**：已核对的 `论文文稿/overleaf_SCI_07_0907/sections/02_problem.tex`、`03_identification.tex`。  
+> **仿真数值**：以 GAIL 代码与 2026-08-06 大噪声标定为准（`sigma_scale=30` → σ_q=σ_θ=σ_ψ=3°，σ_q̇=0.03 rad/s，σ_r=σ_ṙ=0）。第6节临时填充的成功率/图表**不作为**验收目标。  
+> **算法口径**：严格 11 参数（D1/D2 4 维 + T 3 维）sparse FF-RLS；**不**改成 C1-only，**不**加加权 ℓ₁ / P 限幅 / 自适应 λ。
+
+### 8.1 本轮代码改动
+
+| 文件 | 改动 |
+|------|------|
+| `rl_td3/matlab/stage2_ident_init.m` | KF 设计协方差 `kf_sigma_r=10`、`kf_sigma_rdot=0.5` 与实际量测 σ 解耦；显式 `rls_eta`（默认 0.1）；默认噪声改为 3°/0.03；`KD1=KD2=4` |
+| `rl_td3/matlab/stage2_ident_step.m` | `phi` 用上一拍**量测**距离 `r_meas_prev`；`analytic_noisy` / 首拍 C1 用带噪几何 + 式(9) PN 重建 `a_D`（`V_D` 来自状态，导航比 4），不再读仿真真值 `a_D` |
+| `rl_td3/matlab/stage2_step.m` | `truth_geo.D1/D2.V` 传入 NCV 速度 |
+| `rl_td3/matlab/stage2_core_init.m`、`rl_td3/ident_cfg.py`、`plot_table2_matlab/table2_noisy_ident/noisy_ident_cfg.m` | 同步 `sigma_scale=30`、`rls_eta`、KF 设计 σ |
+| `rl_td3/matlab/env_step.m`、`rl_td3/evasion_env.py` | 诊断扩展：饱和后指令误差、`Q̇` 误差、P 特征值、`θ̂/θ_true` 轨迹 |
+| `td3_baseline/run_ident_shadow_diag_pure.py` | 分物理量 RMSE（A21/B/C1/`Q̇`）+ P 健康度，不再只报 11 维混量纲 RMSE |
+| `td3_baseline/run_ident_hyperparam_scan_pure.py` | 网格改为 `kf_qj × kf_sigma_r/rdot × λ × η`，含 `η=0` |
+| `td3_baseline/run_ident_ablation_pure.py` | `--also-eta0`（`--also-mu0` 别名保留） |
+| `rl_td3/matlab/test_stage2_ident.m` | 增补 BC 恒等式、无 `a_D` 泄漏、KF 设计协方差灵敏度、显式 η / A21 投影 |
+
+默认训练/评估路径仍是 `coeff_mode=analytic_truth`，历史无噪 MC 不受影响。
+
+### 8.2 单元测试
+
+```powershell
+& "D:\Program Files\MATLAB\R2024a\bin\matlab.exe" -batch `
+  "addpath('rl_td3/matlab'); addpath('.'); addpath('expert_trajectory'); ok=test_stage2_ident(); exit(~ok);"
+```
+
+2026-09-08：`[PASS] test_stage2_ident 全部通过`（含新增 7–10 项）。
+
+### 8.3 标定与闭环产物
+
+Checkpoint：`td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model`  
+噪声：`sigma_scale=30`，`σ_r=σ_ṙ=0`，`kf_qj=1e4`，`kf_sigma_r=10`，`kf_sigma_rdot=0.5`，`λ=0.98`。
+
+| 产物目录 | 内容 |
+|----------|------|
+| `ident_shadow_smoke_20260908/` | 1 IC 冒烟 |
+| `ident_hyperparam_scan_20260908/` | 5 IC、64 点网格；扫描排序最优为 `η=0.1` 且与默认重合 |
+| `ident_eta_scan_N20_20260908/` | 20 IC 影子扫 `η∈{0,0.1,0.3,1,3}`；按饱和后指令中位 RMSE 选 `η=0.1` |
+| `ident_shadow_N20_20260908/`、`ident_shadow_final_N5_20260908/` | 影子分物理量诊断；后者含 `ident_tracking_ic0.png` |
+| `ident_ablation_N30_20260908/` | 30 IC 配对闭环 |
+
+**30 IC 闭环摘要**（`--also-eta0`）：
+
+| 模式 | both_ok | 平均 r_MD1 / r_MD2 | 平均 r_minT | 能量 / TV / 饱和率 |
+|------|---------|---------------------|-------------|---------------------|
+| analytic_truth | 96.7% | 34.6 / 34.3 | 0.10 | 8.3e3 / 333 / 8.2% |
+| analytic_noisy | 90.0% | 24.0 / 105.3 | 0.13 | 3.9e4 / 6767 / 56.6% |
+| sparse_ffrls (η=0.1) | 93.3% | **148.9 / 132.4** | 0.13 | 2.8e4 / 1501 / 44.9% |
+| sparse_ffrls (η=0) | 93.3% | 184.3 / 190.0 | **20.3** | 3.0e4 / 1372 / 47.0% |
+
+**影子诊断（η=0.1，5 IC 末段）**：θ / A21 / B 误差仍达 10²–10⁷ 量级（个别 IC 爆炸）；`Q̇` RMSE 均值 ~18；饱和后指令 RMSE ~39 m/s²；收敛率 **0/5**。20 IC 均值被少数爆炸局拉高，中位数同样未达可用跟踪。
+
+### 8.4 Go / no-go
+
+**不通过 Plan 1 重训门槛，不启动 Plan 2。**
+
+- 辨识误差：11 维 θ 未收敛，不能声称“辨识出来了”。
+- 闭环：相对 `analytic_noisy`，both_ok 从 90% 升到 93.3%，能耗/抖动下降，但最近规避距离系统性偏大（约 24/105 → 149/132），与 8/1 小样本现象同类。按原门槛“仅 both_ok↑ 但 miss 系统性恶化 → 未通过”。
+- `η=0` 目标到达失败（r_minT=20.3 m），故保留 `η=0.1` 作为当前候选，只作对照默认，**不是**推荐闭环配置。
+- 实现侧已修：KF–R 解耦、`a_D` 泄漏、显式 η、因果 `r(k-1)`、PN 初值（`K_D=4`）。剩余问题与 8/1 §5.2.1③ 一致：11 维 θ 强时变 + 弱激励，准冻结 FF-RLS 在真实交会轨迹上估不准。这不是单元测试能修的公式符号错误。
+
+**下一步须用户拍板**（在未拍板前禁止重训 / Plan 2 / 改论文理论）：
+
+1. 维持论文 11 参数写法，把辨识当作“平滑带噪解析系数”的工程模块，接受 miss 偏大、不宣称参数跟踪。
+2. 再讨论算法降维（每通道只估 C1 等）——这会偏离当前第3节公式，需改论文。
+3. 先补跟踪图/更多 IC，仍不改公式。

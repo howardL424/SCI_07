@@ -54,6 +54,34 @@ function ok = test_stage2_ident()
         fprintf('[OK] coeffs 入口等价\n');
     end
 
+    fprintf('--- [7] 式(13)/(15) 投影系数恒等式 ---\n');
+    if ~local_test_bc_identities()
+        ok = false;
+    else
+        fprintf('[OK] B 系数恒等式\n');
+    end
+
+    fprintf('--- [8] PN warm-start 不读取真值 a_D ---\n');
+    if ~local_test_no_ad_leak()
+        ok = false;
+    else
+        fprintf('[OK] PN warm-start 无真值泄漏\n');
+    end
+
+    fprintf('--- [9] KF 设计 R 与实际量测噪声解耦 ---\n');
+    if ~local_test_kf_design_covariance()
+        ok = false;
+    else
+        fprintf('[OK] KF 设计协方差\n');
+    end
+
+    fprintf('--- [10] 显式 eta 与 A21 投影 ---\n');
+    if ~local_test_eta_and_projection()
+        ok = false;
+    else
+        fprintf('[OK] eta / A21 投影\n');
+    end
+
     if ok
         fprintf('\n[PASS] test_stage2_ident 全部通过\n');
     else
@@ -99,35 +127,42 @@ end
 
 function ok = local_test_ffrls_synth()
     ok = true;
-    % 直接测缩放坐标下的 FF-RLS + soft-threshold 数值性质
-    n = 4;
-    theta_true = [1e-4; 2.0; -1.5; 0.3];  % A21,B1,B2,C1
-    P = 1e4 * eye(n);
-    th0 = zeros(n, 1);
-    th_mu0 = th0; P0 = P;
-    th_mu = th0; Pm = P;
+    % 三通道共 11 参数：在缩放域用充分激励的常参数数据验证收敛。
+    theta_set = {
+        [1e-4; 0.8; -0.5; 6.0], ...
+        [2e-4; -0.4; 0.9; -4.0], ...
+        [1.5e-4; 0.6; 0.3]};
+    dims = [4, 4, 3];
+    Sset = {diag([1e4,50,50,1]), diag([1e4,50,50,1]), ...
+        diag([1e4,50,50])};
     lambda = 0.98;
     eta = 1e-3 / 2;
     rng(7);
-    for k = 1:800
-        phi = [randn()*5e3; randn()*30; randn()*30; 1];
-        y = phi' * theta_true + 0.05 * randn();
-        [th_mu0, P0] = local_ffrls(th_mu0, P0, phi, y, lambda);
-        [th_mu, Pm] = local_ffrls(th_mu, Pm, phi, y, lambda);
-        th_mu = sign(th_mu) .* max(abs(th_mu) - eta, 0);
+    for c = 1:3
+        n = dims(c);
+        theta_true = theta_set{c};
+        S = Sset{c};
+        th0 = zeros(n, 1); P0 = 1e4 * eye(n);
+        th_eta = th0; Peta = P0;
+        for k = 1:1200
+            phi = [4000 + randn()*1500; randn()*30; randn()*30];
+            if n == 4; phi = [phi; 1]; end %#ok<AGROW>
+            y = phi' * theta_true + 0.05 * randn();
+            phi_bar = S \ phi;
+            [th0, P0] = local_ffrls(th0, P0, phi_bar, y, lambda);
+            [th_eta, Peta] = local_ffrls(th_eta, Peta, phi_bar, y, lambda);
+            th_eta = sign(th_eta) .* max(abs(th_eta) - eta, 0);
+        end
+        err0 = norm(S \ th0 - theta_true);
+        err_eta = norm(S \ th_eta - theta_true);
+        if err0 > 0.2 || err_eta > 1.0
+            fprintf('[FAIL] synth channel=%d err0=%.3g err_eta=%.3g\n', ...
+                c, err0, err_eta);
+            ok = false;
+        end
     end
-    err0 = norm(th_mu0 - theta_true);
-    errm = norm(th_mu - theta_true);
-    if err0 > 0.5
-        fprintf('[FAIL] mu=0 RLS err=%.3g\n', err0);
-        ok = false;
-    end
-    % mu>0 应靠近真值，且相对零初值有收缩
-    if errm > 1.0
-        fprintf('[FAIL] mu>0 RLS err=%.3g\n', errm);
-        ok = false;
-    end
-    % soft-threshold 在纯噪声小系数上应更稀疏：用额外零真值通道验证
+
+    % 软阈值在纯噪声小系数上应保持稀疏。
     th_sp = [0; 0; 0; 0]; Psp = 1e4 * eye(4);
     for k = 1:200
         phi = [randn(); randn(); randn(); 1];
@@ -242,6 +277,120 @@ function ok = local_test_coeffs_equiv(tol)
         t, 0.5, 0.5, 2.0, 1.0, 20.0);
     if max(abs(a1(:) - a2(:))) > tol
         fprintf('[FAIL] coeffs 不等价 err=%.3g\n', max(abs(a1(:)-a2(:))));
+        ok = false;
+    end
+end
+
+function ok = local_test_bc_identities()
+    ok = true;
+    H = evasion_helpers();
+    qy = 0.21; qz = -0.34; thA = 0.12; psA = -0.18;
+    [B1, B2, ~] = H.computeBC(qy, qz, thA, psA, 0, 0, 0, 0);
+    radial = cos(thA) * cos(qy) * cos(qz - psA) + sin(thA) * sin(qy);
+    err_ncv = abs(B1^2 + B2^2 - (1 - radial^2));
+
+    [B1T, B2T, ~] = H.computeBC(qy, qz, thA, psA, 0, 0, 0, 0);
+    rdot_over_v = -(cos(thA) * cos(qy) * cos(qz - psA) + ...
+        sin(thA) * sin(qy));
+    err_t = abs(B1T^2 + B2T^2 - (1 - rdot_over_v^2));
+    if max(err_ncv, err_t) > 1e-12
+        fprintf('[FAIL] B 系数恒等式 err_ncv=%.3g err_T=%.3g\n', err_ncv, err_t);
+        ok = false;
+    end
+end
+
+function ok = local_test_no_ad_leak()
+    ok = true;
+    cfg = struct('sigma_r', 0, 'sigma_rdot', 0, 'sigma_q', 0, ...
+        'sigma_qdot', 0, 'sigma_theta', 0, 'sigma_psi', 0, ...
+        'kf_sigma_r', 10, 'kf_sigma_rdot', 1, 'noise_seed', 11);
+    H = evasion_helpers();
+    ident1 = stage2_ident_init(cfg);
+    ident2 = stage2_ident_init(cfg);
+    g = struct('r', 4200, 'rdot', -180, 'qy', 0.07, 'qz', -0.04, ...
+        'qdy', 0.012, 'qdz', -0.018, 'V', 600);
+    truth = struct('D1', g, 'D2', g, 'T', g, ...
+        'theta_M', 0.1, 'psi_M', -0.2, 'theta_D1', 0.05, 'psi_D1', 0.1, ...
+        'theta_D2', 0.05, 'psi_D2', 0.1);
+    [~, c1, d1] = stage2_ident_step(ident1, truth, [1; 2], [3; 4], H);
+    [~, c2, d2] = stage2_ident_step(ident2, truth, [70; -50], [-60; 40], H);
+    err = max(abs([c1.analytic_noisy.vr1 - c2.analytic_noisy.vr1; ...
+        c1.analytic_noisy.vr2 - c2.analytic_noisy.vr2; ...
+        d1.theta_noisy{1}(4) - d2.theta_noisy{1}(4); ...
+        d1.theta_noisy{2}(4) - d2.theta_noisy{2}(4)]));
+    if err > 1e-12
+        fprintf('[FAIL] noisy/warm-start 仍依赖真值 a_D，err=%.3g\n', err);
+        ok = false;
+    end
+end
+
+function ok = local_test_kf_design_covariance()
+    ok = true;
+    cfg1 = struct('sigma_r', 0, 'sigma_rdot', 0, 'sigma_q', 0, ...
+        'sigma_qdot', 0, 'sigma_theta', 0, 'sigma_psi', 0, ...
+        'kf_qj', 1e2, 'kf_sigma_r', 10, 'kf_sigma_rdot', 1, ...
+        'rls_eta', 0, 'noise_seed', 13);
+    cfg2 = cfg1; cfg2.kf_qj = 1e5;
+    i1 = stage2_ident_init(cfg1);
+    i2 = stage2_ident_init(cfg2);
+    H = evasion_helpers();
+    a_D = [0; 0];
+    out1 = 0; out2 = 0;
+    for k = 0:12
+        t = k * i1.dt;
+        rdd = -15 + 8 * sin(2.5 * t);
+        rd = -200 - 15*t + (8/2.5) * (1 - cos(2.5*t));
+        r = 5000 - 200*t - 7.5*t^2 + (8/2.5)*t - (8/2.5^2)*sin(2.5*t);
+        g = struct('r', r, 'rdot', rd, 'qy', 0.1, 'qz', -0.05, ...
+            'qdy', 0.01, 'qdz', -0.02, 'V', 600);
+        truth = struct('D1', g, 'D2', g, 'T', g, ...
+            'theta_M', 0, 'psi_M', 0, 'theta_D1', 0, 'psi_D1', 0, ...
+            'theta_D2', 0, 'psi_D2', 0);
+        [i1, ~, d1] = stage2_ident_step(i1, truth, a_D, a_D, H);
+        [i2, ~, d2] = stage2_ident_step(i2, truth, a_D, a_D, H);
+        i1 = stage2_ident_commit(i1, [0; 0]);
+        i2 = stage2_ident_commit(i2, [0; 0]);
+        out1 = d1.rddot_hat(1); out2 = d2.rddot_hat(1);
+    end
+    if abs(out1 - out2) < 1e-3
+        fprintf('[FAIL] kf_qj 改变未影响 rddot_hat，差值=%.3g\n', abs(out1-out2));
+        ok = false;
+    end
+    if any(diag(i1.R_xi) <= 0) || i1.sigma_r ~= 0 || i1.sigma_rdot ~= 0
+        fprintf('[FAIL] KF 设计 R 未与实际零噪声正确解耦\n');
+        ok = false;
+    end
+end
+
+function ok = local_test_eta_and_projection()
+    ok = true;
+    base = struct('sigma_r', 0, 'sigma_rdot', 0, 'sigma_q', 0, ...
+        'sigma_qdot', 0, 'sigma_theta', 0, 'sigma_psi', 0, ...
+        'kf_sigma_r', 10, 'kf_sigma_rdot', 1, 'rls_mu', 9, ...
+        'rls_eta', 0, 'noise_seed', 17);
+    i0 = stage2_ident_init(base);
+    base.rls_eta = 0.5;
+    i1 = stage2_ident_init(base);
+    H = evasion_helpers();
+    g = struct('r', 4000, 'rdot', -150, 'qy', 0.08, 'qz', 0.03, ...
+        'qdy', 0.015, 'qdz', -0.01, 'V', 600);
+    truth = struct('D1', g, 'D2', g, 'T', g, ...
+        'theta_M', 0.1, 'psi_M', -0.1, 'theta_D1', 0.02, 'psi_D1', 0.03, ...
+        'theta_D2', 0.02, 'psi_D2', 0.03);
+    [i0, ~] = stage2_ident_step(i0, truth, [0;0], [0;0], H);
+    [i1, ~] = stage2_ident_step(i1, truth, [0;0], [0;0], H);
+    i0 = stage2_ident_commit(i0, [20;-10]);
+    i1 = stage2_ident_commit(i1, [20;-10]);
+    g.r = 3985; g.rdot = -151;
+    truth.D1 = g; truth.D2 = g; truth.T = g;
+    [i0, c0] = stage2_ident_step(i0, truth, [0;0], [0;0], H);
+    [i1, c1] = stage2_ident_step(i1, truth, [0;0], [0;0], H);
+    if norm(i0.ch(1).theta_sc - i1.ch(1).theta_sc) < 1e-6
+        fprintf('[FAIL] 显式 rls_eta 未改变软阈值结果\n');
+        ok = false;
+    end
+    if c0.Q1 < 0 || c1.Q1 < 0 || c0.QT < 0 || c1.QT < 0
+        fprintf('[FAIL] A21 非负投影失效\n');
         ok = false;
     end
 end

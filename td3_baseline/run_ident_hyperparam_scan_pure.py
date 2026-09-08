@@ -1,7 +1,7 @@
-"""纯 TD3 辨识超参小网格：kf_qj × rls_lambda × rls_mu（影子诊断）。
+"""纯 TD3 辨识超参网格：KF(Q/R) × lambda × eta（影子诊断）。
 
 复用 run_ident_shadow_diag_pure.run_shadow_episode，对同一 checkpoint / IC
-比较末段 θ / r̈ / 指令 RMSE，并汇总 μ>0 vs μ=0。
+比较末段归一化 θ / r̈ / 饱和指令 RMSE，并汇总 eta>0 vs eta=0。
 
 用法：
   E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe \\
@@ -37,9 +37,11 @@ from run_ident_shadow_diag_pure import (  # noqa: E402
 from stable_baselines3 import TD3  # noqa: E402
 
 # 默认小网格（可 CLI 覆盖）
-_DEFAULT_KF_QJ = [1e2, 1e3, 1e4, 1e5]
+_DEFAULT_KF_QJ = [1e3, 1e4]
+_DEFAULT_KF_SIGMA_R = [5.0, 10.0]
+_DEFAULT_KF_SIGMA_RDOT = [0.5, 1.0]
 _DEFAULT_LAMBDA = [0.95, 0.98, 0.995]
-_DEFAULT_MU = [0.0, 1e-4, 1e-3, 1e-2]
+_DEFAULT_ETA = [0.0, 0.01, 0.03, 0.1, 0.3, 1.0, 3.0]
 
 
 def _parse_float_list(s: str) -> list[float]:
@@ -55,6 +57,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--noise-seed", type=int, default=0)
     p.add_argument("--action-mapping", type=str, default=DEFAULT_ACTION_MAPPING)
     p.add_argument("--out-dir", type=str, default=None)
+    p.add_argument("--sigma-scale", type=float, default=IDENT_CLI_DEFAULTS["sigma_scale"])
     p.add_argument("--sigma-q", type=float, default=IDENT_CLI_DEFAULTS["sigma_q"])
     p.add_argument("--sigma-qdot", type=float, default=IDENT_CLI_DEFAULTS["sigma_qdot"])
     p.add_argument("--sigma-theta", type=float, default=IDENT_CLI_DEFAULTS["sigma_theta"])
@@ -62,6 +65,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--sigma-r", type=float, default=IDENT_CLI_DEFAULTS["sigma_r"])
     p.add_argument("--sigma-rdot", type=float, default=IDENT_CLI_DEFAULTS["sigma_rdot"])
     p.add_argument("--kf-sigma-a0", type=float, default=IDENT_CLI_DEFAULTS["kf_sigma_a0"])
+    p.add_argument("--rls-mu", type=float, default=IDENT_CLI_DEFAULTS["rls_mu"])
     p.add_argument("--rls-P0", type=float, default=IDENT_CLI_DEFAULTS["rls_P0"])
     p.add_argument("--rls-r0", type=float, default=IDENT_CLI_DEFAULTS["rls_r0"])
     p.add_argument("--rls-a0", type=float, default=IDENT_CLI_DEFAULTS["rls_a0"])
@@ -71,14 +75,24 @@ def parse_args() -> argparse.Namespace:
         default=",".join(str(x) for x in _DEFAULT_KF_QJ),
     )
     p.add_argument(
+        "--kf-sigma-r-grid",
+        type=str,
+        default=",".join(str(x) for x in _DEFAULT_KF_SIGMA_R),
+    )
+    p.add_argument(
+        "--kf-sigma-rdot-grid",
+        type=str,
+        default=",".join(str(x) for x in _DEFAULT_KF_SIGMA_RDOT),
+    )
+    p.add_argument(
         "--rls-lambda-grid",
         type=str,
         default=",".join(str(x) for x in _DEFAULT_LAMBDA),
     )
     p.add_argument(
-        "--rls-mu-grid",
+        "--rls-eta-grid",
         type=str,
-        default=",".join(str(x) for x in _DEFAULT_MU),
+        default=",".join(str(x) for x in _DEFAULT_ETA),
     )
     p.add_argument("--theta-rmse-thresh", type=float, default=_THETA_RMSE_THRESH)
     p.add_argument("--theta-hold", type=int, default=_THETA_HOLD)
@@ -131,13 +145,23 @@ def run_one_cfg(
             np.mean([np.isfinite(e["converge_step"]) for e in ep_stats])
         ),
         "kf_qj": float(cfg["kf_qj"]),
+        "kf_sigma_r": float(cfg["kf_sigma_r"]),
+        "kf_sigma_rdot": float(cfg["kf_sigma_rdot"]),
         "rls_lambda": float(cfg["rls_lambda"]),
-        "rls_mu": float(cfg["rls_mu"]),
+        "rls_eta": float(cfg["rls_eta"]),
     }
     for key in (
         "theta_rmse_tail",
+        "theta_norm_rmse_tail",
+        "a21_norm_rmse_tail",
+        "b_rmse_tail",
+        "c1_norm_rmse_tail",
+        "qdot_rmse_tail",
         "rddot_rmse_tail",
         "a_cmd_rmse_tail",
+        "a_cmd_sat_rmse_tail",
+        "P_max_tail",
+        "P_cond_max_tail",
         "r_rmse_tail",
         "rdot_rmse_tail",
     ):
@@ -146,8 +170,10 @@ def run_one_cfg(
         {
             "local_idx": e["local_idx"],
             "theta_rmse_tail": e["theta_rmse_tail"],
+            "theta_norm_rmse_tail": e["theta_norm_rmse_tail"],
+            "qdot_rmse_tail": e["qdot_rmse_tail"],
             "rddot_rmse_tail": e["rddot_rmse_tail"],
-            "a_cmd_rmse_tail": e["a_cmd_rmse_tail"],
+            "a_cmd_sat_rmse_tail": e["a_cmd_sat_rmse_tail"],
             "converge_step": e["converge_step"],
         }
         for e in ep_stats
@@ -155,55 +181,61 @@ def run_one_cfg(
     return out
 
 
-def _mu_paired_delta(rows: list[dict]) -> dict:
-    """对相同 (kf_qj, λ)，比较 μ>0 相对 μ=0 的 median a_cmd / θ。"""
-    by_base: dict[tuple[float, float], dict[float, dict]] = {}
+def _eta_paired_delta(rows: list[dict]) -> dict:
+    """相同 KF/λ 下比较 eta>0 相对 eta=0 的末段中位指标。"""
+    by_base: dict[tuple[float, float, float, float], dict[float, dict]] = {}
     for r in rows:
         if r.get("n", 0) == 0:
             continue
-        key = (r["kf_qj"], r["rls_lambda"])
-        by_base.setdefault(key, {})[r["rls_mu"]] = r
+        key = (
+            r["kf_qj"],
+            r["kf_sigma_r"],
+            r["kf_sigma_rdot"],
+            r["rls_lambda"],
+        )
+        by_base.setdefault(key, {})[r["rls_eta"]] = r
 
     pairs = []
-    for (qj, lam), mus in by_base.items():
-        if 0.0 not in mus:
+    for (qj, sig_r, sig_rd, lam), etas in by_base.items():
+        if 0.0 not in etas:
             continue
-        base = mus[0.0]
-        for mu, row in mus.items():
-            if mu == 0.0:
+        base = etas[0.0]
+        for eta, row in etas.items():
+            if eta == 0.0:
                 continue
             pairs.append(
                 {
                     "kf_qj": qj,
+                    "kf_sigma_r": sig_r,
+                    "kf_sigma_rdot": sig_rd,
                     "rls_lambda": lam,
-                    "rls_mu": mu,
-                    "delta_median_a_cmd": row["median_a_cmd_rmse_tail"]
-                    - base["median_a_cmd_rmse_tail"],
-                    "delta_median_theta": row["median_theta_rmse_tail"]
-                    - base["median_theta_rmse_tail"],
+                    "rls_eta": eta,
+                    "delta_median_a_cmd_sat": row["median_a_cmd_sat_rmse_tail"]
+                    - base["median_a_cmd_sat_rmse_tail"],
+                    "delta_median_theta_norm": row["median_theta_norm_rmse_tail"]
+                    - base["median_theta_norm_rmse_tail"],
                     "delta_median_rddot": row["median_rddot_rmse_tail"]
                     - base["median_rddot_rmse_tail"],
-                    "a_cmd_mu0": base["median_a_cmd_rmse_tail"],
-                    "a_cmd_mu": row["median_a_cmd_rmse_tail"],
-                    "theta_mu0": base["median_theta_rmse_tail"],
-                    "theta_mu": row["median_theta_rmse_tail"],
+                    "a_cmd_eta0": base["median_a_cmd_sat_rmse_tail"],
+                    "a_cmd_eta": row["median_a_cmd_sat_rmse_tail"],
+                    "theta_eta0": base["median_theta_norm_rmse_tail"],
+                    "theta_eta": row["median_theta_norm_rmse_tail"],
                 }
             )
     if not pairs:
         return {"n_pairs": 0}
 
-    d_a = np.array([p["delta_median_a_cmd"] for p in pairs], dtype=float)
-    d_th = np.array([p["delta_median_theta"] for p in pairs], dtype=float)
-    # 负值 = μ>0 更好
+    d_a = np.array([p["delta_median_a_cmd_sat"] for p in pairs], dtype=float)
+    d_th = np.array([p["delta_median_theta_norm"] for p in pairs], dtype=float)
+    # 负值 = eta>0 更好
     better_a = int(np.sum(d_a < -1e-9))
     worse_a = int(np.sum(d_a > 1e-9))
     return {
         "n_pairs": len(pairs),
-        "mean_delta_median_a_cmd": float(np.nanmean(d_a)),
-        "mean_delta_median_theta": float(np.nanmean(d_th)),
-        "frac_mu_better_a_cmd": better_a / len(pairs),
-        "frac_mu_worse_a_cmd": worse_a / len(pairs),
-        "recommend_disable_l1": bool(np.nanmean(d_a) > 0 and worse_a >= better_a),
+        "mean_delta_median_a_cmd_sat": float(np.nanmean(d_a)),
+        "mean_delta_median_theta_norm": float(np.nanmean(d_th)),
+        "frac_eta_better_a_cmd": better_a / len(pairs),
+        "frac_eta_worse_a_cmd": worse_a / len(pairs),
         "pairs": pairs,
     }
 
@@ -219,9 +251,11 @@ def main() -> None:
         sys.exit(1)
 
     qj_grid = _parse_float_list(args.kf_qj_grid)
+    sig_r_grid = _parse_float_list(args.kf_sigma_r_grid)
+    sig_rd_grid = _parse_float_list(args.kf_sigma_rdot_grid)
     lam_grid = _parse_float_list(args.rls_lambda_grid)
-    mu_grid = _parse_float_list(args.rls_mu_grid)
-    grid = list(itertools.product(qj_grid, lam_grid, mu_grid))
+    eta_grid = _parse_float_list(args.rls_eta_grid)
+    grid = list(itertools.product(qj_grid, sig_r_grid, sig_rd_grid, lam_grid, eta_grid))
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     if args.out_dir:
@@ -234,8 +268,10 @@ def main() -> None:
     args.coeff_mode = "sparse_ffrls"
     args.ident_shadow = True
     args.kf_qj = qj_grid[0]
+    args.kf_sigma_r = sig_r_grid[0]
+    args.kf_sigma_rdot = sig_rd_grid[0]
     args.rls_lambda = lam_grid[0]
-    args.rls_mu = mu_grid[0]
+    args.rls_eta = eta_grid[0]
     base_cfg = matlab_cfg_from_args(args)
 
     env = EvasionEnv(
@@ -249,16 +285,19 @@ def main() -> None:
     print(
         f"[scan] model={model_path}  ICs={n_ic}  "
         f"grid={len(grid)}  "
-        f"qj={qj_grid}  lambda={lam_grid}  mu={mu_grid}  "
-        f"sigma_r/rdot={base_cfg['sigma_r']}/{base_cfg['sigma_rdot']}"
+        f"qj={qj_grid}  kfR={sig_r_grid}/{sig_rd_grid}  "
+        f"lambda={lam_grid}  eta={eta_grid}  "
+        f"meas_sigma_r/rdot={base_cfg['sigma_r']}/{base_cfg['sigma_rdot']}"
     )
 
     rows: list[dict] = []
-    for k, (qj, lam, mu) in enumerate(grid, start=1):
+    for k, (qj, sig_r, sig_rd, lam, eta) in enumerate(grid, start=1):
         cfg = dict(base_cfg)
         cfg["kf_qj"] = float(qj)
+        cfg["kf_sigma_r"] = float(sig_r)
+        cfg["kf_sigma_rdot"] = float(sig_rd)
         cfg["rls_lambda"] = float(lam)
-        cfg["rls_mu"] = float(mu)
+        cfg["rls_eta"] = float(eta)
         row = run_one_cfg(
             env,
             model,
@@ -271,25 +310,26 @@ def main() -> None:
         )
         rows.append(row)
         print(
-            f"  [{k:02d}/{len(grid)}] qj={qj:.3g} lam={lam:.4g} mu={mu:.3g}  "
-            f"med_a={row.get('median_a_cmd_rmse_tail', float('nan')):.3g}  "
-            f"med_theta={row.get('median_theta_rmse_tail', float('nan')):.3g}  "
+            f"  [{k:02d}/{len(grid)}] qj={qj:.3g} "
+            f"R={sig_r:.3g}/{sig_rd:.3g} lam={lam:.4g} eta={eta:.3g}  "
+            f"med_a_sat={row.get('median_a_cmd_sat_rmse_tail', float('nan')):.3g}  "
+            f"med_theta_norm={row.get('median_theta_norm_rmse_tail', float('nan')):.3g}  "
             f"med_rdd={row.get('median_rddot_rmse_tail', float('nan')):.3g}"
         )
 
     env.close()
 
     valid = [r for r in rows if r.get("n", 0) > 0]
-    # 主排序键：median a_cmd（对 IC 爆点更稳）；次键 median θ
+    # 主排序键：饱和后指令误差；次键归一化参数误差。
     ranked = sorted(
         valid,
         key=lambda r: (
-            r["median_a_cmd_rmse_tail"],
-            r["median_theta_rmse_tail"],
+            r["median_a_cmd_sat_rmse_tail"],
+            r["median_theta_norm_rmse_tail"],
             r["median_rddot_rmse_tail"],
         ),
     )
-    mu_cmp = _mu_paired_delta(valid)
+    eta_cmp = _eta_paired_delta(valid)
     best = ranked[0] if ranked else None
 
     summary = {
@@ -299,12 +339,14 @@ def main() -> None:
         "sigma_rdot": base_cfg["sigma_rdot"],
         "grid": {
             "kf_qj": qj_grid,
+            "kf_sigma_r": sig_r_grid,
+            "kf_sigma_rdot": sig_rd_grid,
             "rls_lambda": lam_grid,
-            "rls_mu": mu_grid,
+            "rls_eta": eta_grid,
             "n": len(grid),
         },
         "best": best,
-        "mu_vs_mu0": mu_cmp,
+        "eta_vs_eta0": eta_cmp,
         "ranked_top10": ranked[:10],
         "all": rows,
     }
@@ -317,12 +359,15 @@ def main() -> None:
     csv_path = out_dir / "scan_table.csv"
     headers = [
         "kf_qj",
+        "kf_sigma_r",
+        "kf_sigma_rdot",
         "rls_lambda",
-        "rls_mu",
-        "median_a_cmd_rmse_tail",
-        "mean_a_cmd_rmse_tail",
-        "median_theta_rmse_tail",
-        "mean_theta_rmse_tail",
+        "rls_eta",
+        "median_a_cmd_sat_rmse_tail",
+        "mean_a_cmd_sat_rmse_tail",
+        "median_theta_norm_rmse_tail",
+        "mean_theta_norm_rmse_tail",
+        "median_qdot_rmse_tail",
         "median_rddot_rmse_tail",
         "mean_rddot_rmse_tail",
         "converge_rate",
@@ -341,17 +386,18 @@ def main() -> None:
     print(f"\n[scan] 结果写入 {out_dir}")
     if best:
         print(
-            f"  BEST: qj={best['kf_qj']:.3g} lam={best['rls_lambda']:.4g} "
-            f"mu={best['rls_mu']:.3g}  "
-            f"med_a={best['median_a_cmd_rmse_tail']:.3g}  "
-            f"med_theta={best['median_theta_rmse_tail']:.3g}"
+            f"  BEST: qj={best['kf_qj']:.3g} "
+            f"R={best['kf_sigma_r']:.3g}/{best['kf_sigma_rdot']:.3g} "
+            f"lam={best['rls_lambda']:.4g} eta={best['rls_eta']:.3g}  "
+            f"med_a_sat={best['median_a_cmd_sat_rmse_tail']:.3g}  "
+            f"med_theta_norm={best['median_theta_norm_rmse_tail']:.3g}"
         )
-    if mu_cmp.get("n_pairs", 0):
+    if eta_cmp.get("n_pairs", 0):
         print(
-            f"  mu vs mu0: mean d_med_a={mu_cmp['mean_delta_median_a_cmd']:.3g}  "
-            f"better={100*mu_cmp['frac_mu_better_a_cmd']:.0f}%  "
-            f"worse={100*mu_cmp['frac_mu_worse_a_cmd']:.0f}%  "
-            f"recommend_disable_l1={mu_cmp['recommend_disable_l1']}"
+            f"  eta vs eta0: mean d_med_a_sat="
+            f"{eta_cmp['mean_delta_median_a_cmd_sat']:.3g}  "
+            f"better={100*eta_cmp['frac_eta_better_a_cmd']:.0f}%  "
+            f"worse={100*eta_cmp['frac_eta_worse_a_cmd']:.0f}%"
         )
 
 

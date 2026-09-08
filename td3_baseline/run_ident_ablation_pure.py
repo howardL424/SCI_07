@@ -1,7 +1,7 @@
 """纯 TD3 三模式配对验证：analytic_truth / analytic_noisy / sparse_ffrls。
 
 同一 checkpoint、同一 test IC、同一 noise_seed，比较闭环指标。
-另可选 --also-mu0 追加 sparse_ffrls(mu=0)。
+另可选 --also-eta0 追加 sparse_ffrls(eta=0)。
 
 用法：
   E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe \\
@@ -39,7 +39,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--noise-seed", type=int, default=0)
     p.add_argument("--action-mapping", type=str, default=DEFAULT_ACTION_MAPPING)
-    p.add_argument("--also-mu0", action="store_true", help="追加 mu=0 对照")
+    p.add_argument(
+        "--also-eta0",
+        "--also-mu0",
+        dest="also_eta0",
+        action="store_true",
+        help="追加 eta=0 对照（--also-mu0 为旧兼容别名）",
+    )
     p.add_argument(
         "--out-dir",
         type=str,
@@ -47,6 +53,7 @@ def parse_args() -> argparse.Namespace:
         help="结果目录（默认模型旁 ident_ablation_{ts}）",
     )
     # 噪声 / KF / RLS（与 evaluate 同名）
+    p.add_argument("--sigma-scale", type=float, default=IDENT_CLI_DEFAULTS["sigma_scale"])
     p.add_argument("--sigma-q", type=float, default=IDENT_CLI_DEFAULTS["sigma_q"])
     p.add_argument("--sigma-qdot", type=float, default=IDENT_CLI_DEFAULTS["sigma_qdot"])
     p.add_argument(
@@ -59,8 +66,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--kf-sigma-a0", type=float, default=IDENT_CLI_DEFAULTS["kf_sigma_a0"]
     )
+    p.add_argument("--kf-sigma-r", type=float, default=IDENT_CLI_DEFAULTS["kf_sigma_r"])
+    p.add_argument(
+        "--kf-sigma-rdot", type=float, default=IDENT_CLI_DEFAULTS["kf_sigma_rdot"]
+    )
     p.add_argument("--rls-lambda", type=float, default=IDENT_CLI_DEFAULTS["rls_lambda"])
     p.add_argument("--rls-mu", type=float, default=IDENT_CLI_DEFAULTS["rls_mu"])
+    p.add_argument("--rls-eta", type=float, default=IDENT_CLI_DEFAULTS["rls_eta"])
     p.add_argument("--rls-P0", type=float, default=IDENT_CLI_DEFAULTS["rls_P0"])
     p.add_argument("--rls-r0", type=float, default=IDENT_CLI_DEFAULTS["rls_r0"])
     p.add_argument("--rls-a0", type=float, default=IDENT_CLI_DEFAULTS["rls_a0"])
@@ -73,11 +85,11 @@ def _modes(args: argparse.Namespace) -> list[tuple[str, dict]]:
     modes = [
         ("analytic_truth", {"coeff_mode": "analytic_truth"}),
         ("analytic_noisy", {"coeff_mode": "analytic_noisy"}),
-        ("sparse_ffrls", {"coeff_mode": "sparse_ffrls", "rls_mu": args.rls_mu}),
+        ("sparse_ffrls", {"coeff_mode": "sparse_ffrls", "rls_eta": args.rls_eta}),
     ]
-    if args.also_mu0:
+    if args.also_eta0:
         modes.append(
-            ("sparse_ffrls_mu0", {"coeff_mode": "sparse_ffrls", "rls_mu": 0.0})
+            ("sparse_ffrls_eta0", {"coeff_mode": "sparse_ffrls", "rls_eta": 0.0})
         )
     out = []
     for name, over in modes:
@@ -157,12 +169,22 @@ def main() -> None:
         d2 = np.array([r["r_MD2_min"] for r in rows], dtype=float)
         rT = np.array([r["r_minT"] for r in rows], dtype=float)
         both = np.array([r["both_ok"] for r in rows], dtype=bool)
+        energy = np.array([r["a_energy"] for r in rows], dtype=float)
+        total_variation = np.array(
+            [r["a_total_variation"] for r in rows], dtype=float
+        )
+        saturation_rate = np.array(
+            [r["saturation_rate"] for r in rows], dtype=float
+        )
         summary["modes"][mode_name] = {
             "n": len(rows),
             "both_ok_rate": float(both.mean()),
             "r_MD1_min_mean": float(d1.mean()),
             "r_MD2_min_mean": float(d2.mean()),
             "r_minT_mean": float(np.nanmean(rT)),
+            "a_energy_mean": float(energy.mean()),
+            "a_total_variation_mean": float(total_variation.mean()),
+            "saturation_rate_mean": float(saturation_rate.mean()),
             "cfg": cfg,
         }
         np.savez(
@@ -171,6 +193,9 @@ def main() -> None:
             r_MD2_min=d2,
             r_minT=rT,
             both_ok=both,
+            a_energy=energy,
+            a_total_variation=total_variation,
+            saturation_rate=saturation_rate,
         )
 
     (out_dir / "summary.json").write_text(
@@ -183,7 +208,8 @@ def main() -> None:
         print(
             f"  {name}: both_ok={100*st['both_ok_rate']:.1f}%  "
             f"r1={st['r_MD1_min_mean']:.1f} r2={st['r_MD2_min_mean']:.1f} "
-            f"rT={st['r_minT_mean']:.2f}"
+            f"rT={st['r_minT_mean']:.2f}  "
+            f"sat={100*st['saturation_rate_mean']:.1f}%"
         )
 
 

@@ -16,8 +16,9 @@ function core = stage2_core_init(cfg_in)
 %   辨识相关 cfg（默认 analytic_truth，不影响旧入口）:
 %     .coeff_mode = 'analytic_truth' | 'analytic_noisy' | 'sparse_ffrls'
 %     .ident_apply_cmd = true/false（false=影子：估参但不改指令）
-%     .sigma_q .sigma_qdot .sigma_theta .sigma_psi .sigma_r .sigma_rdot
-%     .kf_qj .kf_sigma_a0 .rls_lambda .rls_mu .rls_P0 .rls_r0 .rls_a0
+%     .sigma_scale .sigma_q .sigma_qdot .sigma_theta .sigma_psi .sigma_r .sigma_rdot
+%     .kf_qj .kf_sigma_a0 .kf_sigma_r .kf_sigma_rdot
+%     .rls_lambda .rls_mu .rls_eta .rls_P0 .rls_r0 .rls_a0
 %     .noise_seed
 
     if nargin < 1 || isempty(cfg_in); cfg_in = struct(); end
@@ -39,16 +40,21 @@ function core = stage2_core_init(cfg_in)
     % ---- 参数辨识 / 测量噪声（Plan 1）----
     d.coeff_mode       = 'analytic_truth';
     d.ident_apply_cmd  = true;
-    d.sigma_q          = 0.1 * pi / 180;   % 0.1 deg
-    d.sigma_qdot       = 0.001;            % rad/s
-    d.sigma_theta      = 0.1 * pi / 180;
-    d.sigma_psi        = 0.1 * pi / 180;
-    d.sigma_r          = 0.0;              % m（2026-08-01：占位 10→0）
-    d.sigma_rdot       = 0.0;              % m/s（2026-08-01：占位 1→0）
+    d.sigma_scale      = 30.0;              % GAIL 2026-08-06 标定倍率
+    d.sigma_q          = 3.0 * pi / 180;    % rad (=0.1 deg × 30)
+    d.sigma_qdot       = 0.03;              % rad/s (=0.001 × 30)
+    d.sigma_theta      = 3.0 * pi / 180;
+    d.sigma_psi        = 3.0 * pi / 180;
+    d.sigma_r          = 0.0;               % 物理量测：论文第2节规定精确
+    d.sigma_rdot       = 0.0;
     d.kf_qj            = 1.0e4;
     d.kf_sigma_a0      = 50.0;
+    % KF 设计标准差与实际注入噪声解耦；用于正则化 rddot 估计。
+    d.kf_sigma_r       = 10.0;
+    d.kf_sigma_rdot    = 0.5;
     d.rls_lambda       = 0.98;
-    d.rls_mu           = 1.0e-3;           % 2026-08-01：曾误改为 0，已回退
+    d.rls_mu           = 1.0e-3;           % 式(31)的离线目标权重（记录用）
+    d.rls_eta          = 0.1;              % 2026-09-08：20 IC 离线标定候选
     d.rls_P0           = 1.0e4;
     d.rls_r0           = 1.0e4;
     d.rls_a0           = 50.0;

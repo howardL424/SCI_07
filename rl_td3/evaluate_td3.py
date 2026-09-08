@@ -237,6 +237,10 @@ def run_episode(
     evade_ok = False
     strike_ok = False
     step = 0
+    a_prev: np.ndarray | None = None
+    a_energy = 0.0
+    a_total_variation = 0.0
+    saturated_steps = 0
 
     while not terminated:
         action, _ = model.predict(obs, deterministic=True)
@@ -250,6 +254,17 @@ def run_episode(
             r_minT = float(info["r_minT"])
             evade_ok = bool(info.get("evade_ok", False))
             strike_ok = bool(info.get("strike_ok", False))
+        a_sat = np.asarray(info.get("a_M_sat", [np.nan, np.nan]), dtype=float)
+        a_raw = np.asarray(info.get("a_M_raw", a_sat), dtype=float)
+        if np.isfinite(a_sat).all():
+            a_energy += 0.1 * float(np.dot(a_sat, a_sat))
+            if a_prev is not None:
+                a_total_variation += float(np.linalg.norm(a_sat - a_prev))
+            a_prev = a_sat.copy()
+            saturated_steps += int(
+                np.isfinite(a_raw).all()
+                and np.max(np.abs(a_raw - a_sat)) > 1e-9
+            )
         step += 1
 
         if render:
@@ -277,6 +292,9 @@ def run_episode(
         "evade_ok": evade_ok,
         "strike_ok": strike_ok,
         "both_ok": evade_ok and strike_ok,
+        "a_energy": a_energy,
+        "a_total_variation": a_total_variation,
+        "saturation_rate": saturated_steps / max(step, 1),
         "steps": step,
         "row_idx": int(info0.get("row_idx", -1)),
         "local_idx": int(info0.get("local_idx", -1)),

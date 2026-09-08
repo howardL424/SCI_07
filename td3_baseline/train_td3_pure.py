@@ -315,7 +315,10 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     matlab_cfg = matlab_cfg_from_args(args)
     print(f"  coeff_mode: {matlab_cfg['coeff_mode']}")
     print(f"  ident_apply_cmd: {matlab_cfg['ident_apply_cmd']}")
-    print(f"  rls_mu / noise_seed: {matlab_cfg['rls_mu']} / {matlab_cfg['noise_seed']}")
+    print(
+        f"  rls_mu / eta / noise_seed: {matlab_cfg['rls_mu']} / "
+        f"{matlab_cfg['rls_eta']} / {matlab_cfg['noise_seed']}"
+    )
     print("=" * 60)
     save_ident_run_config(
         save_dir / "ident_run_config.json",
