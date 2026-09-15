@@ -1,0 +1,25 @@
+{
+  "coeff_mode": "sparse_ffrls",
+  "ident_apply_cmd": false,
+  "sigma_scale": 30.0,
+  "sigma_q": 0.05235987755982988,
+  "sigma_qdot": 0.03,
+  "sigma_theta": 0.05235987755982988,
+  "sigma_psi": 0.05235987755982988,
+  "sigma_r": 10.0,
+  "sigma_rdot": 0.5,
+  "kf_qj": 10000.0,
+  "kf_sigma_a0": 50.0,
+  "rls_lambda": 0.98,
+  "rls_mu": 0.001,
+  "rls_eta": 0.1,
+  "rls_P0": 10000.0,
+  "rls_P_trace_max": 100.0,
+  "rls_r0": 10000.0,
+  "rls_a0": 50.0,
+  "noise_seed": 0,
+  "action_mapping_version": "ratio_log_box_v1",
+  "_extra": {
+    "task": "shadow_diag"
+  }
+}

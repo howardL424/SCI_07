@@ -21,6 +21,7 @@ addpath(this_dir);
 addpath(fullfile(plot_root, 'table2_bctd3'));   % td3_load_policy / predict / obs_norm
 addpath(gail_root);
 addpath(fullfile(gail_root, 'rl_td3', 'matlab'));
+addpath(fullfile(gail_root, 'ident', 'matlab'));
 addpath(fullfile(gail_root, 'expert_trajectory'));
 
 py_exe = 'E:\Python\venvs\rl_pytorch\Scripts\python.exe';

@@ -1,0 +1,47 @@
+% !TeX program = xelatex
+% Overleaf: Menu → Compiler → XeLaTeX  （或使用本目录 latexmkrc）
+%
+% 换期刊模板时主要改这一段 documentclass / 导言宏包，正文 \cite / \section 可尽量保留。
+% Elsevier 例：
+%   \documentclass[preprint,12pt]{elsarticle}
+% IEEE 例：
+%   \documentclass[journal]{IEEEtran}
+%
+% ctexart 的默认中文字体集 fandol 只支持 XeLaTeX / LuaLaTeX。
+% 下面这行让"用错编译器"时直接给出可读的提示，而不是 ctex 的 fontset 报错。
+\RequirePackage{iftex}
+\RequireXeTeX
+\documentclass[UTF8,a4paper,11pt]{ctexart}
+
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,mathtools,bm,amsbsy,amsthm}
+\usepackage{graphicx}
+\usepackage{pifont}
+\usepackage{booktabs,tabularx,array,makecell,multirow}
+\usepackage{algorithm}
+\usepackage[section]{placeins}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage[backend=biber,style=numeric,sorting=none,maxbibnames=99]{biblatex}
+\addbibresource{refs.bib}
+\usepackage{hyperref}
+\usepackage[nameinlink]{cleveref}
+
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\graphicspath{{figures/}{./}}
+\allowdisplaybreaks
+\newtheorem{assumption}{假设}
+\newtheorem{remark}{注}
+\newtheorem{problem}{问题}
+\crefname{remark}{注}{注}
+\Crefname{remark}{注}{注}
+\crefname{problem}{问题}{问题}
+\Crefname{problem}{问题}{问题}
+\crefname{assumption}{假设}{假设}
+\Crefname{assumption}{假设}{假设}
+\DeclareMathOperator{\diag}{diag}
+% 叠加重音只作用在字母本体，下标放在重音之外，避免 hat/tilde/ddot 左右错位
+\newcommand{\hatddot}[1]{\hat{\ddot{#1}}}
+\newcommand{\tildedot}[1]{\tilde{\dot{#1}}}
+
+% MathType AMS-LaTeX 常见残留：多余花括号、array 列格式 *{20}{l}

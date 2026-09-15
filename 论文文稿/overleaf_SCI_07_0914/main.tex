@@ -1,0 +1,46 @@
+\input{preamble}
+
+\title{基于行为克隆增强强化学习的双非合作飞行器三维鲁棒一体化最优规避制导律\\[0.6em]
+{\large Robust Integrated Optimal 3D Evasion and Guidance Against Dual Non-Cooperative Vehicles via Behavior Cloning-Enhanced RL}}
+\author{%
+梁泰源\textsuperscript{1(\ding{37})},~裴胤\textsuperscript{1},~杨奔\textsuperscript{1}\\[0.6em]
+{\normalsize 1.~中国运载火箭技术研究院, 北京 100076, 中国}%
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+传统飞行器规避方法易因过度规避导致终端到达误差过大，而现有考虑目标到达的规避研究多局限于平面单飞行器交会场景。为此，本文建立三维四体相对运动学模型，基于极大值原理推导一体化最优规避与制导律，并通过权重系数协调对两枚非合作飞行器（non-cooperative vehicle, NCV）的规避、目标到达精度与控制能耗，并利用零控偏差量（zero-effort miss, ZEM）实时估计终端到达性能。针对制导权重的在线优化问题，采用打靶法（shooting method）生成覆盖一定范围初始几何构型的专家轨迹，构建行为克隆增强双延迟深度确定性策略梯度（BC-TD3）框架：先利用专家数据预训练策略网络，再通过强化学习微调，以提高复杂多约束任务下的收敛速度与泛化能力。进一步地，针对角度和角速度测量噪声，设计带稀疏正则化与遗忘因子的递推最小二乘辨识方法，在线估计状态空间模型中的关键非平凡参数，降低噪声对制导指令的影响。300次蒙特卡洛仿真表明，在无噪声条件下，所提BC-TD3方法的双NCV规避成功率和目标到达成功率分别为94.7\%和94.3\%，优于纯TD3及传统比例导引、程序机动方法；在测量噪声条件下，结合在线辨识后，两项成功率进一步达到96.7\%和96.0\%，与无辨识的纯TD3和程序机动方法成功率进一步拉大，验证了所提方法在三维双NCV场景中兼顾规避安全性、终端精度与鲁棒性方面的有效性。
+\end{abstract}
+
+\noindent\textbf{关键词：} 三维四体运动学；一体化规避与制导；最优控制；深度强化学习；在线参数辨识
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% AGENT WARNING (2026-09-14) — 表述全文公式编号时必读；本块不进入 PDF
+%
+% 对用户、正文论述、修改说明里写「式(n)」时，必须用 PDF 里印出的编号，
+% 禁止把 \label{eq:xx} 的标签名（eq:48、eq:16b、eq:62g 等）当作公式号。
+%
+% 原因：标签是历史锚点，与计数器不同步。插式/拆式（eq:16b、eq:62b–g）
+% 以及章节 \input 顺序都会让标签数字与版面编号错位。现稿实例
+% （以本目录 main.aux 为准，重编译后以最新 aux/PDF 为准）：
+%   \label{eq:16b} → 式(17)；  \label{eq:17} → 式(18)；
+%   \label{eq:24}  → 式(25)；  \label{eq:25} → 式(26)。
+%
+% 查印刷号：读 main.aux 中 \newlabel{eq:xx}{{N}{页}...} 的 N，或直接看 PDF。
+% 源码交叉引用仍用 \eqref{eq:xx} / \cref{eq:xx}，不要为「对上号」去改 label。
+% 第2节起出现编号公式，该节开头有指向本块的短注。
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{sections/01_introduction}
+\input{sections/02_problem}
+\input{sections/04_guidance}
+\input{sections/03_identification}
+\input{sections/05_bctd3}
+\input{sections/06_simulation}
+\input{sections/07_conclusion}
+
+\printbibliography[title={参考文献}]
+\end{document}

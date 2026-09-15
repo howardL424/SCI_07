@@ -17,9 +17,11 @@ function core = stage2_core_init(cfg_in)
 %     .coeff_mode = 'analytic_truth' | 'analytic_noisy' | 'sparse_ffrls'
 %     .ident_apply_cmd = true/false（false=影子：估参但不改指令）
 %     .sigma_scale .sigma_q .sigma_qdot .sigma_theta .sigma_psi .sigma_r .sigma_rdot
-%     .kf_qj .kf_sigma_a0 .kf_sigma_r .kf_sigma_rdot
-%     .rls_lambda .rls_mu .rls_eta .rls_P0 .rls_r0 .rls_a0
+%     .kf_qj .kf_sigma_a0
+%     .rls_lambda .rls_mu .rls_eta .rls_P0 .rls_P_trace_max .rls_r0 .rls_a0
 %     .noise_seed
+
+    ident_addpath();
 
     if nargin < 1 || isempty(cfg_in); cfg_in = struct(); end
 
@@ -45,17 +47,15 @@ function core = stage2_core_init(cfg_in)
     d.sigma_qdot       = 0.03;              % rad/s (=0.001 × 30)
     d.sigma_theta      = 3.0 * pi / 180;
     d.sigma_psi        = 3.0 * pi / 180;
-    d.sigma_r          = 0.0;               % 物理量测：论文第2节规定精确
-    d.sigma_rdot       = 0.0;
+    d.sigma_r          = 10.0;              % m；同时构成式(62d)的 R_xi
+    d.sigma_rdot       = 0.5;               % m/s；同时构成式(62d)的 R_xi
     d.kf_qj            = 1.0e4;
     d.kf_sigma_a0      = 50.0;
-    % KF 设计标准差与实际注入噪声解耦；用于正则化 rddot 估计。
-    d.kf_sigma_r       = 10.0;
-    d.kf_sigma_rdot    = 0.5;
     d.rls_lambda       = 0.98;
     d.rls_mu           = 1.0e-3;           % 式(31)的离线目标权重（记录用）
     d.rls_eta          = 0.1;              % 2026-09-08：20 IC 离线标定候选
     d.rls_P0           = 1.0e4;
+    d.rls_P_trace_max  = 1.0;              % 20 IC 影子扫描选定；Inf=关闭
     d.rls_r0           = 1.0e4;
     d.rls_a0           = 50.0;
     d.noise_seed       = 0;

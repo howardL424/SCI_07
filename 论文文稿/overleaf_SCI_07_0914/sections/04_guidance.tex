@@ -1,0 +1,238 @@
+\section{一体化最优制导律设计}
+\subsection{最优控制问题求解}
+采用极大值原理求解前述最优控制\cref{prb:integrated}。构造哈密顿函数
+
+\begin{equation}
+\label{eq:25}
+H = {\lambda _1}{\dot z_1}(t) \cdot I(t \leqslant {t_{f1}}) + {\lambda _2}{\dot z_2}(t) \cdot I(t \leqslant {t_{f2}}){\text{ + }}{\lambda _T}{\dot z_T}(t) + \frac{{{w_E}}}{2}\left[ {a_{yA}^2(t) + a_{zA}^2(t)} \right]
+\end{equation}
+式中，${\lambda _i},{\lambda _T}$分别为对应零控偏差量 ${z_i}(t),{z_T}(t)$的协态变量，$I(t \leqslant {t_{fi}})(i = 1,2)$为指示函数。由正则方程和终端横截条件，可得协态变量的解析解
+
+\begin{equation}
+\label{eq:26}
+\left\{
+\begin{aligned}
+& {\lambda _i}\left( t \right) = {w_i}\left[ {z_i\left( {{t_{fi}}} \right) - d_i^*} \right],{\text{ }}i = 1,2 \\
+& {\lambda _T}\left( t \right) = {w_T}{z_T}\left( {{t_{fT}}} \right)
+\end{aligned}
+\right.
+\end{equation}
+根据最优控制的极值条件$\frac{{\partial H}}{{\partial {u_A}}} = 0$，对哈密顿函数关于控制量求偏导并令其为零，可得最优控制指令的开环形式
+
+\begin{equation}
+\label{eq:27}
+\begin{gathered}
+  u_A^* =  - \frac{{{w_1}}}{{{w_E}}}\left[ {{z_1}\left( {{t_{f1}}} \right) - d_1^*} \right]{\varphi _1}(t){b_1}I(t \leqslant {t_{f1}}) - \frac{{{w_2}}}{{{w_E}}}\left[ {{z_2}\left( {{t_{f2}}} \right) - d_2^*} \right]{\varphi _2}(t){b_2}I(t \leqslant {t_{f2}}) -  \hfill \\
+  {\text{    }}\frac{{{w_T}}}{{{w_E}}}{z_T}\left( {{t_{fT}}} \right){\varphi _T}(t){b_T} \hfill \\ 
+\end{gathered}
+\end{equation}
+为得到闭环制导指令，需确定终端零控偏差量 ${z_i}({t_{fi}})$。将式\eqref{eq:27}代入式\eqref{eq:19}，可得规避者与两枚NCV终端零控偏差量导数
+
+\begin{equation}
+\label{eq:28}
+\begin{gathered}
+  {{\dot z}_1}(t) =  - \frac{{{w_1}}}{{{w_E}}}\left[ {{z_1}({t_{f1}}) - d_1^*} \right]\varphi _1^2(t)\left( {B_{1,1}^2 + B_{2,1}^2} \right) - {\varphi _1}(t){v_{r1}} -  \hfill \\
+  {\text{          }}\frac{{{w_2}}}{{{w_E}}}\left[ {{z_2}({t_{f2}}) - d_2^*} \right]{\varphi _1}(t){\varphi _2}(t)\left( {b_1^T{b_2}} \right) \cdot I(t \leqslant {t_{f2}}) - \quad  \hfill \\
+  {\text{          }}\frac{{{w_T}}}{{{w_E}}}{z_T}({t_{fT}}){\varphi _1}(t){\varphi _T}(t)\left( {b_1^T{b_T}} \right){\text{   }}(t \leqslant {t_{f1}}) \hfill \\ 
+\end{gathered}
+\end{equation}
+\begin{equation}
+\label{eq:29}
+\begin{gathered}
+  {{\dot z}_2}(t) =  - \frac{{{w_1}}}{{{w_E}}}\left[ {{z_1}({t_{f1}}) - d_1^*} \right]{\varphi _1}(t){\varphi _2}(t)\left( {b_1^T{b_2}} \right) \cdot I(t \leqslant {t_{f1}}) -  \hfill \\
+  {\text{          }}\frac{{{w_2}}}{{{w_E}}}\left[ {{z_2}({t_{f2}}) - d_2^*} \right]\varphi _2^2(t)\left( {B_{1,2}^2 + B_{2,2}^2} \right) - {\varphi _2}(t){v_{r2}} -  \hfill \\
+  {\text{          }}\frac{{{w_T}}}{{{w_E}}}{z_T}({t_{fT}}){\varphi _2}(t){\varphi _T}(t)\left( {b_2^T{b_T}} \right){\text{   }}(t \leqslant {t_{f2}}) \hfill \\ 
+\end{gathered}
+\end{equation}
+\begin{equation}
+\label{eq:30}
+\begin{gathered}
+  {{\dot z}_T}(t) =  - \frac{{{w_1}}}{{{w_E}}}\left[ {{z_1}({t_{f1}}) - d_1^*} \right]{\varphi _T}(t){\varphi _1}(t)\left( {b_1^T{b_T}} \right) \cdot I(t \leqslant {t_{f1}}) -  \hfill \\
+  {\text{          }}\frac{{{w_2}}}{{{w_E}}}\left[ {{z_2}({t_{f2}}) - d_2^*} \right]{\varphi _T}(t){\varphi _2}(t)\left( {b_2^T{b_T}} \right) \cdot I(t \leqslant {t_{f2}}) - \quad  \hfill \\
+  {\text{          }}\frac{{{w_T}}}{{{w_E}}}{z_T}({t_{fT}})\varphi _T^2(t)\left( {B_{1,T}^2 + B_{2,T}^2} \right){\text{   }}(t \leqslant {t_{fT}}) \hfill \\ 
+\end{gathered}
+\end{equation}
+将式\eqref{eq:28}、\eqref{eq:29}、\eqref{eq:30}分别从$t$到${t_{f1}}$、$t$到${t_{f2}}$、$t$到${t_{fT}}$积分得
+
+\begin{equation}
+\label{eq:31}
+\begin{gathered}
+  {z_1}({t_{f1}}) = {z_1}(t) - \frac{{{w_1}(B_{1,1}^2 + B_{2,1}^2)}}{{{w_E}}}{\Phi _1}\left[ {{z_1}({t_{f1}}) - d_1^*} \right] -  \\ 
+  {\text{ }}\frac{{{w_2}\left( {b_1^T{b_2}} \right)}}{{{w_E}}}{\Phi _{12}}\left[ {{z_2}({t_{f2}}) - d_2^*} \right] -  \\ 
+  {\text{ }}\frac{{{w_T}\left( {b_1^T{b_T}} \right)}}{{{w_E}}}{\Phi _{1T}}{z_T}({t_{fT}}) - {N_1} \\ 
+\end{gathered}
+\end{equation}
+\begin{equation}
+\label{eq:32}
+\begin{gathered}
+  {z_2}({t_{f2}}) = {z_2}(t) - \frac{{{w_1}\left( {b_1^T{b_2}} \right)}}{{{w_E}}}{\Phi _{12}}\left[ {{z_1}({t_{f1}}) - d_1^*} \right] -  \\ 
+  {\text{ }}\frac{{{w_2}(B_{1,2}^2 + B_{2,2}^2)}}{{{w_E}}}{\Phi _2}\left[ {{z_2}({t_{f2}}) - d_2^*} \right] -  \\ 
+  {\text{ }}\frac{{{w_T}\left( {b_2^T{b_T}} \right)}}{{{w_E}}}{\Phi _{2T}}{z_T}({t_{fT}}) - {N_2} \\ 
+\end{gathered}
+\end{equation}
+\begin{equation}
+\label{eq:33}
+\begin{gathered}
+  {z_T}({t_{fT}}) = {z_T}(t) - \frac{{{w_1}\left( {b_1^T{b_T}} \right)}}{{{w_E}}}{\Phi _{1T}}\left[ {{z_1}({t_{f1}}) - d_1^*} \right] -  \\ 
+  {\text{ }}\frac{{{w_2}\left( {b_2^T{b_T}} \right)}}{{{w_E}}}{\Phi _{2T}}\left[ {{z_2}({t_{f2}}) - d_2^*} \right] -  \\ 
+  {\text{ }}\frac{{{w_T}\left( {B_{1,T}^2 + B_{2,T}^2} \right)}}{{{w_E}}}{\Phi _T}{z_T}({t_{fT}}) \\ 
+\end{gathered}
+\end{equation}
+上三式中，${\Phi _i}$, ${N_i}$($i$=1,2), ${\Phi _T}$和${\Phi _{12}}$, ${\Phi _{1T}}$, ${\Phi _{2T}}$的表达式分别为
+
+\begin{equation}
+\label{eq:34}
+\left\{
+\begin{aligned}
+& {\Phi _i} = \int_t^{{t_{fi}}} {\varphi _i^2} (\tau )d\tau  = \frac{1}{{4\dot Q_i^2}}\left( {\frac{{{e^{2{{\dot Q}_i}{t_{go,i}}}} - {e^{ - 2{{\dot Q}_i}{t_{go,i}}}}}}{{2{{\dot Q}_i}}} - 2{t_{go,i}}} \right),{\text{ }}i = 1,2 \\
+& {N_i} = \int_t^{{t_{fi}}} {{\varphi _i}} (\tau ){v_{ri}}d\tau  = \frac{{{e^{{{\dot Q}_i}{t_{go,i}}}} + {e^{ - {{\dot Q}_i}{t_{go,i}}}} - 2}}{{2\dot Q_i^2}}{v_{ri}},{\text{ }}i = 1,2 \\
+& {\Phi _T} = \int_t^{{t_{fT}}} {\varphi _T^2} (\tau )d\tau  = \frac{1}{{4\dot Q_T^2}}\left( {\frac{{{e^{2{{\dot Q}_T}{t_{go,T}}}} - {e^{ - 2{{\dot Q}_T}{t_{go,T}}}}}}{{2{{\dot Q}_T}}} - 2{t_{go,T}}} \right)
+\end{aligned}
+\right.
+\end{equation}
+\begin{equation}
+\label{eq:35}
+\begin{gathered}
+  {\Phi _{12}} = \int_t^{\min ({t_{f1}},{t_{f2}})} {{\varphi _1}(\tau ){\varphi _2}(\tau )} d\tau  \\ 
+   = \frac{1}{{4{{\dot Q}_1}{{\dot Q}_2}}}\left\{ {\frac{{{e^{{{\dot Q}_1}{t_{go,1}} + {{\dot Q}_2}{t_{go,2}}}} - {e^{{{\dot Q}_1}{t_{go,1}} + {{\dot Q}_2}{t_{go,2}} - ({{\dot Q}_1} + {{\dot Q}_2}) \cdot \min ({t_{go,1}},{t_{go,2}})}}}}{{{{\dot Q}_1} + {{\dot Q}_2}}}} \right. \\ 
+   - \frac{{{e^{{{\dot Q}_1}{t_{go,1}} - {{\dot Q}_2}{t_{go,2}}}} - {e^{{{\dot Q}_1}{t_{go,1}} - {{\dot Q}_2}{t_{go,2}} - ({{\dot Q}_1} - {{\dot Q}_2}) \cdot \min ({t_{go,1}},{t_{go,2}})}}}}{{{{\dot Q}_1} - {{\dot Q}_2}}} \\ 
+   - \frac{{{e^{ - {{\dot Q}_1}{t_{go,1}} + {{\dot Q}_2}{t_{go,2}} + ({{\dot Q}_1} - {{\dot Q}_2}) \cdot \min ({t_{go,1}},{t_{go,2}})}} - {e^{ - {{\dot Q}_1}{t_{go,1}} + {{\dot Q}_2}{t_{go,2}}}}}}{{{{\dot Q}_1} - {{\dot Q}_2}}} \\ 
+  \left. { + \frac{{{e^{ - {{\dot Q}_1}{t_{go,1}} - {{\dot Q}_2}{t_{go,2}} + ({{\dot Q}_1} + {{\dot Q}_2}) \cdot \min ({t_{go,1}},{t_{go,2}})}} - {e^{ - {{\dot Q}_1}{t_{go,1}} - {{\dot Q}_2}{t_{go,2}}}}}}{{{{\dot Q}_1} + {{\dot Q}_2}}}} \right\} \\ 
+\end{gathered}
+\end{equation}
+\begin{equation}
+\label{eq:36}
+\begin{gathered}
+  {\Phi _{1T}} = \int_t^{\min ({t_{f1}},{t_{fT}})} {{\varphi _1}} (\tau ){\varphi _T}(\tau )\,d\tau  \\ 
+   = \frac{1}{{4{{\dot Q}_1}{{\dot Q}_T}}}\left\{ {\frac{{{e^{{{\dot Q}_1}{t_{go,1}} + {{\dot Q}_T}{t_{go,T}}}} - {e^{{{\dot Q}_1}{t_{go,1}} + {{\dot Q}_T}{t_{go,T}} - ({{\dot Q}_1} + {{\dot Q}_T}) \cdot \min ({t_{go,1}},{t_{go,T}})}}}}{{{{\dot Q}_1} + {{\dot Q}_T}}}} \right. \\ 
+   - \frac{{{e^{{{\dot Q}_1}{t_{go,1}} - {{\dot Q}_T}{t_{go,T}}}} - {e^{{{\dot Q}_1}{t_{go,1}} - {{\dot Q}_T}{t_{go,T}} - ({{\dot Q}_1} - {{\dot Q}_T}) \cdot \min ({t_{go,1}},{t_{go,T}})}}}}{{{{\dot Q}_1} - {{\dot Q}_T}}} \\ 
+   - \frac{{{e^{ - {{\dot Q}_1}{t_{go,1}} + {{\dot Q}_T}{t_{go,T}} + ({{\dot Q}_1} - {{\dot Q}_T}) \cdot \min ({t_{go,1}},{t_{go,T}})}} - {e^{ - {{\dot Q}_1}{t_{go,1}} + {{\dot Q}_T}{t_{go,T}}}}}}{{{{\dot Q}_1} - {{\dot Q}_T}}} \\ 
+  \left. { + \frac{{{e^{ - {{\dot Q}_1}{t_{go,1}} - {{\dot Q}_T}{t_{go,T}} + ({{\dot Q}_1} + {{\dot Q}_T}) \cdot \min ({t_{go,1}},{t_{go,T}})}} - {e^{ - {{\dot Q}_1}{t_{go,1}} - {{\dot Q}_T}{t_{go,T}}}}}}{{{{\dot Q}_1} + {{\dot Q}_T}}}} \right\} \\ 
+\end{gathered}
+\end{equation}
+\begin{equation}
+\label{eq:37}
+\begin{gathered}
+  {\Phi _{2T}} = \int_t^{\min ({t_{f2}},{t_{fT}})} {{\varphi _2}} (\tau ){\varphi _T}(\tau )d\tau  \\ 
+   = \frac{1}{{4{{\dot Q}_2}{{\dot Q}_T}}}\left\{ {\frac{{{e^{{{\dot Q}_2}{t_{go,2}} + {{\dot Q}_T}{t_{go,T}}}} - {e^{{{\dot Q}_2}{t_{go,2}} + {{\dot Q}_T}{t_{go,T}} - ({{\dot Q}_2} + {{\dot Q}_T}) \cdot \min ({t_{go,2}},{t_{go,T}})}}}}{{{{\dot Q}_2} + {{\dot Q}_T}}}} \right. \\ 
+   - \frac{{{e^{{{\dot Q}_2}{t_{go,2}} - {{\dot Q}_T}{t_{go,T}}}} - {e^{{{\dot Q}_2}{t_{go,2}} - {{\dot Q}_T}{t_{go,T}} - ({{\dot Q}_2} - {{\dot Q}_T}) \cdot \min ({t_{go,2}},{t_{go,T}})}}}}{{{{\dot Q}_2} - {{\dot Q}_T}}} \\ 
+   - \frac{{{e^{ - {{\dot Q}_2}{t_{go,2}} + {{\dot Q}_T}{t_{go,T}} + ({{\dot Q}_2} - {{\dot Q}_T}) \cdot \min ({t_{go,2}},{t_{go,T}})}} - {e^{ - {{\dot Q}_2}{t_{go,2}} + {{\dot Q}_T}{t_{go,T}}}}}}{{{{\dot Q}_2} - {{\dot Q}_T}}} \\ 
+  \left. { + \frac{{{e^{ - {{\dot Q}_2}{t_{go,2}} - {{\dot Q}_T}{t_{go,T}} + ({{\dot Q}_2} + {{\dot Q}_T}) \cdot \min ({t_{go,2}},{t_{go,T}})}} - {e^{ - {{\dot Q}_2}{t_{go,2}} - {{\dot Q}_T}{t_{go,T}}}}}}{{{{\dot Q}_2} + {{\dot Q}_T}}}} \right\} \\ 
+\end{gathered}
+\end{equation}
+\subsection{闭环制导指令与耦合分析}
+令待求ZEM偏差为${\delta z_1} = {z_1}({t_{f1}}) - d_1^*$, ${\delta z_2} = {z_2}({t_{f2}}) - d_2^*$, ${\delta z_T} = {z_T}({t_{fT}})$。联立式\eqref{eq:31}、\eqref{eq:32}、\eqref{eq:33}，移项整理得
+
+\begin{equation}
+\label{eq:38}
+\left[ {\begin{array}{*{20}{c}}
+  {1 + {G_{11}}{\Phi _1}}&{{G_{12}}{\Phi _{12}}}&{{G_{1T}}{\Phi _{1T}}} \\ 
+  {{G_{21}}{\Phi _{12}}}&{1 + {G_{22}}{\Phi _2}}&{{G_{2T}}{\Phi _{2T}}} \\ 
+  {{G_{T1}}{\Phi _{1T}}}&{{G_{T2}}{\Phi _{2T}}}&{1 + {G_T}{\Phi _T}} 
+\end{array}} \right]
+\begin{bmatrix}
+  {\delta z_1} \\
+  {\delta z_2} \\
+  {\delta z_T}
+\end{bmatrix}
+=
+\begin{bmatrix}
+  {z_1}(t) - {N_1} - d_1^* \\
+  {z_2}(t) - {N_2} - d_2^* \\
+  {z_T}(t)
+\end{bmatrix}
+\end{equation}
+其中，自耦合增益
+
+\begin{equation}
+\label{eq:39}
+{G_{11}} = \frac{{{w_1}(B_{1,1}^2 + B_{2,1}^2)}}{{{w_E}}},\quad {G_{22}} = \frac{{{w_2}(B_{1,2}^2 + B_{2,2}^2)}}{{{w_E}}},\quad {G_T} = \frac{{{w_T}(B_{1,T}^2 + B_{2,T}^2)}}{{{w_E}}}
+\end{equation}
+NCV间交叉耦合增益
+
+\begin{equation}
+\label{eq:40}
+{G_{12}} = \frac{{{w_2}(b_1^T{b_2})}}{{{w_E}}},\quad {G_{21}} = \frac{{{w_1}(b_1^T{b_2})}}{{{w_E}}}
+\end{equation}
+目标与NCV间交叉耦合增益
+
+\begin{equation}
+\label{eq:41}
+{G_{1T}} = \frac{{{w_T}(b_1^T{b_T})}}{{{w_E}}},\quad {G_{2T}} = \frac{{{w_T}(b_2^T{b_T})}}{{{w_E}}},\quad {G_{T1}} = \frac{{{w_1}(b_1^T{b_T})}}{{{w_E}}},\quad {G_{T2}} = \frac{{{w_2}(b_2^T{b_T})}}{{{w_E}}}
+\end{equation}
+\begin{remark}
+自耦合项${G_{11}},{G_{22}},{G_T}$刻画各NCV或目标与规避者相对运动对其自身末端零控偏差量的独立影响。交叉耦合项${G_{12}},{G_{21}},{G_{1T}},{G_{2T}},{G_{T1}},{G_{T2}}$则刻画规避者一次机动同时改变其与两枚NCV及目标相对运动状态的相互依存效应。这种耦合是双NCV一体化规避–到达场景区别于单NCV情形的核心特征，当$b_i^T{b_j}$项非零（non-trivial）时在三维交会中尤为明显。
+\end{remark}
+令$\Delta {Z_1} = {z_1}(t) - {N_1} - d_1^*$, $\Delta {Z_2} = {z_2}(t) - {N_2} - d_2^*$, $\Delta {Z_T} = {z_T}(t)$，则有
+
+\begin{equation}
+\label{eq:42}
+\left[ {\begin{array}{*{20}{c}}
+  {1 + {G_{11}}{\Phi _1}}&{{G_{12}}{\Phi _{12}}}&{{G_{1T}}{\Phi _{1T}}} \\ 
+  {{G_{21}}{\Phi _{12}}}&{1 + {G_{22}}{\Phi _2}}&{{G_{2T}}{\Phi _{2T}}} \\ 
+  {{G_{T1}}{\Phi _{1T}}}&{{G_{T2}}{\Phi _{2T}}}&{1 + {G_T}{\Phi _T}} 
+\end{array}} \right]
+\begin{bmatrix}
+  {\delta z_1} \\
+  {\delta z_2} \\
+  {\delta z_T}
+\end{bmatrix}
+=
+\begin{bmatrix}
+  {\Delta {Z_1}} \\
+  {\Delta {Z_2}} \\
+  {\Delta {Z_T}}
+\end{bmatrix}
+\end{equation}
+记矩阵行列式
+
+\begin{equation}
+\label{eq:43}
+{\Delta _{\text{det}}} = \left| {\begin{array}{*{20}{c}}
+  {1 + {G_{11}}{\Phi _1}}&{{G_{12}}{\Phi _{12}}}&{{G_{1T}}{\Phi _{1T}}} \\ 
+  {{G_{21}}{\Phi _{12}}}&{1 + {G_{22}}{\Phi _2}}&{{G_{2T}}{\Phi _{2T}}} \\ 
+  {{G_{T1}}{\Phi _{1T}}}&{{G_{T2}}{\Phi _{2T}}}&{1 + {G_T}{\Phi _T}} 
+\end{array}} \right|
+\end{equation}
+\begin{equation}
+\label{eq:44}
+{\Delta _1} = \left| {\begin{array}{*{20}{c}}
+  {\Delta {Z_1}}&{{G_{12}}{\Phi _{12}}}&{{G_{1T}}{\Phi _{1T}}} \\ 
+  {\Delta {Z_2}}&{1 + {G_{22}}{\Phi _2}}&{{G_{2T}}{\Phi _{2T}}} \\ 
+  {\Delta {Z_T}}&{{G_{T2}}{\Phi _{2T}}}&{1 + {G_T}{\Phi _T}} 
+\end{array}} \right|
+\end{equation}
+\begin{equation}
+\label{eq:45}
+{\Delta _2} = \left| {\begin{array}{*{20}{c}}
+  {1 + {G_{11}}{\Phi _1}}&{\Delta {Z_1}}&{{G_{1T}}{\Phi _{1T}}} \\ 
+  {{G_{21}}{\Phi _{12}}}&{\Delta {Z_2}}&{{G_{2T}}{\Phi _{2T}}} \\ 
+  {{G_{T1}}{\Phi _{1T}}}&{\Delta {Z_T}}&{1 + {G_T}{\Phi _T}} 
+\end{array}} \right|
+\end{equation}
+\begin{equation}
+\label{eq:46}
+{\Delta _T} = \left| {\begin{array}{*{20}{c}}
+  {1 + {G_{11}}{\Phi _1}}&{{G_{12}}{\Phi _{12}}}&{\Delta {Z_1}} \\ 
+  {{G_{21}}{\Phi _{12}}}&{1 + {G_{22}}{\Phi _2}}&{\Delta {Z_2}} \\ 
+  {{G_{T1}}{\Phi _{1T}}}&{{G_{T2}}{\Phi _{2T}}}&{\Delta {Z_T}} 
+\end{array}} \right|
+\end{equation}
+则由克莱姆法则可对线性方程组式\eqref{eq:42}求解得
+
+\begin{equation}
+\label{eq:47}
+{\delta z_1} = \frac{{{\Delta _1}}}{{{\Delta _{\text{det}}}}},{\text{ }}{\delta z_2} = \frac{{{\Delta _2}}}{{{\Delta _{\text{det}}}}},{\text{ }}{\delta z_T} = \frac{{{\Delta _T}}}{{{\Delta _{\text{det}}}}}
+\end{equation}
+将式\eqref{eq:47}代入式\eqref{eq:27}，得到最优规避制导加速度指令
+
+\begin{equation}
+\label{eq:48}
+u_A^*(t) =  - \frac{1}{{{\Delta _{\text{det}}}}}\left\{ {\frac{{{w_1}}}{{{w_E}}}{\varphi _1}(t){\Delta _1}{b_1}I(t \leqslant {t_{f1}})} \right.{\text{ + }}\left. {\frac{{{w_2}}}{{{w_E}}}{\varphi _2}(t){\Delta _2}{b_2}I(t \leqslant {t_{f2}}) + \frac{{{w_T}}}{{{w_E}}}{\varphi _T}(t){\Delta _T}{b_T}} \right\}
+\end{equation}
+该最优制导指令综合考虑了两枚NCV的规避需求、控制能量消耗以及目标到达影响，能够实现双NCV规避和目标到达一体化制导。按\cref{prb:integrated}中规避者可用最大法向过载给定的幅值上限，式\eqref{eq:48}的指令在施加前作幅值限制，其对规避与到达余量的影响由第5节的权重在线调度予以补偿，具体数值设定见第6.1节。
+
+\begin{problem}[制导参数优化]
+\label{prb:weights}
+闭环制导律\eqref{eq:48}需要针对各交会场景最优确定参数${\mathbf{p}} = {[w,{\kern 1pt} \gamma ,{\kern 1pt} {w_T},{\kern 1pt} {w_E}]^T}$。求取在达到期望规避距离的同时最小化能量消耗的${{\mathbf{p}}^*}$，构成非线性优化问题，第5节将通过BC-TD3框架予以解决。
+\end{problem}

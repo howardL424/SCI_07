@@ -55,6 +55,7 @@ addpath(plot_root);                                  % plot_table2_trajectories
 addpath(fullfile(plot_root, 'table2_bctd3'));
 addpath(gail_root);
 addpath(fullfile(gail_root, 'rl_td3', 'matlab'));
+addpath(fullfile(gail_root, 'ident', 'matlab'));
 addpath(fullfile(gail_root, 'expert_trajectory'));
 
 results_dir = fullfile(this_dir, 'results', opts.out_tag);

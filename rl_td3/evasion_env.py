@@ -22,6 +22,7 @@ from action_mapping import (
     action_norm_to_phys,
     phys_to_action_norm,
 )
+from ident_protocol import parse_ident_diag
 from obs_norm import OBS_BOX_HIGH, OBS_DIM, normalize_obs
 from reward_projection import (
     DEFAULT_REWARD_CFG,
@@ -32,6 +33,7 @@ from reward_projection import (
 # ── 路径配置 ──────────────────────────────────────────────────────────────────
 GAIL_ROOT    = str(Path(__file__).parent.parent.resolve())
 MATLAB_DIR   = str(Path(__file__).parent / "matlab")
+IDENT_MATLAB_DIR = str(Path(GAIL_ROOT) / "ident" / "matlab")
 EXPERT_DIR   = str(Path(GAIL_ROOT) / "expert_trajectory")
 SAMPLES_FILE = str(Path(GAIL_ROOT) / "samples_clean.mat")
 SAMPLES_VAL_FILE = str(Path(GAIL_ROOT) / "samples_clean_val.mat")
@@ -187,6 +189,7 @@ class EvasionEnv(gym.Env):
         print("[EvasionEnv] 正在启动 MATLAB Engine，请稍候…")
         self._eng = matlab.engine.start_matlab()
         self._eng.addpath(MATLAB_DIR,  nargout=0)
+        self._eng.addpath(IDENT_MATLAB_DIR, nargout=0)
         self._eng.addpath(GAIL_ROOT,   nargout=0)
         self._eng.addpath(EXPERT_DIR,  nargout=0)
         print("[EvasionEnv] MATLAB Engine 就绪")
@@ -374,33 +377,10 @@ class EvasionEnv(gym.Env):
             "reached":     False,   # 兼容旧评估脚本：打击成功才为 True
             "zT":          r_MT,    # 兼容旧字段名：现为当前 r_MT，非 ZEM
         }
-        # env_step 辨识扩展；新版 [33:68] 增加物理量/P健康度/参数轨迹
-        if info_vec.size >= 32:
-            info["ident_diag"] = {
-                "r_err": info_vec[9:12].copy(),
-                "rdot_err": info_vec[12:15].copy(),
-                "rddot_err": info_vec[15:18].copy(),
-                "theta_err": info_vec[18:29].copy(),  # 11D: D1(4)+D2(4)+T(3)
-                "did_rls": bool(info_vec[29] > 0.5),
-                "a_cmd_err": info_vec[30:32].copy(),
-            }
-            if info_vec.size >= 46:
-                info["ident_diag"].update(
-                    {
-                        "a_cmd_err_sat": info_vec[32:34].copy(),
-                        "qdot_err": info_vec[34:37].copy(),
-                        "P_trace": info_vec[37:40].copy(),
-                        "P_min_eig": info_vec[40:43].copy(),
-                        "P_max_eig": info_vec[43:46].copy(),
-                    }
-                )
-            if info_vec.size >= 68:
-                info["ident_diag"].update(
-                    {
-                        "theta_hat": info_vec[46:57].copy(),
-                        "theta_true": info_vec[57:68].copy(),
-                    }
-                )
+        # env_step 辨识扩展；85维版本同时给出因果/当前参数真值。
+        ident_diag = parse_ident_diag(info_vec)
+        if ident_diag is not None:
+            info["ident_diag"] = ident_diag
 
         # 规避段正常结束 → MATLAB 一次 PN 跑完 stage3，结算终端奖励
         if terminated and stage2_done and not intercepted:

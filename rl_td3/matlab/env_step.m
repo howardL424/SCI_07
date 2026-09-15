@@ -20,7 +20,7 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 %     state_abs_next [18×1] 新绝对状态
 %     reward         标量过程奖励（终端 R1/+100 由 Python 在 stage3 后追加）
 %     terminated     逻辑，本 episode（规避段）是否结束
-%     info_vec       [9×1] 基础；sparse_ffrls / analytic_noisy 时扩展为 [68×1]
+%     info_vec       [9×1] 基础；sparse_ffrls / analytic_noisy 时扩展为 [85×1]
 %       [r_MD1; r_MD2; r_MT; intercepted; stage2_done;
 %        a_M_sat_y; a_M_sat_z; a_M_raw_y; a_M_raw_z]
 %       （后 4 项供轨迹落盘/画图；旧脚本只读前 5 项仍兼容）
@@ -28,16 +28,19 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 %         [10:12]  r_err D1/D2/T
 %         [13:15]  rdot_err
 %         [16:18]  rddot_err（相对真值 rdot 有限差分）
-%         [19:29]  theta_err 共 11 维 (D1:4 + D2:4 + T:3)
+%         [19:29]  theta_err_causal 共 11 维（相对 vartheta[k-1]）
 %         [30]     did_rls
-%         [31:32]  a_cmd_err_y / a_cmd_err_z（估参指令 − 本拍采用指令）
-%         [33:34]  饱和后指令误差
-%         [35:37]  Qdot_err D1/D2/T
+%         [31:32]  非真值路径指令 − analytic_truth 参考指令
+%         [33:34]  两路径饱和后的指令误差
+%         [35:37]  Qdot_err_causal D1/D2/T
 %         [38:40]  RLS P trace
 %         [41:43]  RLS P min eigenvalue
 %         [44:46]  RLS P max eigenvalue
 %         [47:57]  theta_hat 共 11 维
-%         [58:68]  theta_true 共 11 维
+%         [58:68]  theta_true_causal = vartheta[k-1] 共 11 维
+%         [69:79]  theta_true_current = vartheta[k] 共 11 维
+%         [80:82]  frozen_model_residual D1/D2/T
+%         [83:85]  Qdot_err_command（相对 vartheta[k]）
 %
 %   动力学实现委托 stage2_core_init + stage2_step（与专家抽取共用）。
 %   本函数对 helper/config 做 persistent 缓存，避免逐步重建。
@@ -94,7 +97,7 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 end
 
 function v = local_pack_ident_diag(d)
-% 固定 59×1：原 37 项 + theta_hat/theta_true 各 11 项
+% 固定 76×1：含因果/当前参数真值及周期拟冻结模型残差。
     r_err = d.r_hat(:) - d.r_true(:);
     rd_err = d.rdot_hat(:) - d.rdot_true(:);
     rdd_err = d.rddot_hat(:) - d.rddot_true(:);
@@ -102,10 +105,12 @@ function v = local_pack_ident_diag(d)
     th_e = [];
     th_h = [];
     th_t = [];
+    th_tc = [];
     for i = 1:3
         th_e = [th_e; d.theta_hat{i}(:) - d.theta_true{i}(:)]; %#ok<AGROW>
         th_h = [th_h; d.theta_hat{i}(:)]; %#ok<AGROW>
         th_t = [th_t; d.theta_true{i}(:)]; %#ok<AGROW>
+        th_tc = [th_tc; d.theta_true_current{i}(:)]; %#ok<AGROW>
     end
     if isfield(d, 'a_cmd_err') && numel(d.a_cmd_err) >= 2
         a_err = d.a_cmd_err(1:2);
@@ -118,8 +123,11 @@ function v = local_pack_ident_diag(d)
     p_trace = local_vec_or(d, 'P_trace', 3, NaN);
     p_min = local_vec_or(d, 'P_min_eig', 3, NaN);
     p_max = local_vec_or(d, 'P_max_eig', 3, NaN);
+    frozen_res = local_vec_or(d, 'frozen_model_residual', 3, NaN);
+    q_err_command = local_vec_or(d, 'qdot_err_command', 3, NaN);
     v = [r_err; rd_err; rdd_err; th_e; double(d.did_rls); a_err; ...
-        a_err_sat; q_err; p_trace; p_min; p_max; th_h; th_t];
+        a_err_sat; q_err; p_trace; p_min; p_max; th_h; th_t; ...
+        th_tc; frozen_res; q_err_command];
 end
 
 function v = local_vec_or(s, name, n, fill)
@@ -152,8 +160,8 @@ function key = cfg_cache_key(cfg_in)
     id_names = { ...
         'coeff_mode','ident_apply_cmd','noise_seed', ...
         'sigma_scale','sigma_q','sigma_qdot','sigma_theta','sigma_psi','sigma_r','sigma_rdot', ...
-        'kf_qj','kf_sigma_a0','kf_sigma_r','kf_sigma_rdot', ...
-        'rls_lambda','rls_mu','rls_eta','rls_P0','rls_r0','rls_a0'};
+        'kf_qj','kf_sigma_a0', ...
+        'rls_lambda','rls_mu','rls_eta','rls_P0','rls_P_trace_max','rls_r0','rls_a0'};
     for i = 1:numel(id_names)
         n = id_names{i};
         if ~isfield(cfg_in, n) || isempty(cfg_in.(n))

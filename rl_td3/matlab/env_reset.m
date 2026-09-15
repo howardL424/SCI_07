@@ -33,6 +33,7 @@ function [obs, state_abs, Tev, zT0, ok] = env_reset(row, cfg_in)
     addpath(this_dir);                           % rl_td3/matlab/
     addpath(fullfile(this_dir, '..', '..'));      % GAIL 根目录 (evasion_helpers)
     addpath(fullfile(this_dir, '..', '..', 'expert_trajectory'));  % reconstruct_geometry 等
+    ident_addpath();                             % ident/matlab 专属辨识函数
 
     if nargin < 2 || isempty(cfg_in); cfg_in = struct(); end
 

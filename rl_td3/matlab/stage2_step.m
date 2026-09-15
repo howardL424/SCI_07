@@ -76,13 +76,12 @@ function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
     a_D1 = saturate(computePN(cfg.KD1, D1(6), qd_y1, qd_z1, D1(4)), core.max_ov_D);
     a_D2 = saturate(computePN(cfg.KD2, D2(6), qd_y2, qd_z2, D2(4)), core.max_ov_D);
 
-    rd1 = sign(rdot_MD1) * max(abs(rdot_MD1), 1e-3);
-    rd2 = sign(rdot_MD2) * max(abs(rdot_MD2), 1e-3);
-    rdT = sign(rdot_TM)  * max(abs(rdot_TM),  1e-3);
-    tf1 = t - r_MD1 / rd1;
-    tf2 = t - r_MD2 / rd2;
-    tfT = t - r_TM  / rdT;
-    tgo1 = tf1 - t; tgo2 = tf2 - t; tgoT = tfT - t;
+    [tf1, tgo1] = local_intercept_time(t, r_MD1, rdot_MD1);
+    [tf2, tgo2] = local_intercept_time(t, r_MD2, rdot_MD2);
+    [tfT, tgoT] = local_intercept_time(t, r_TM, rdot_TM);
+    tf1_truth = tf1;
+    tf2_truth = tf2;
+    tfT_truth = tfT;
 
     ident_diag = struct();
     use_analytic = true;
@@ -119,6 +118,14 @@ function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
         % sparse_ffrls + ident_apply_cmd=false：影子模式，仍用解析真值指令
     end
 
+    % 非真值系数路径的剩余时间同样由该路径可用的 r/rdot 计算，
+    % 避免式(34)–(37)的积分增益继续读取真值几何。
+    if ~use_analytic
+        [tf1, tgo1] = local_intercept_time(t, c.r1, c.rdot1);
+        [tf2, tgo2] = local_intercept_time(t, c.r2, c.rdot2);
+        [tfT, tgoT] = local_intercept_time(t, c.rT, c.rdotT);
+    end
+
     if use_analytic
         a_M_raw = computeOptimalCmd_duo_target( ...
             qy_D1M, qz_D1M, qd_y1, qd_z1, r_MD1, rdot_MD1, t, tf1, ...
@@ -127,7 +134,7 @@ function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
             M(4), M(5), D1(4), D1(5), D2(4), D2(5), ...
             a_D1, a_D2, r1, r2, rT, 1.0, cfg.dstar);
     else
-        % 与解析路径一致：Q*tgo 上限钳制；tgo/tf 仍用真值时间轴
+        % 与解析路径一致：Q*tgo 上限钳制；tgo/tf 使用本系数路径的时间轴
         Q1c = local_clamp_Q(c.Q1, tgo1);
         Q2c = local_clamp_Q(c.Q2, tgo2);
         QTc = local_clamp_Q(c.QT, tgoT);
@@ -138,21 +145,37 @@ function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
             t, r1, r2, rT, 1.0, cfg.dstar);
     end
 
-    % 影子诊断：估参指令 vs 本拍实际采用的指令（影子时=解析真值）
-    if strcmp(coeff_mode, 'sparse_ffrls') && isstruct(ident_diag) && ...
+    % 诊断基准始终为解析真值指令，避免 sparse_ffrls 闭环应用时
+    % “预测指令减自身”退化为恒零。真值仅用于诊断，不进入控制。
+    if ~strcmp(coeff_mode, 'analytic_truth') && isstruct(ident_diag) && ...
             isfield(ident_diag, 'theta_hat')
-        Q1c = local_clamp_Q(coeffs.Q1, tgo1);
-        Q2c = local_clamp_Q(coeffs.Q2, tgo2);
-        QTc = local_clamp_Q(coeffs.QT, tgoT);
-        a_pred = computeOptimalCmd_duo_target_coeffs( ...
-            Q1c, coeffs.b1, coeffs.vr1, coeffs.r1, coeffs.rdot1, tgo1, tf1, ...
-            Q2c, coeffs.b2, coeffs.vr2, coeffs.r2, coeffs.rdot2, tgo2, tf2, ...
-            QTc, coeffs.bT, coeffs.vrT, coeffs.rT, coeffs.rdotT, tgoT, tfT, ...
-            t, r1, r2, rT, 1.0, cfg.dstar);
-        ident_diag.a_cmd_err = a_pred(:) - a_M_raw(:);
+        a_truth_ref = computeOptimalCmd_duo_target( ...
+            qy_D1M, qz_D1M, qd_y1, qd_z1, r_MD1, rdot_MD1, t, tf1_truth, ...
+            qy_D2M, qz_D2M, qd_y2, qd_z2, r_MD2, rdot_MD2, tf2_truth, ...
+            qy_TM, qz_TM, qd_yTM, qd_zTM, r_TM, rdot_TM, tfT_truth, ...
+            M(4), M(5), D1(4), D1(5), D2(4), D2(5), ...
+            a_D1, a_D2, r1, r2, rT, 1.0, cfg.dstar);
+        if strcmp(coeff_mode, 'sparse_ffrls')
+            [tf1_id, tgo1_id] = local_intercept_time(t, coeffs.r1, coeffs.rdot1);
+            [tf2_id, tgo2_id] = local_intercept_time(t, coeffs.r2, coeffs.rdot2);
+            [tfT_id, tgoT_id] = local_intercept_time(t, coeffs.rT, coeffs.rdotT);
+            Q1c = local_clamp_Q(coeffs.Q1, tgo1_id);
+            Q2c = local_clamp_Q(coeffs.Q2, tgo2_id);
+            QTc = local_clamp_Q(coeffs.QT, tgoT_id);
+            a_pred = computeOptimalCmd_duo_target_coeffs( ...
+                Q1c, coeffs.b1, coeffs.vr1, coeffs.r1, coeffs.rdot1, tgo1_id, tf1_id, ...
+                Q2c, coeffs.b2, coeffs.vr2, coeffs.r2, coeffs.rdot2, tgo2_id, tf2_id, ...
+                QTc, coeffs.bT, coeffs.vrT, coeffs.rT, coeffs.rdotT, tgoT_id, tfT_id, ...
+                t, r1, r2, rT, 1.0, cfg.dstar);
+        else
+            a_pred = a_M_raw;
+        end
+        ident_diag.a_cmd_err = a_pred(:) - a_truth_ref(:);
         ident_diag.a_cmd_err_sat = ...
-            saturate(a_pred, core.max_ov_M) - saturate(a_M_raw, core.max_ov_M);
+            saturate(a_pred, core.max_ov_M) - ...
+            saturate(a_truth_ref, core.max_ov_M);
         ident_diag.a_cmd_pred = a_pred(:);
+        ident_diag.a_cmd_truth_ref = a_truth_ref(:);
     end
 
     a_M = saturate(a_M_raw, core.max_ov_M);
@@ -234,4 +257,13 @@ function Q = local_clamp_Q(Q, tgo)
     if abs(tgo) > 1e-12 && Q * tgo > 100
         Q = 100 / tgo;
     end
+end
+
+function [tf, tgo] = local_intercept_time(t, r, rdot)
+    rd = sign(rdot) * max(abs(rdot), 1e-3);
+    if rd == 0
+        rd = 1e-3;
+    end
+    tf = t - r / rd;
+    tgo = tf - t;
 end

@@ -8,4 +8,5 @@ function setup_expert_path()
     addpath(expertRoot);
     addpath(projectRoot);
     addpath(fullfile(projectRoot, 'rl_td3', 'matlab'));
+    addpath(fullfile(projectRoot, 'ident', 'matlab'));
 end

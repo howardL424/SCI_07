@@ -1,0 +1,245 @@
+\section{在线参数辨识}
+第3节的闭环制导律\eqref{eq:48}及其积分增益\eqref{eq:34}--\eqref{eq:37}依赖投影系数${b_i},{b_T}$、视线角速度合成量${\dot Q_i},{\dot Q_T}$以及NCV机动在视线上的投影${v_{ri}}$。在理想信息下，这些量可由式\eqref{eq:12}--\eqref{eq:15}解析计算；但在\cref{asm:meas-noise}的量测条件下，将含噪的视线角与航迹角直接代入解析式，会使制导指令产生有偏且相互相关的误差。为此，本节在递推运行中不再依赖解析式（仅滤波与参数初始化时一次性使用），而是由相对距离运动学在线辨识状态空间模型\eqref{eq:12}与\eqref{eq:14}中的非平凡元素，为制导律提供其所需参数的估计。
+
+\subsection{参数辨识问题构建}
+根据状态空间方程\eqref{eq:12}和\eqref{eq:14}，每个方程的第二行包含非平凡元素。对于规避者–NCV对，从方程\eqref{eq:10}中提取二阶动力学：
+
+\begin{equation}
+\label{eq:49}
+{\ddot r_{ADi}}(t) = \underbrace {(\dot q_{yi}^2 + \dot q_{zi}^2{{\cos }^2}{q_{yi}})}_{A_{21}^{(i)}} \cdot {r_{ADi}}(t) + {B_{1,i}} \cdot {a_{yA}}(t) + {B_{2,i}} \cdot {a_{zA}}(t) + {C_{1i}}(t)
+\end{equation}
+同理，对规避者–目标对，由式\eqref{eq:11}可得
+
+\begin{equation}
+\label{eq:50}
+{\ddot r_{AT}}(t) = \underbrace {(\dot q_\theta ^2 + \dot q_\psi ^2{{\cos }^2}{q_\theta })}_{A_{21}^{(T)}} \cdot {r_{AT}}(t) + {B_{1,T}} \cdot {a_{yA}}(t) + {B_{2,T}} \cdot {a_{zA}}(t)
+\end{equation}
+式\eqref{eq:49}–\eqref{eq:50}对未知参数均为线性。对比式\eqref{eq:49}和式\eqref{eq:3}可知${C_{1i}} =  - {v_{ri}}$，即第i枚NCV加速度在与规避者视线上投影的负值。
+
+所有信号在制导周期${t_k} = k\Delta t$内采样。基于${t_k}$时刻参数估计计算的加速度指令在区间$[{t_k},{t_{k + 1}})$内保持不变。因此，${t_k}$时刻重构的相对加速度应与区间$[{t_{k - 1}},{t_k})$内实际施加的加速度相配对，而不应与${t_k}$时刻正在计算的指令相配对。据此定义规避者–NCV对的因果回归（causal regression）模型：
+
+\begin{equation}
+\label{eq:51}
+{y_i}(k) = \phi _i^T(k - 1){\kern 1pt} {\vartheta _i} + {e_i}(k)
+\end{equation}
+其中
+
+\begin{equation}
+\label{eq:52}
+{y_i}(k) = \hatddot{r}_{ADi}(k|k),\quad {\vartheta _i} = \left[ {\begin{array}{*{20}{c}}
+  {A_{21}^{(i)}} \\ 
+  {{B_{1,i}}} \\ 
+  {{B_{2,i}}} \\ 
+  {{C_{1i}}} 
+\end{array}} \right],\quad {\phi _i}(k - 1) = \left[ {\begin{array}{*{20}{c}}
+  {{{\hat r}_{ADi}}(k - 1|k - 1)} \\ 
+  {{a_{yA}}(k - 1)} \\ 
+  {{a_{zA}}(k - 1)} \\ 
+  1 
+\end{array}} \right]
+\end{equation}
+对规避者–目标对：
+
+\begin{equation}
+\label{eq:53}
+{y_T}(k) = \phi _T^T(k - 1){\kern 1pt} {\vartheta _T} + {e_T}(k)
+\end{equation}
+其中
+
+\begin{equation}
+\label{eq:54}
+{y_T}(k) = \hatddot{r}_{AT}(k|k),\quad {\vartheta _T} = \left[ {\begin{array}{*{20}{c}}
+  {A_{21}^{(T)}} \\ 
+  {{B_{1,T}}} \\ 
+  {{B_{2,T}}} 
+\end{array}} \right],\quad {\phi _T}(k - 1) = \left[ {\begin{array}{*{20}{c}}
+  {{{\hat r}_{AT}}(k - 1|k - 1)} \\ 
+  {{a_{yA}}(k - 1)} \\ 
+  {{a_{zA}}(k - 1)} 
+\end{array}} \right]
+\end{equation}
+式\eqref{eq:52}和\eqref{eq:54}中，${a_{yA}}(k - 1)$和${a_{zA}}(k - 1)$为在区间$[{t_{k - 1}},{t_k})$内实际施加的限幅后加速度；$\hatddot{r}(k|k)$为利用直至${t_k}$的量测得到的相对加速度后验估计，回归向量中的$\hat r(k - 1|k - 1)$为上一时刻的相对距离后验估计，二者均由第\ref{subsec:kf}小节的Kalman滤波给出。式\eqref{eq:51}和\eqref{eq:53}中的${\vartheta _i}$、${\vartheta _T}$为等效参数，其真值随视线几何连续变化：单条回归方程在区间$[{t_{k - 1}},{t_k})$内将其视为常数，式\eqref{eq:55}进而以同一常向量拟合遗忘窗内的全部数据，参数的慢变由遗忘因子$\rho $予以跟踪；在${t_k}$时刻递推得到的估计$\hat{\vartheta}_{i}(k)$、$\hat{\vartheta}_{T}(k)$即为当前可用的最新估计。残差$e(k)$主要包括相对加速度估计误差，以及以单一常向量表示遗忘窗内时变参数所产生的建模误差。
+
+结构化辨识利用状态矩阵已知的稀疏模式，即${{\mathbf{A}}_i},{{\mathbf{A}}_T}$的$(1,1),(1,2){\text{,}}(2,2)$元素分别固定为0, 1, 0，${{\mathbf{B}}_i},{{\mathbf{B}}_T}$的第一行均为零。仅估计非平凡元素，从而降低参数维数并保证物理一致性。待辨识的非平凡元素汇总于表~\ref{tab:nontrivial}。
+
+\begin{table}[htbp]
+\centering
+\caption{待辨识非平凡元素}
+\label{tab:nontrivial}
+\small
+\begin{tabularx}{\linewidth}{lXXX}
+\toprule
+方程 & 矩阵 & 元素 & 物理含义 \\
+\midrule
+式\eqref{eq:12} & ${{\mathbf{A}}_i}$ & $A_{21}^{(i)} = \dot q_{yi}^2 + \dot q_{zi}^2{\cos ^2}{q_{yi}}$ & 视线角速率耦合 \\
+式\eqref{eq:12} & ${{\mathbf{B}}_i}$ & ${B_{1,i}},{B_{2,i}}$ & 规避者加速度投影系数（NCV方向） \\
+式\eqref{eq:12} & ${{\mathbf{C}}_i}$ & ${C_{1i}}$ & NCV机动加速度偏置 \\
+式\eqref{eq:14} & ${{\mathbf{A}}_T}$ & $A_{21}^{(T)} = \dot q_\theta ^2 + \dot q_\psi ^2{\cos ^2}{q_\theta }$ & 目标-规避者视线角速率耦合 \\
+式\eqref{eq:14} & ${{\mathbf{B}}_T}$ & ${B_{1,T}},{B_{2,T}}$ & 规避者加速度投影系数（目标方向） \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\FloatBarrier
+
+在\cref{asm:meas-noise}的量测条件下，$\ddot r$须由含噪的$\tilde{r}$与$\tildedot{r}$在线估计，回归残差$e$非零，且部分自由参数（尤其是投影系数${B_{1,i}},{B_{2,i}},{C_{1i}}$以及${B_{1,T}},{B_{2,T}}$）在某些几何中可能被弱激发。为提高弱激励条件下参数辨识的稳定性，并抑制相对加速度估计误差引起的伪参数分量，在带遗忘因子的最小二乘代价函数\cite{ljung1999}中附加${\ell _1}$(Lasso)正则项。对于规避者–NCV对$(i = 1,2)$
+
+\begin{equation}
+\label{eq:55}
+{J_i}({\vartheta _i}) = \sum\limits_{k = 1}^N {{\rho ^{N - k}}} {\left[ {{y_i}(k) - \phi _i^T(k - 1){\vartheta _i}} \right]^2} + \mu \sum\limits_{j = 2}^4 {\left| {{[{\vartheta _i}]}_j} \right|}
+\end{equation}
+对规避者-目标对同样构造${J_T}({\vartheta _T})$（其${\ell _1}$项对$j = 2,3$求和），其中$\rho  \in (0,1]$为遗忘因子，$\mu  \geqslant 0$为稀疏度权重。两式中的${\ell _1}$正则仅作用于投影系数与偏置分量。${A_{21}}$是由视线角速率平方和确定的非负几何参数，并通过$\dot Q=\sqrt{A_{21}}$进入制导律，因此不作为稀疏分量进行软阈值收缩；其非负性由式\eqref{eq:61}的投影保证。由于$\phi $的各分量具有不同的物理量纲，实际实现中采用对角缩放矩阵$M$作归一化：
+
+\begin{equation}
+\label{eq:56}
+\bar{\phi} = {M^{ - 1}}\phi ,\quad {\vartheta ^{{\text{sc}}}} = M\vartheta ,\quad {M_i} = \diag({r_0},{a_0},{a_0},1),\quad {M_T} = \diag({r_0},{a_0},{a_0})
+\end{equation}
+其中，${r_0}$和${a_0}$分别为标称距离尺度和加速度尺度。该变换保持预测量不变，即$\bar{\phi}^{T}{\vartheta ^{{\text{sc}}}}{\text{ = }}{\phi ^T}\vartheta $。式\eqref{eq:55}中的${\ell _1}$正则项即在该归一化域中对投影系数与偏置分量（自第2个分量起）施加。在以下递推中，为简洁起见省略上标“sc”，所有变量均默认为归一化变量。
+
+\begin{problem}[结构稀疏参数辨识]
+\label{prb:id}
+给定\cref{asm:meas-noise}所述导引头相对距离、距离率测量与规避者实际施加的加速度，在已知状态矩阵稀疏结构的约束下，以式\eqref{eq:55}的带遗忘因子${\ell _1}$正则准则为设计准则，在每个制导周期$\Delta t$内仅利用${t_k}$及以前的量，以该准则的近端（软阈值）近似递推估计${\vartheta _i}$（$i = 1,2$）与${\vartheta _T}$，为制导律提供${{\mathbf{A}}_i},{{\mathbf{B}}_i},{{\mathbf{C}}_i},{{\mathbf{A}}_T},{{\mathbf{B}}_T}$的在线估计。
+\end{problem}
+
+\subsection{相对加速度与距离的Kalman估计}
+\label{subsec:kf}
+按\cref{asm:meas-noise}的量测条件，相对加速度$\ddot r$无法直接量测，而对含噪距离率直接作数值差分会将量测噪声放大$1/\Delta t$倍，在$\Delta t = 0.1{\kern 1pt} {\text{s}}$时即为10倍。因此对两个NCV距离通道$i \in \{1,2\}$和目标距离通道$T$各配置一个相互独立的三状态常加速度Kalman滤波器，以下用$c$统指上述任一距离通道。此处不以式\eqref{eq:12}、\eqref{eq:14}本身作为滤波模型，是因为NCV通道的非平凡元素$A_{21}^{(i)},B_{1,i},B_{2,i},C_{1i}$以及目标通道的非平凡元素$A_{21}^{(T)},B_{1,T},B_{2,T}$恰为待辨识量，若以其估计值构造滤波器将形成辨识--滤波的循环依赖；改用与视线几何无关的常加速度模型、将相对加加速度视为白噪声，可使$\ddot r$的重构独立于待估参数。取状态与量测
+
+\begin{equation}
+\label{eq:62}
+{\xi _c}(k) = {[{r_c}(k),{\dot r_c}(k),{\ddot r_c}(k)]^T},\quad {z_{\xi ,c}}(k) = {[\tilde{r}_{c}(k),\tildedot{r}_{c}(k)]^T}
+\end{equation}
+则各通道的离散过程方程与量测方程为
+
+\begin{equation}
+\label{eq:62b}
+{\xi _c}(k) = {{\mathbf{F}}_\xi }{\xi _c}(k - 1) + {w_c}(k - 1),\quad {z_{\xi ,c}}(k) = {{\mathbf{H}}_\xi }{\xi _c}(k) + {\nu _c}(k)
+\end{equation}
+式中，状态转移矩阵与量测矩阵为
+
+\begin{equation}
+\label{eq:62c}
+{{\mathbf{F}}_\xi } = \left[ {\begin{array}{*{20}{c}}
+  1&{\Delta t}&{\tfrac{1}{2}\Delta {t^2}} \\ 
+  0&1&{\Delta t} \\ 
+  0&0&1 
+\end{array}} \right],\quad {{\mathbf{H}}_\xi } = \left[ {\begin{array}{*{20}{c}}
+  1&0&0 \\ 
+  0&1&0 
+\end{array}} \right]
+\end{equation}
+过程噪声${w_c}\sim \mathcal{N}({\mathbf{0}},{{\mathbf{Q}}_\xi })$与量测噪声${\nu _c}\sim \mathcal{N}({\mathbf{0}},{{\mathbf{R}}_\xi })$互不相关。将相对加加速度建模为强度为$\sigma _j^2$的连续白噪声，其离散等效过程协方差，以及由式\eqref{eq:16b}确定的量测协方差分别为\cite{barshalom2001}
+
+\begin{equation}
+\label{eq:62d}
+{{\mathbf{Q}}_\xi } = \sigma _j^2\left[ {\begin{array}{*{20}{c}}
+  {\Delta {t^5}/20}&{\Delta {t^4}/8}&{\Delta {t^3}/6} \\ 
+  {\Delta {t^4}/8}&{\Delta {t^3}/3}&{\Delta {t^2}/2} \\ 
+  {\Delta {t^3}/6}&{\Delta {t^2}/2}&{\Delta t} 
+\end{array}} \right],\quad {{\mathbf{R}}_\xi } = \diag(\sigma _r^2,\sigma _{\dot r}^2)
+\end{equation}
+每个制导周期内按标准Kalman递推先预测再更新\cite{barshalom2001}：
+
+\begin{equation}
+\label{eq:62e}
+\left\{
+\begin{aligned}
+\hat \xi _c^-(k) &= {{\mathbf{F}}_\xi }{{\hat \xi }_c}(k - 1|k - 1),\\
+{\mathbf{P}}_c^-(k) &= {{\mathbf{F}}_\xi }{{\mathbf{P}}_c}(k - 1|k - 1){\mathbf{F}}_\xi ^T + {{\mathbf{Q}}_\xi },\\
+{{\mathbf{K}}_{\xi ,c}}(k) &= {\mathbf{P}}_c^-(k){\mathbf{H}}_\xi ^T
+\left[ {\mathbf{H}}_\xi {\mathbf{P}}_c^-(k){\mathbf{H}}_\xi ^T + {\mathbf{R}}_\xi \right]^{-1},\\
+{{\hat \xi }_c}(k|k) &= \hat \xi _c^-(k)+{{\mathbf{K}}_{\xi ,c}}(k)
+\left[ {z_{\xi ,c}}(k)-{{\mathbf{H}}_\xi }\hat \xi _c^-(k) \right],\\
+{{\mathbf{P}}_c}(k|k) &= \left[ {\mathbf{I}}-{{\mathbf{K}}_{\xi ,c}}(k){{\mathbf{H}}_\xi } \right]{\mathbf{P}}_c^-(k).
+\end{aligned}
+\right.
+\end{equation}
+回归输出${y_c}(k)$取${\hat \xi _c}(k|k)$的第三个分量，回归向量中的距离项取${\hat \xi _c}(k - 1|k - 1)$的第一个分量。
+
+滤波器以${\hat \xi _c}(0|0) = {[\tilde{r}_{c}(0),\tildedot{r}_{c}(0),{{\ddot r}_{c,0}}]^T}$初始化，其中${\ddot r_{c,0}}$由式\eqref{eq:10}、\eqref{eq:11}的解析表达式代入初始量测算得，NCV通道所需的NCV加速度由PN模型\eqref{eq:9}给出；协方差初值取${{\mathbf{P}}_c}(0|0) = \diag(\sigma _r^2,\sigma _{\dot r}^2,\sigma _{a0}^2)$，其中${\sigma _{a0}}$按规避者与NCV可用法向过载之和的量级选取。加加速度强度${\sigma _j}$决定跟踪带宽与噪声抑制之间的折中：${\sigma _j}$偏小时$\hatddot{r}$的滞后增大，在末段${C_{1i}}$随NCV比例导引加速度快速变化时引入偏差；${\sigma _j}$偏大时量测噪声更多地进入${y_c}$，并经式\eqref{eq:58}传入参数估计。${\sigma _j}$与${\sigma _r}$、${\sigma _{\dot r}}$的取值一并在第6.1节给出。
+
+\subsection{带${\ell _1}$近端更新的稀疏FF-RLS}
+针对\cref{prb:id}，本小节构造带${\ell _1}$近端更新的稀疏FF-RLS估计器：在每个制导周期内，先由遗忘因子递推最小二乘完成二次更新\cite{ljung1999,johnstone1982}，再以一次逐元素软阈值实现式\eqref{eq:55}中${\ell _1}$正则所对应的稀疏收缩，并将${A_{21}}$的估计投影至物理可行域，从而改善弱激励与含噪残差下时变参数的跟踪性能。其中的软阈值步是式\eqref{eq:55}中${\ell _1}$项近端算子的可分离近似，用于在保持递推形式与在线计算效率的前提下抑制含噪与弱激励条件下出现的无效小幅参数分量。遗忘因子$\rho$对旧数据作指数折扣，使估计器能适应交会过程中视线几何关系的持续变化。对规避者–NCV对$(i = 1,2)$，其二次更新为：
+
+\begin{equation}
+\label{eq:57}
+{{\mathbf{K}}_i}(k) = \frac{{{{\mathbf{P}}_i}(k - 1){\kern 1pt} {\phi _i}(k - 1)}}{{\rho  + \phi _i^T(k - 1){\kern 1pt} {{\mathbf{P}}_i}(k - 1){\kern 1pt} {\phi _i}(k - 1)}}
+\end{equation}
+\begin{equation}
+\label{eq:58}
+\bar{\vartheta}_{i}(k) = \hat{\vartheta}_{i}(k - 1) + {{\mathbf{K}}_i}(k)[{y_i}(k) - \phi _i^T(k - 1){\kern 1pt} \hat{\vartheta}_{i}(k - 1)]
+\end{equation}
+\begin{equation}
+\label{eq:59}
+{{\mathbf{P}}_i}(k) = \frac{1}{\rho }[{\mathbf{I}} - {{\mathbf{K}}_i}(k){\kern 1pt} \phi _i^T(k - 1)]{\kern 1pt} {{\mathbf{P}}_i}(k - 1)
+\end{equation}
+其中${{\mathbf{K}}_i}(k)$为增益矩阵，${{\mathbf{P}}_i}(k)$为估计误差协方差矩阵，$\bar{\vartheta}_{i}(k)$为二次更新得到的中间估计。规避者–目标对$\bar{\vartheta}_{T}(k)$的更新方程形式相同，只需将各项下标i替换为T。在RLS更新后，对投影系数与偏置分量作一次逐元素软阈值，实现${\ell _1}$正则对应的稀疏收缩：
+
+\begin{equation}
+\label{eq:60}
+{\left[ {{{\hat \vartheta }_i}(k)} \right]_j} = \left\{ {\begin{array}{*{20}{l}}
+  {{{\left[ {{{\bar \vartheta }_i}(k)} \right]}_j},}&{j = 1}\\
+  {{{\left[ {{\mathcal{S}_\eta }\left( {{{\bar \vartheta }_i}(k)} \right)} \right]}_j},}&{j = 2,3, \ldots }
+\end{array}} \right.
+\end{equation}
+其中，${[{\mathcal{S}_\eta }(v)]_j} = {\text{sign}}({v_j})\max (|{v_j}| - \eta ,0)$，$\eta  \geqslant 0$为归一化参数域中的软阈值，与式\eqref{eq:55}中的稀疏度权重$\mu $相对应，其取值由离线仿真标定；$j = 1$对应${A_{21}}$，不参与收缩，$j \geqslant 2$对应投影系数与偏置分量。
+
+对$\bar{\vartheta}_{T}(k)$采用相同操作。$\hat{\vartheta}_{i}(k)$为第$k$步最终估计，下一周期式\eqref{eq:58}中的$\hat{\vartheta}_{i}(k - 1)$取软阈值与下式投影处理后的值。由于${A_{21}}$是平方项之和，并通过$\dot Q = \sqrt {{A_{21}}} $进入制导律，其估计值应投影到物理可行域：
+
+\begin{equation}
+\label{eq:61}
+\hat A_{21}^{(i)}(k) \leftarrow {\text{max}}(\hat A_{21}^{(i)}(k),0),\quad i \in \{1,2\},\qquad
+\hat A_{21}^{(T)}(k) \leftarrow {\text{max}}(\hat A_{21}^{(T)}(k),0)
+\end{equation}
+\begin{remark}
+在弱激励区间，遗忘因子会使未被充分校正的协方差方向逐拍放大，进而导致后续递推增益和参数估计出现数值发散。为保持协方差矩阵的半正定性并限制该协方差膨胀，工程实现对初始化及式\eqref{eq:59}更新后的协方差采用迹投影
+\[
+{\mathbf{P}}_c(k)\leftarrow
+\min\left(1,\frac{P_{\max}}{\operatorname{tr}({\mathbf{P}}_c(k))}\right)
+{\mathbf{P}}_c(k),\qquad c\in\{1,2,T\},
+\]
+其中$P_{\max}>0$为归一化参数域中的协方差迹上限。该处理不改变本拍式\eqref{eq:58}已经得到的参数更新，仅约束下一拍递推增益；取$P_{\max}\to\infty$时恢复标准FF-RLS。
+\end{remark}
+参数估计值由式\eqref{eq:12}--\eqref{eq:15}的解析表达式初始化，初始值由初始测量值计算并经$M$缩放后进入递推；同时先取${{\mathbf{P}}_i}(0) = {\delta ^{ - 1}}{\mathbf{I}}$和${{\mathbf{P}}_T}(0) = {\delta ^{ - 1}}{\mathbf{I}}$，再按上述迹投影限制其初始尺度，其中$\delta  \ll 1$。对于NCV通道，${C_{1i}}$的初始值求解需采用由PN模型式\eqref{eq:9}得到的NCV加速度。
+
+最后，将辨识得到的参数重新组装为状态空间矩阵：
+
+\begin{equation}
+\label{eq:63}
+\hat{\mathbf{A}}_{i} = \left[ {\begin{array}{*{20}{c}}
+  0&1 \\ 
+  {\hat A_{21}^{(i)}}&0 
+\end{array}} \right],\quad \hat{\mathbf{B}}_{i} = \left[ {\begin{array}{*{20}{c}}
+  0&0 \\ 
+  {{{\hat B}_{1,i}}}&{{{\hat B}_{2,i}}} 
+\end{array}} \right],\quad \hat{\mathbf{C}}_{i} = \left[ {\begin{array}{*{20}{c}}
+  0 \\ 
+  {{{\hat C}_{1i}}} 
+\end{array}} \right]
+\end{equation}
+\begin{equation}
+\label{eq:64}
+\hat{\mathbf{A}}_{T} = \left[ {\begin{array}{*{20}{c}}
+  0&1 \\ 
+  {\hat A_{21}^{(T)}}&0 
+\end{array}} \right],\quad \hat{\mathbf{B}}_{T} = \left[ {\begin{array}{*{20}{c}}
+  0&0 \\ 
+  {{{\hat B}_{1,T}}}&{{{\hat B}_{2,T}}} 
+\end{array}} \right]
+\end{equation}
+式\eqref{eq:63}--\eqref{eq:66}中各估计量均已按$\vartheta  = {M^{ - 1}}{\vartheta ^{{\text{sc}}}}$反变换回物理量纲。制导律关于第i枚NCV所需的量由下式获得：
+
+\begin{equation}
+\label{eq:65}
+\hat{\dot Q}_{i} = \sqrt {\hat A_{21}^{(i)}} ,\quad \hat{b}_{i} = {\left[ {{{\hat B}_{1,i}},{{\hat B}_{2,i}}} \right]^T},\quad \hat{v}_{ri} =  - \hat{C}_{1i}
+\end{equation}
+关于目标的所需的量由下式获得：
+
+\begin{equation}
+\label{eq:66}
+\hat{\dot Q}_{T} = \sqrt {\hat A_{21}^{(T)}} ,\quad \hat{b}_{T} = {\left[ {{{\hat B}_{1,T}},{{\hat B}_{2,T}}} \right]^T}
+\end{equation}
+这些估计量替代解析计算得到的对应量，用于最优制导律\eqref{eq:48}与积分增益\eqref{eq:34}-\eqref{eq:37}计算，形成闭环辨识–制导架构。
+\begin{remark}
+上述辨识器的精度受以下因素影响。遗忘窗较短时，${r}$在窗内变化平缓，与常数回归项不易区分；而${a_{yA}}$、${a_{zA}}$由闭环制导律产生，因此各参数能否被充分辨识取决于交会过程中机动的丰富程度。回归输出$\hatddot{r}$由常加速度Kalman滤波估计，该模型对$\ddot r$快变段仍可能存在滞后，且滞后与噪声抑制之间的折中由${\sigma _j}$确定，故参数估计中仍会残留一定偏差。此外，末段${C_{1i}}$随NCV比例导引加速度快速变化，将其在一个制导周期内视为常数的近似随之变弱。
+\end{remark}
+

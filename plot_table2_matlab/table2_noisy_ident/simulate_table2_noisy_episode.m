@@ -51,6 +51,7 @@ addpath(this_dir);
 addpath(fullfile(plot_root, 'table2_bctd3'));   % td3_load_policy / predict / obs 归一化
 addpath(gail_root);
 addpath(fullfile(gail_root, 'rl_td3', 'matlab'));
+addpath(fullfile(gail_root, 'ident', 'matlab'));
 addpath(fullfile(gail_root, 'expert_trajectory'));
 
 %% 1. Table 2 初值（与 main_changjing3_0421_LM.m 一致）
@@ -318,7 +319,12 @@ else
 end
 
 for i = 1:3
-    tt = id_diag.theta_true{i}(:);
+    if isfield(id_diag, 'theta_true_current')
+        % 本拍实际用于制导的估计应与下一周期 vartheta[k] 比较。
+        tt = id_diag.theta_true_current{i}(:);
+    else
+        tt = id_diag.theta_true{i}(:);
+    end
     tu = th_used{i}(:);
     nrm = norm(tt);
     if nrm > 0

@@ -32,7 +32,7 @@ from stable_baselines3 import TD3
 sys.path.insert(0, str(Path(__file__).parent))
 from action_mapping import DEFAULT_ACTION_MAPPING
 from evasion_env import EvasionEnv, KILL_R, SAMPLES_TEST_FILE, STRIKE_OK
-from ident_cfg import add_ident_args, matlab_cfg_from_args
+from ident_cfg import IDENT_CLI_DEFAULTS, add_ident_args, matlab_cfg_from_args
 from td3_bc import TD3BC
 
 
@@ -126,18 +126,42 @@ def save_mc_metrics(results: list[dict], path: Path) -> Path:
     """将每轮规避距离与打击精度落盘，供后续蒙特卡洛散点图使用。"""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    np.savez_compressed(
-        path,
-        r_MD1_min=np.asarray([r["r_MD1_min"] for r in results], dtype=np.float64),
-        r_MD2_min=np.asarray([r["r_MD2_min"] for r in results], dtype=np.float64),
-        r_minT=np.asarray([r["r_minT"] for r in results], dtype=np.float64),
-        evade_ok=np.asarray([r["evade_ok"] for r in results], dtype=bool),
-        strike_ok=np.asarray([r["strike_ok"] for r in results], dtype=bool),
-        both_ok=np.asarray([r["both_ok"] for r in results], dtype=bool),
-        intercepted=np.asarray([r["intercepted"] for r in results], dtype=bool),
-        row_idx=np.asarray([r["row_idx"] for r in results], dtype=np.int64),
-        local_idx=np.asarray([r["local_idx"] for r in results], dtype=np.int64),
+    payload = {
+        "r_MD1_min": np.asarray(
+            [r["r_MD1_min"] for r in results], dtype=np.float64
+        ),
+        "r_MD2_min": np.asarray(
+            [r["r_MD2_min"] for r in results], dtype=np.float64
+        ),
+        "r_minT": np.asarray([r["r_minT"] for r in results], dtype=np.float64),
+        "evade_ok": np.asarray([r["evade_ok"] for r in results], dtype=bool),
+        "strike_ok": np.asarray([r["strike_ok"] for r in results], dtype=bool),
+        "both_ok": np.asarray([r["both_ok"] for r in results], dtype=bool),
+        "intercepted": np.asarray(
+            [r["intercepted"] for r in results], dtype=bool
+        ),
+        "row_idx": np.asarray([r["row_idx"] for r in results], dtype=np.int64),
+        "local_idx": np.asarray([r["local_idx"] for r in results], dtype=np.int64),
+    }
+    optional_metrics = (
+        "a_energy",
+        "a_total_variation",
+        "saturation_rate",
+        "theta_causal_rmse",
+        "theta_causal_tail_rmse",
+        "theta_command_rmse",
+        "theta_command_tail_rmse",
+        "frozen_model_rmse",
+        "frozen_model_tail_rmse",
+        "a_cmd_rmse",
+        "a_cmd_tail_rmse",
+        "a_cmd_sat_rmse",
+        "a_cmd_sat_tail_rmse",
     )
+    for key in optional_metrics:
+        if all(key in r for r in results):
+            payload[key] = np.asarray([r[key] for r in results], dtype=np.float64)
+    np.savez_compressed(path, **payload)
     print(
         f"[evaluate] 逐轮指标已写入 {path}\n"
         f"           keys: r_MD1_min, r_MD2_min, r_minT, "
@@ -203,6 +227,39 @@ def parse_args() -> argparse.Namespace:
     return p.parse_args()
 
 
+def _metric_vector(value, size: int) -> np.ndarray:
+    """将可选诊断量规整为固定长度；缺失时返回 NaN。"""
+    if value is None:
+        return np.full(size, np.nan, dtype=np.float64)
+    arr = np.asarray(value, dtype=np.float64).reshape(-1)
+    if arr.size < size:
+        return np.full(size, np.nan, dtype=np.float64)
+    return arr[:size].copy()
+
+
+def _normalize_theta_error(value, *, r0: float, a0: float) -> np.ndarray:
+    """按辨识诊断口径归一化11维参数误差。"""
+    err = _metric_vector(value, 11)
+    err[[0, 4, 8]] *= r0 / max(a0, 1e-12)
+    err[[3, 7]] /= max(a0, 1e-12)
+    return err
+
+
+def _rows_rmse(rows: list[np.ndarray], *, tail: bool = False) -> float:
+    """计算逐拍向量的整体RMSE；tail取后20%且至少5拍。"""
+    if not rows:
+        return float("nan")
+    use = rows
+    if tail:
+        n_tail = min(len(rows), max(5, int(np.ceil(0.2 * len(rows)))))
+        use = rows[-n_tail:]
+    arr = np.stack(use)
+    finite = np.isfinite(arr)
+    if not finite.any():
+        return float("nan")
+    return float(np.sqrt(np.nanmean(arr**2)))
+
+
 def run_episode(
     env: EvasionEnv,
     model: TD3,
@@ -241,6 +298,11 @@ def run_episode(
     a_energy = 0.0
     a_total_variation = 0.0
     saturated_steps = 0
+    theta_causal_rows: list[np.ndarray] = []
+    theta_command_rows: list[np.ndarray] = []
+    frozen_rows: list[np.ndarray] = []
+    a_cmd_rows: list[np.ndarray] = []
+    a_cmd_sat_rows: list[np.ndarray] = []
 
     while not terminated:
         action, _ = model.predict(obs, deterministic=True)
@@ -264,6 +326,31 @@ def run_episode(
             saturated_steps += int(
                 np.isfinite(a_raw).all()
                 and np.max(np.abs(a_raw - a_sat)) > 1e-9
+            )
+        ident_diag = info.get("ident_diag")
+        if ident_diag is not None:
+            r0 = float(
+                env.matlab_cfg.get("rls_r0", IDENT_CLI_DEFAULTS["rls_r0"])
+            )
+            a0 = float(
+                env.matlab_cfg.get("rls_a0", IDENT_CLI_DEFAULTS["rls_a0"])
+            )
+            theta_causal_rows.append(
+                _normalize_theta_error(
+                    ident_diag.get("theta_err_causal"), r0=r0, a0=a0
+                )
+            )
+            theta_command_rows.append(
+                _normalize_theta_error(
+                    ident_diag.get("theta_err_command"), r0=r0, a0=a0
+                )
+            )
+            frozen_rows.append(
+                _metric_vector(ident_diag.get("frozen_model_residual"), 3)
+            )
+            a_cmd_rows.append(_metric_vector(ident_diag.get("a_cmd_err"), 2))
+            a_cmd_sat_rows.append(
+                _metric_vector(ident_diag.get("a_cmd_err_sat"), 2)
             )
         step += 1
 
@@ -295,6 +382,16 @@ def run_episode(
         "a_energy": a_energy,
         "a_total_variation": a_total_variation,
         "saturation_rate": saturated_steps / max(step, 1),
+        "theta_causal_rmse": _rows_rmse(theta_causal_rows),
+        "theta_causal_tail_rmse": _rows_rmse(theta_causal_rows, tail=True),
+        "theta_command_rmse": _rows_rmse(theta_command_rows),
+        "theta_command_tail_rmse": _rows_rmse(theta_command_rows, tail=True),
+        "frozen_model_rmse": _rows_rmse(frozen_rows),
+        "frozen_model_tail_rmse": _rows_rmse(frozen_rows, tail=True),
+        "a_cmd_rmse": _rows_rmse(a_cmd_rows),
+        "a_cmd_tail_rmse": _rows_rmse(a_cmd_rows, tail=True),
+        "a_cmd_sat_rmse": _rows_rmse(a_cmd_sat_rows),
+        "a_cmd_sat_tail_rmse": _rows_rmse(a_cmd_sat_rows, tail=True),
         "steps": step,
         "row_idx": int(info0.get("row_idx", -1)),
         "local_idx": int(info0.get("local_idx", -1)),

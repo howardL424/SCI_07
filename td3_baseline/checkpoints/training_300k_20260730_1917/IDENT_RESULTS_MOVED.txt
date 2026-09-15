@@ -1,0 +1,6 @@
+本目录下原 ident_* 实验产物已于 2026-09-15 迁至：
+
+  ident/results/training_300k_20260730_1917/
+
+策略 checkpoint（best/ 等）仍留在本目录。新的辨识实验结果默认也写入 ident/results/。
+详见 ident/README.md。

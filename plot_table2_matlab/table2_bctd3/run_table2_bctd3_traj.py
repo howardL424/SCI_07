@@ -77,6 +77,7 @@ def main() -> int:
     print("[table2] 启动 MATLAB Engine …", flush=True)
     eng = matlab.engine.start_matlab()
     eng.addpath(str(_RL_TD3 / "matlab"), nargout=0)
+    eng.addpath(str(_GAIL / "ident" / "matlab"), nargout=0)
     eng.addpath(str(_GAIL), nargout=0)
     eng.addpath(str(_GAIL / "expert_trajectory"), nargout=0)
 

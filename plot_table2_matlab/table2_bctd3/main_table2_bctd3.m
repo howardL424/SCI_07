@@ -19,6 +19,7 @@ gail_root = fileparts(plot_root);          % .../GAIL
 addpath(this_dir);
 addpath(gail_root);
 addpath(fullfile(gail_root, 'rl_td3', 'matlab'));
+addpath(fullfile(gail_root, 'ident', 'matlab'));
 addpath(fullfile(gail_root, 'expert_trajectory'));
 
 UsePythonDriver = false;   % true: 整轨交给 Python+MATLAB Engine，本脚本只读结果绘图

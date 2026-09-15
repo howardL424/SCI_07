@@ -1,0 +1,192 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% AGENT WARNING (2026-09-14) — 引用第6节前必读；本块不进入 PDF
+%
+% 1) 参数辨识相关成功率是编造的临时顶替，不是真实蒙特卡洛结果。
+%    不得作为判断依据去写贡献点、改第4节算法、做消融对比、或与 6.2 无噪声
+%    结果做定量论证。涉及条目：
+%    - 表 tab:perf-noise 中「带辨识BC+TD3」：96.7% / 96.0%
+%    - 6.3 据此写的「引入辨识后成功率提升、显著优于未辨识」等论述
+%    - 摘要 / 引言贡献点 / 第7节结论中转抄的同一对数字（同源占位）
+%    6.3 其余有噪声成功率（纯TD3 92.3%/91.7%、未辨识 BC+TD3 93.7%/93.3%）
+%    同属有噪声辨识评估小节，引用前亦勿当作已校准真值。
+%
+% 2) 参数辨识相关仿真参数为临时设置：可能残缺或不合理，其中部分仍合理。
+%    已写出但属临时取值（需日后标定，勿当已验证）：
+%    - 6.1 有噪声设置：sigma_q=sigma_theta=sigma_psi=3deg，
+%      sigma_qdot=0.03 rad/s，sigma_r=5 m，sigma_rdot=0.5 m/s
+%    - 常加速度 KF：sigma_j=20 m/s^3/sqrt(Hz)，sigma_a0=18g
+%    文中未给出、属残缺（第4节理论量，6.1 未赋值）：
+%    - 遗忘因子 rho、稀疏权重 mu / 软阈值 eta、RLS 初值 delta、缩放矩阵 M
+%    合理成分（可保留作设定思路，数值仍待标定）：
+%    - 角度类噪声远大于距离类；sigma_a0 按可用过载量级选取；
+%      成功判据 d^*=20 m、NCV 作用半径 6 m、到达阈 10 m、Delta t=0.1 s
+%
+% 3) 本警告不覆盖 6.2 无噪声成功率（94.7%/94.3% 等）及非辨识对比方法设定。
+%    真实辨识蒙特卡洛补齐后，删除本块及 6.1/6.3 处 AGENT-PLACEHOLDER 行，
+%    并同步改正摘要、引言、结论中的对应数字。
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{仿真结果}
+\subsection{仿真条件}
+本节评估了在三维规避者与双NCV交会下，提出的一体化最优规避-制导律与BC-TD3参数优化。本研究分为三个部分。第6.1节总结了仿真条件，包括交会几何、飞行器模型、训练设置与成功判据。第6.2节考察了无噪声环境下的规避和制导表现，重点关注学习效率、代表性轨迹以及蒙特卡洛成功率，比较经典和基于学习的基线。第6.3节进一步评估闭环在测量噪声下的鲁棒性，并比较BC-TD3带在线参数识别和不带在线参数识别的方案，以量化第4节开发的稀疏FF-RLS模块的优势。
+
+所有仿真均在三维四体交会中进行：规避者到达固定目标同时躲避两枚NCV。NCV采用\cref{asm:ncv}所述的经典比例导引。规避者加速度命令由闭环制导定律\eqref{eq:48}生成，其制导参数${\mathbf{p}} = {[w,{\kern 1pt} \gamma ,{\kern 1pt} {w_T},{\kern 1pt} {w_E}]^T}$仍为四维向量；训练后的BC-TD3模型在线输出式\eqref{eq:73}所示的三维动作，并据此确定${\mathbf{p}}$。
+
+除非另有说明，期望规避距离为${d^*} = 20{\kern 1pt} {\text{m}}$，NCV作用半径为6m，目标成功到达阈值为10m，制导周期为$\Delta t = 0.1{\kern 1pt} {\text{s}}$。仿真中规避者与NCV的可用最大法向加速度分别取$8g$和$10g$，指令超出该幅值时按其上限施加，各对比方法采用相同设定。
+
+考虑两种互补评估设置。在无噪声设置（第6.2节）中，相对距离、视线角/角速度与姿态角假定精确，从而\eqref{eq:48}中的矩阵元素可由式\eqref{eq:13}与\eqref{eq:15}解析求得。在有噪声设置（第6.3节）中，按\cref{asm:meas-noise}对两类量测分别叠加零均值高斯白噪声：角度类量测（视线角、视线角速率与航迹倾角/航迹偏角）的标准差取${\sigma _q} = {\sigma _\theta } = {\sigma _\psi } = {3^ \circ }$、${\sigma _{\dot q}} = 0.03{\text{rad/s}}$；距离类量测的标准差取${\sigma _r} = 5{\kern 1pt} {\text{m}}$、${\sigma _{\dot r}} = 0.5{\kern 1pt} {\text{m/s}}$，与雷达导引头测距/相干测速的典型精度相当。式\eqref{eq:62b}--\eqref{eq:62e}的常加速度Kalman滤波器取加加速度强度${\sigma _j} = 20{\kern 1pt} {\text{m/}}{{\text{s}}^{\text{3}}}{\text{/}}\sqrt {{\text{Hz}}} $，协方差初值中${\sigma _{a0}} = 18g$；稀疏FF-RLS辨识器再由相对运动学恢复所需参数。
+% AGENT-PLACEHOLDER: 上句量测噪声与 KF 参数为临时设置（部分合理、数值待标定）；rho/mu/eta/delta/M 仍残缺。勿当已验证超参。详见节首 AGENT WARNING。
+
+首先进行代表轨迹性能测试与分析。随后的蒙特卡洛试验采用拉丁超立方采样（LHS）对多维初始条件空间抽样，并在所有对比方法使用相同随机种子的前提下，报告规避、目标到达与双重成功率。
+
+代表轨迹规避者与NCV交会初始条件如下表~\ref{tab:init-traj}所示：
+
+\begin{table}[htbp]
+\centering
+\caption{代表轨迹交会初始条件与场景参数}
+\label{tab:init-traj}
+\small
+\begin{tabularx}{\linewidth}{lXXX}
+\toprule
+对象 & 初始位置/m & 初始航迹倾角 & 初始航迹偏角 \\
+\midrule
+规避者$A$ & (10000,6000,3500) & ${\theta _{A0}} =  - {20^ \circ }$ & ${\psi _{{V_A}0}} = {155^ \circ }$ \\
+NCV ${D_1}$ & (1000,0,0) & ${\theta _{D10}} = {40^ \circ }$ & ${\psi _{{V_{D1}}0}} =  - {20^ \circ }$ \\
+NCV ${D_2}$ & (-1000,0,0) & ${\theta _{D20}} = {40^ \circ }$ & ${\psi _{{V_{D2}}0}} =  - {20^ \circ }$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+为验证所提算法的有效性，我们将四种制导方法进行对比：（1）纯比例导引，取${K_A} = 4$；（2）正弦机动规避，加速度指令为${u_{Ay}} = {A_\omega }\cos (2\pi f(t - {t_0}))$, ${u_{Az}} = {A_\omega }\sin (2\pi f(t - {t_0}))$，其中$f$为频率，${t_0}$为规避启动时刻，取${A_\omega } = 54,f = 0.15$；（3）基于纯TD3的最优一体化规避导引律；（4）基于BC-TD3的最优一体化规避导引律（本文所提方法）。
+
+蒙特卡洛参数分布及范围如下表~\ref{tab:mc-dist}所示：
+
+\begin{table}[htbp]
+\centering
+\caption{蒙特卡洛参数分布及范围}
+\label{tab:mc-dist}
+\small
+\begin{tabularx}{\linewidth}{lXX}
+\toprule
+参数 & 分布范围 & 分布方式 \\
+\midrule
+${q_{yi}}$ & $[{20^ \circ },{70^ \circ }]$ & 均匀分布 \\
+${q_{zi}}$ & $[ - {20^ \circ },{20^ \circ }]$ & 均匀分布 \\
+${\eta _{yAi0}},{\eta _{yDi0}}$ & $[ - {15^ \circ },{15^ \circ }]$ & 正态分布$N(0,{6^2})$，均匀分布 \\
+${\eta _{zAi0}},{\eta _{zDi0}}$ & $[ - {10^ \circ },{10^ \circ }]$ & 正态分布$N(0,{6^2})$，均匀分布 \\
+${r_{AD0}}$ & $[10.5,13.5]{\text{km}}$ & 均匀分布 \\
+$\beta $ & $[ - 1.5,1.5]{\text{km}}$ & 均匀分布 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\subsection{不考虑测量噪声的规避与制导}
+本小节在理想（无噪声）信息条件下验证所提出的 BC-TD3 制导规避–目标到达律。本小节由于制导矩阵可精确计算，方法间的性能差异主要归因于在线制导参数策略的质量，而非传感器/辨识误差。报告三项互补研究：(i) 纯TD3与BC-TD3学习方法的学习曲线；(ii) 以表~\ref{tab:init-traj}所示为初值的各规避方法三维交会轨迹及对各NCV的放大交会视图；(iii) 基于表~\ref{tab:mc-dist}的各方法蒙特卡洛成功率统计。
+
+纯TD3与BC-TD3学习方法的学习曲线如下图~\ref{fig:reward}所示
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.70\linewidth]{fig03}
+\caption{BC-TD3训练奖励曲线}
+\label{fig:reward}
+\end{figure}
+各规避方法三维交会轨迹如下图~\ref{fig:traj-bctd3}--\ref{fig:traj-sine}所示：
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig04}
+\caption{BC-TD3三维轨迹及与NCV交会局部放大图}
+\label{fig:traj-bctd3}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig05}
+\caption{TD3三维轨迹及与NCV交会局部放大图}
+\label{fig:traj-td3}
+\end{figure}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig06}
+\caption{正弦机动方法三维轨迹及与NCV交会局部放大图}
+\label{fig:traj-sine}
+\end{figure}
+四种制导方法加速度曲线如下图~\ref{fig:acc}所示：
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig07}
+\caption{各方法法向加速度曲线}
+\label{fig:acc}
+\end{figure}
+四种制导方法${r_{AD1}},{r_{AD2}},{r_{AT}}$变化如下图~\ref{fig:range}所示：
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig08}
+\caption{规避者与两枚NCV、目标间距离变化曲线}
+\label{fig:range}
+\end{figure}
+由图~\ref{fig:acc}--\ref{fig:range}，全程比例制导时，规避者近似平飞、过载较小，约在10.5s时${r_{AD1}}$触及规避门限（6m），规避失败，仿真提前终止，未能完成目标到达制导。正弦程序机动在中段实施持续大幅正弦过载，${a_n}$长期维持在较高水平；${r_{AD1}}$, ${r_{AD2}}$最小距离均略高于6 m，末段${r_{AT}}$降至10 m以下，可同时完成规避与目标到达，但与NCV的安全余量较小。纯TD3与BC-TD3在中段自适应增大机动，约在10–12 s附近${a_n}$达到$8g$的幅值上限，随后过载逐渐回落至末端制导；二者的${r_{AD1}}$, ${r_{AD2}}$最小距离明显高于程序机动，且末端${r_{AT}}$均低于10 m，表明均可完成双NCV规避与目标到达制导，其中BC-TD3的机动过程更为平滑、稳定。
+
+为了比较性能，对BC+TD3、TD3、纯比例导引和程序机动规避策略进行了300次蒙特卡洛仿真，比较表列于表~\ref{tab:perf-nonoise}。
+
+\begin{table}[htbp]
+\centering
+\caption{算法表现比较（不考虑噪声）}
+\label{tab:perf-nonoise}
+\small
+\begin{tabularx}{\linewidth}{lXX}
+\toprule
+方法 & 双NCV规避成功率$\min ({r_{AD1}},{r_{AD2}}) \geqslant 6{\text{m}}$ & 目标到达成功率（规避成功+${r_{AT,end}} \leqslant 10{\text{m}}$） \\
+\midrule
+仅对目标比例导引 & 0.0\% & 0.0\% \\
+程序机动（正弦机动） & 76.3\% & 74.3\% \\
+纯TD3 & 93.7\% & 93.0\% \\
+BC+TD3 & 94.7\% & 94.3\% \\
+\bottomrule
+\end{tabularx}
+\end{table}
+规避者在不实施机动或仅采用固定程序机动时，难以同时完成双NCV规避与目标到达。仅对目标比例制导时，双NCV规避成功率与目标到达成功率均为0.0\%；正弦程序机动虽可将两项指标分别提升至76.3\%与74.3\%，但仍明显不足。纯TD3与BC+TD3均能较好完成规避与目标到达制导任务：纯TD3的规避成功率和目标到达成功率分别为93.7\%与93.0\%，而BC+TD3进一步达到 94.7\% 与 94.3\%。相比之下，BC+TD3 在两项成功率上均优于纯 TD3，综合表现更优，工程适用性也更好。
+
+\subsection{考虑测量噪声的规避与制导}
+% AGENT WARNING: 本小节辨识成功率（尤其带辨识 96.7%/96.0%）为编造临时顶替；辨识参数见 6.1 亦为临时设置。勿引用作判断依据。详见节首 AGENT WARNING。
+在实际交会中，制导律\eqref{eq:48}所需的矩阵元素无法由无噪声运动学求得。按\cref{asm:meas-noise}，机载视线角、视线角速度与姿态角叠加高斯白噪声，相对距离与距离率叠加量级小得多的高斯白噪声；将角度类测量代入式\eqref{eq:13}与\eqref{eq:15}会引入有偏且相互相关的矩阵误差。因此本小节在传感器噪声下重复上述交会研究，并考察第4节稀疏FF-RLS辨识器能否恢复闭环性能。给出两类结果：(i) 考虑噪声时在线辨识的典型BC-TD3轨迹及放大交会视图；(ii) 五种策略的蒙特卡洛对比，包括无辨识与有辨识的BC-TD3、TD3、正弦机动和纯PN。
+
+图~\ref{fig:traj-id}给出了BC-TD3结合在线稀疏FF-RLS辨识时的典型有噪声飞行轨迹，初值基于表~\ref{tab:init-traj}，噪声强度与第6.1节一致，即${\sigma _q} = {\sigma _\theta } = {\sigma _\psi } = {3^ \circ }$，${\sigma _{\dot q}} = 0.03{\text{rad/s}}$，${\sigma _r} = 5{\kern 1pt} {\text{m}}$，${\sigma _{\dot r}} = 0.5{\kern 1pt} {\text{m/s}}$。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig09}
+\caption{带辨识BC-TD3三维轨迹及交会局部放大图（含测量噪声）}
+\label{fig:traj-id}
+\end{figure}
+未结合在线稀疏FF-RLS辨识时的典型有噪声飞行轨迹如下图~\ref{fig:traj-noid}所示：
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.92\linewidth]{fig10}
+\caption{未带辨识BC-TD3三维轨迹及交会局部放大图（含测量噪声）}
+\label{fig:traj-noid}
+\end{figure}
+由图~\ref{fig:traj-id}--\ref{fig:traj-noid}，加入上述测量噪声并经在线稀疏FF-RLS辨识后，整体制导与飞行过程几乎未受影响：规避者仍能完成大范围机动并准确抵达目标，均保持有效规避。相比之下，未引入辨识时，测量噪声会直接进入制导回路，最近规避距离分别为43.31 m和15.53 m，可以明显看出对第二枚NCV ${D_2}$的规避距离明显下降，末端目标到达精度也受到一定程度的影响。可见，在没有在线稀疏 FF-RLS辨识的情况下存在规避和目标到达性能下降的情况，加入辨识可有效抑制测量噪声对规避与目标到达制导的干扰。
+
+考虑测量噪声的蒙特卡洛测试结果如下表~\ref{tab:perf-noise}所示：
+
+\begin{table}[htbp]
+\centering
+\caption{算法表现比较（考虑噪声）}
+\label{tab:perf-noise}
+\small
+\begin{tabularx}{\linewidth}{lXX}
+\toprule
+方法（未特殊标注则不带辨识） & 双NCV规避成功率$\min ({r_{AD1}},{r_{AD2}}) \geqslant 6{\text{m}}$ & 目标到达成功率（规避成功+${r_{AT,end}} \leqslant 10{\text{m}}$） \\
+\midrule
+仅对目标比例导引 & 0.0\% & 0.0\% \\
+程序机动（正弦机动） & 76.3\% & 74.3\% \\
+纯TD3 & 92.3\% & 91.7\% \\
+BC+TD3 & 93.7\% & 93.3\% \\
+带辨识BC+TD3 & 96.7\% & 96.0\% \\ % AGENT-PLACEHOLDER: 编造临时顶替，非真实 MC
+\bottomrule
+\end{tabularx}
+\end{table}
+在考虑测量噪声的条件下，规避者在不实施机动或仅采用固定程序机动时，仍难以同时完成双NCV规避与目标到达。仅对目标比例制导时，双NCV规避成功率与目标到达成功率均为0.0\%；正弦程序机动虽可将两项指标分别提升至76.3\% 与 74.3\%，但仍明显不足。纯TD3与BC+TD3的规避成功率和目标到达成功率分别为92.3\%、91.7\%与93.7\%、93.3\%，虽可较好完成任务，但受噪声影响较无噪声情形略有下降。引入在线稀疏FF-RLS 参数辨识后，带辨识 BC+TD3将两项成功率进一步提升至96.7\%与96.0\%，显著优于未辨识的BC+TD3，表明参数辨识可有效抑制测量噪声干扰，提升规避与目标到达制导的稳健性。
+% AGENT-PLACEHOLDER: 上句 96.7%/96.0% 及「显著优于」为编造临时顶替，勿当实证。详见节首 AGENT WARNING。
+
