@@ -1,0 +1,206 @@
+{
+  "schema_version": "p0_4_evaluation_v1",
+  "created_at": "2026-09-15T18:16:28",
+  "protocol": {
+    "path": "D:\\LTY\\yan\\yanerxia\\GAIL\\ident\\protocols\\p0_4_protocol.draft.json",
+    "sha256": "115b223636e1f60346c016adea1e35f4ef85976227a055ceec1c6b08a4d36905",
+    "status": "frozen",
+    "phase": "F1_frozen_before_final_test"
+  },
+  "repository": {
+    "commit": "1a8c25bd0e145054415d017e2884cfaafa7f94bc",
+    "dirty": true,
+    "porcelain_entry_count": 51,
+    "porcelain": [
+      " M expert_trajectory/lhsyangbenshengcheng_beta_0_test.m",
+      " M ident/README.md",
+      " M ident/ident_cfg.py",
+      " M ident/ident_protocol.py",
+      " M ident/matlab/stage2_ident_init.m",
+      " M ident/matlab/stage2_ident_step.m",
+      " M ident/matlab/test_stage2_ident.m",
+      " M ident/scripts/run_ident_ablation_pure.py",
+      " M ident/tests/test_ident_protocol.py",
+      " M plot_table2_matlab/mc_baseline_300/main_mc_pn_sine_300.m",
+      " M plot_table2_matlab/mc_baseline_300/simulate_baseline_episode.m",
+      " M plot_table2_matlab/mc_fixed100/models.example.json",
+      " M plot_table2_matlab/mc_noisy_300/run_mc_rl_noisy.py",
+      " M plot_table2_matlab/table2_bctd3/main_table2_bctd3.m",
+      " M plot_table2_matlab/table2_bctd3/run_table2_bctd3_traj.py",
+      " M plot_table2_matlab/table2_noisy_ident/run_table2_noisy_ident.m",
+      " M rl_td3/evaluate_td3.py",
+      " M rl_td3/evasion_env.py",
+      " M rl_td3/matlab/env_reset.m",
+      " M rl_td3/matlab/env_step.m",
+      " M rl_td3/matlab/stage2_core_init.m",
+      " M rl_td3/matlab/stage2_obs_from_abs.m",
+      " M rl_td3/matlab/stage2_step.m",
+      " M rl_td3/matlab/stage3_rollout.m",
+      " M samples_clean_test.mat",
+      " M td3_baseline/evaluate_td3_pure.py",
+      " M \"\\345\\217\\202\\346\\225\\260\\350\\276\\250\\350\\257\\206\\346\\226\\260\\345\\257\\271\\350\\257\\235&\\346\\226\\260\\345\\242\\236\\345\\256\\236\\351\\252\\214\\346\\270\\205\\345\\215\\225md/PARAMETER_IDENTIFICATION_REFACTOR_TODO_20260915.md\"",
+      "?? bc-TD3-advantage-experiment-design.canvas.tsx",
+      "?? ident/experiment_protocol.py",
+      "?? ident/matlab/stage2_measurement_noise.m",
+      "?? ident/protocols/",
+      "?? ident/results/p0_4_final_test_N300_20260915/",
+      "?? ident/results/p0_4_phase_d_e_smoke_val_N2_20260915/",
+      "?? ident/results/p0_4_phase_f1_stats_smoke_val_N2_20260915/",
+      "?? ident/scripts/run_p0_4_evaluation.py",
+      "?? ident/tests/test_experiment_protocol.py",
+      "?? ident/tests/test_p0_4_evaluation.py",
+      "?? rl_td3/checkpoints/training_300k_20260730_1917/monte_carlo_eval_best_test_energy_20260915.log",
+      "?? rl_td3/checkpoints/training_300k_20260730_1917/monte_carlo_eval_best_test_energy_20260915.npz",
+      "?? rl_td3/checkpoints/training_300k_20260730_1917/monte_carlo_eval_best_val_energy_20260915.log",
+      "?? rl_td3/checkpoints/training_300k_20260730_1917/monte_carlo_eval_best_val_energy_20260915.npz",
+      "?? rl_td3/matlab/stage2_actor_obs_from_abs.m",
+      "?? rl_td3/tests/test_energy_metrics.py",
+      "?? samples_clean_test_0728.mat",
+      "?? td3_baseline/checkpoints/training_300k_20260730_1917/monte_carlo_eval_best_test_energy_20260915.log",
+      "?? td3_baseline/checkpoints/training_300k_20260730_1917/monte_carlo_eval_best_test_energy_20260915.npz",
+      "?? td3_baseline/checkpoints/training_300k_20260730_1917/monte_carlo_eval_best_val_energy_20260915.log",
+      "?? td3_baseline/checkpoints/training_300k_20260730_1917/monte_carlo_eval_best_val_energy_20260915.npz",
+      "?? \"\\345\\217\\202\\346\\225\\260\\350\\276\\250\\350\\257\\206\\346\\226\\260\\345\\257\\271\\350\\257\\235&\\346\\226\\260\\345\\242\\236\\345\\256\\236\\351\\252\\214\\346\\270\\205\\345\\215\\225md/PARAMETER_IDENTIFICATION_REFACTOR_TODO_20260915_PRE_MINIMAL_20260915.md\"",
+      "?? \"\\350\\256\\272\\346\\226\\207\\346\\226\\207\\347\\250\\277/overleaf_SCI_07_0914/main.bbl-SAVE-ERROR\"",
+      "?? \"\\350\\256\\272\\346\\226\\207\\346\\226\\207\\347\\250\\277/overleaf_SCI_07_0914/main.bcf-SAVE-ERROR\""
+    ]
+  },
+  "implementation_file_checks": {
+    "ident/scripts/run_p0_4_evaluation.py": {
+      "expected_sha256": "3d95f981ea6343b9a86cdffcd462323bfe536628ad4752df31e176908894f789",
+      "actual_sha256": "3d95f981ea6343b9a86cdffcd462323bfe536628ad4752df31e176908894f789",
+      "matches": true
+    },
+    "rl_td3/evaluate_td3.py": {
+      "expected_sha256": "00a97e9c88efda8923409f18858914e4c5aef55e1a73eb8b81adc1988061ab51",
+      "actual_sha256": "00a97e9c88efda8923409f18858914e4c5aef55e1a73eb8b81adc1988061ab51",
+      "matches": true
+    },
+    "rl_td3/evasion_env.py": {
+      "expected_sha256": "0762803e38b57a6b255637ed65b031319d9d5f5f8b2054a7555dbe7935eb8de1",
+      "actual_sha256": "0762803e38b57a6b255637ed65b031319d9d5f5f8b2054a7555dbe7935eb8de1",
+      "matches": true
+    },
+    "rl_td3/matlab/env_step.m": {
+      "expected_sha256": "84857e352cea98fc60fedf56d5480cc2a1382cc903e836c601417f44baf49db7",
+      "actual_sha256": "84857e352cea98fc60fedf56d5480cc2a1382cc903e836c601417f44baf49db7",
+      "matches": true
+    },
+    "rl_td3/matlab/stage2_step.m": {
+      "expected_sha256": "e0e974911e398c295e7a7c19bb58e021e6fd4679dfc2e78921df3a557bc1a1d6",
+      "actual_sha256": "e0e974911e398c295e7a7c19bb58e021e6fd4679dfc2e78921df3a557bc1a1d6",
+      "matches": true
+    },
+    "ident/matlab/stage2_ident_step.m": {
+      "expected_sha256": "c3a5eb64db61023054bce66c3c2421a809d4835a5b024d3cb397f69c5312ca8e",
+      "actual_sha256": "c3a5eb64db61023054bce66c3c2421a809d4835a5b024d3cb397f69c5312ca8e",
+      "matches": true
+    },
+    "ident/ident_protocol.py": {
+      "expected_sha256": "78792dd2c9e7f0d6763aeeeb9edbac8b54401f0035ae9bc4cec68408664c4554",
+      "actual_sha256": "78792dd2c9e7f0d6763aeeeb9edbac8b54401f0035ae9bc4cec68408664c4554",
+      "matches": true
+    },
+    "ident/ident_cfg.py": {
+      "expected_sha256": "721202c70ba960626beee5071fe83d843f3b0870e21dbf3b1aadf8dac65aa96c",
+      "actual_sha256": "721202c70ba960626beee5071fe83d843f3b0870e21dbf3b1aadf8dac65aa96c",
+      "matches": true
+    }
+  },
+  "dataset": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean_test.mat",
+  "dataset_sha256": "b9b9f2dbf9679dc774a8c4c231a51d343b2921c814ca2bb39047b43d090a24a4",
+  "dataset_matches_protocol_sha256": true,
+  "dataset_role": "test",
+  "requested_episodes": 0,
+  "episodes": 300,
+  "policies": {
+    "td3": {
+      "checkpoint": "D:\\LTY\\yan\\yanerxia\\GAIL\\td3_baseline\\checkpoints\\training_300k_20260730_1917\\best\\best_model.zip",
+      "sha256": "e264801aba90956ade44bc104400772d5e9d79f747bc11e2dbe45c46592f014e",
+      "matches_protocol_sha256": true
+    },
+    "bc_td3": {
+      "checkpoint": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\checkpoints\\training_300k_20260730_1917\\best\\best_model.zip",
+      "sha256": "859d7f9a89c3e672c592eb9f28d485fd255b35e45b6171b35c5b52bf2d7d27a7",
+      "matches_protocol_sha256": true
+    }
+  },
+  "coeff_modes": [
+    "analytic_noisy",
+    "sparse_ffrls"
+  ],
+  "actor_obs_mode": "filtered",
+  "action_mapping": "ratio_log_box_v1",
+  "base_noise_seed": 0,
+  "noise_seed_rule": "base_noise_seed + local_idx",
+  "matlab_python_config": {
+    "coeff_mode": "analytic_noisy",
+    "actor_obs_mode": "filtered",
+    "ident_apply_cmd": true,
+    "sigma_scale": 30.0,
+    "sigma_q": 0.05235987755982988,
+    "sigma_qdot": 0.03,
+    "sigma_theta": 0.05235987755982988,
+    "sigma_psi": 0.05235987755982988,
+    "sigma_r": 10.0,
+    "sigma_rdot": 0.5,
+    "kf_qj": 10000.0,
+    "kf_sigma_a0": 50.0,
+    "rls_lambda": 0.98,
+    "rls_mu": 0.001,
+    "rls_eta": 0.1,
+    "rls_P0": 10000.0,
+    "rls_P_trace_max": 1.0,
+    "rls_r0": 10000.0,
+    "rls_a0": 50.0,
+    "noise_seed": 0,
+    "action_mapping_version": "ratio_log_box_v1"
+  },
+  "nrmse": {
+    "name": "componentwise_scaled_parameter_nrmse",
+    "parameter_order": [
+      "A21_D1",
+      "B1_D1",
+      "B2_D1",
+      "C1_D1",
+      "A21_D2",
+      "B1_D2",
+      "B2_D2",
+      "C1_D2",
+      "A21_T",
+      "B1_T",
+      "B2_T"
+    ],
+    "scale": [
+      10000.0,
+      50.0,
+      50.0,
+      1.0,
+      10000.0,
+      50.0,
+      50.0,
+      1.0,
+      10000.0,
+      50.0,
+      50.0
+    ],
+    "denominator": "max(RMS(scaled_truth_j), denominator_floor)",
+    "denominator_floor": 1.0,
+    "aggregation": "RMS of the 11 component NRMSE values",
+    "causal_alignment": "estimate[k] versus vartheta[k-1]",
+    "burn_in_steps": 5
+  },
+  "selection_audit": {
+    "eta_grid_performed": false,
+    "P_trace_scan_performed": false,
+    "checkpoint_selection_performed": false,
+    "dataset_roles_are_metadata_only": true
+  },
+  "statistical_plan": {
+    "success_rate_interval": "Wilson 95%",
+    "paired_success_difference": "5000-sample paired bootstrap 95% CI",
+    "paired_binary_test": "two-sided exact McNemar/binomial test",
+    "continuous_summary": "median, IQR, mean, standard deviation",
+    "long_tail": "r_AT_end P95 and CVaR95 on common dual-evasion subset"
+  }
+}

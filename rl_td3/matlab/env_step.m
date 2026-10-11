@@ -20,7 +20,7 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 %     state_abs_next [18×1] 新绝对状态
 %     reward         标量过程奖励（终端 R1/+100 由 Python 在 stage3 后追加）
 %     terminated     逻辑，本 episode（规避段）是否结束
-%     info_vec       [9×1] 基础；sparse_ffrls / analytic_noisy 时扩展为 [85×1]
+%     info_vec       [9×1] 基础；sparse_ffrls / analytic_noisy 时扩展为 [96×1]
 %       [r_MD1; r_MD2; r_MT; intercepted; stage2_done;
 %        a_M_sat_y; a_M_sat_z; a_M_raw_y; a_M_raw_z]
 %       （后 4 项供轨迹落盘/画图；旧脚本只读前 5 项仍兼容）
@@ -41,6 +41,7 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 %         [69:79]  theta_true_current = vartheta[k] 共 11 维
 %         [80:82]  frozen_model_residual D1/D2/T
 %         [83:85]  Qdot_err_command（相对 vartheta[k]）
+%         [86:96]  theta_analytic_noisy_causal（上一拍含噪解析参数）
 %
 %   动力学实现委托 stage2_core_init + stage2_step（与专家抽取共用）。
 %   本函数对 helper/config 做 persistent 缓存，避免逐步重建。
@@ -70,8 +71,10 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
     end
 
     % 新 episode（t=0）重置辨识器，保证不同局之间不泄漏
-    need_ident = isfield(core.cfg, 'coeff_mode') && ...
-        ~strcmp(char(core.cfg.coeff_mode), 'analytic_truth');
+    need_ident = (isfield(core.cfg, 'coeff_mode') && ...
+        ~strcmp(char(core.cfg.coeff_mode), 'analytic_truth')) || ...
+        (isfield(core.cfg, 'actor_obs_mode') && ...
+        strcmp(char(core.cfg.actor_obs_mode), 'filtered'));
     if need_ident
         if isempty(ident_state) || abs(double(t)) < 1e-15
             ident_state = stage2_ident_init(core.cfg);
@@ -97,7 +100,7 @@ function [obs_next, state_abs_next, reward, terminated, info_vec] = ...
 end
 
 function v = local_pack_ident_diag(d)
-% 固定 76×1：含因果/当前参数真值及周期拟冻结模型残差。
+% 固定 87×1：含两类因果估计、当前参数真值及周期拟冻结模型残差。
     r_err = d.r_hat(:) - d.r_true(:);
     rd_err = d.rdot_hat(:) - d.rdot_true(:);
     rdd_err = d.rddot_hat(:) - d.rddot_true(:);
@@ -106,11 +109,13 @@ function v = local_pack_ident_diag(d)
     th_h = [];
     th_t = [];
     th_tc = [];
+    th_nc = [];
     for i = 1:3
         th_e = [th_e; d.theta_hat{i}(:) - d.theta_true{i}(:)]; %#ok<AGROW>
         th_h = [th_h; d.theta_hat{i}(:)]; %#ok<AGROW>
         th_t = [th_t; d.theta_true{i}(:)]; %#ok<AGROW>
         th_tc = [th_tc; d.theta_true_current{i}(:)]; %#ok<AGROW>
+        th_nc = [th_nc; d.theta_noisy_causal{i}(:)]; %#ok<AGROW>
     end
     if isfield(d, 'a_cmd_err') && numel(d.a_cmd_err) >= 2
         a_err = d.a_cmd_err(1:2);
@@ -127,7 +132,7 @@ function v = local_pack_ident_diag(d)
     q_err_command = local_vec_or(d, 'qdot_err_command', 3, NaN);
     v = [r_err; rd_err; rdd_err; th_e; double(d.did_rls); a_err; ...
         a_err_sat; q_err; p_trace; p_min; p_max; th_h; th_t; ...
-        th_tc; frozen_res; q_err_command];
+        th_tc; frozen_res; q_err_command; th_nc];
 end
 
 function v = local_vec_or(s, name, n, fill)
@@ -158,7 +163,7 @@ function key = cfg_cache_key(cfg_in)
     end
     % 辨识 / 测量噪声相关字段
     id_names = { ...
-        'coeff_mode','ident_apply_cmd','noise_seed', ...
+        'coeff_mode','ident_apply_cmd','actor_obs_mode','noise_seed', ...
         'sigma_scale','sigma_q','sigma_qdot','sigma_theta','sigma_psi','sigma_r','sigma_rdot', ...
         'kf_qj','kf_sigma_a0', ...
         'rls_lambda','rls_mu','rls_eta','rls_P0','rls_P_trace_max','rls_r0','rls_a0'};

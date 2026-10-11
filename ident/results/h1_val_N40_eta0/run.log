@@ -1,0 +1,70 @@
+[H1] model=td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model
+[H1] samples=D:\LTY\yan\yanerxia\GAIL\samples_clean_val.mat  episodes=40
+[H1] shadow=True (指令恒为 analytic_truth，三路估计共享同一轨迹)
+[H1] actor_obs_mode=filtered  lambda=0.98  eta=0.0  P_trace_max=1.0
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+  IC0: steps=78 seed=0 noisy=2.005 ffrls=12.87 zoh_floor=3.311 frozen_res=1344
+  IC1: steps=96 seed=1 noisy=2.914 ffrls=60.94 zoh_floor=2.365 frozen_res=2248
+  IC2: steps=78 seed=2 noisy=3.054 ffrls=43.72 zoh_floor=5.911 frozen_res=709.3
+  IC3: steps=76 seed=3 noisy=4.06 ffrls=7.905 zoh_floor=4.335 frozen_res=1757
+  IC4: steps=94 seed=4 noisy=2.847 ffrls=9.101 zoh_floor=1.381 frozen_res=1091
+  IC5: steps=100 seed=5 noisy=7.52 ffrls=15.2 zoh_floor=0.4867 frozen_res=1189
+  IC6: steps=87 seed=6 noisy=3.839 ffrls=76.75 zoh_floor=0.5215 frozen_res=1343
+  IC7: steps=93 seed=7 noisy=1.912 ffrls=20.01 zoh_floor=0.5423 frozen_res=1181
+  IC8: steps=90 seed=8 noisy=3.032 ffrls=10.81 zoh_floor=3.069 frozen_res=537.6
+  IC9: steps=77 seed=9 noisy=2.418 ffrls=14.29 zoh_floor=2.405 frozen_res=1537
+  IC10: steps=75 seed=10 noisy=1.825 ffrls=2.38 zoh_floor=24.23 frozen_res=471.5
+  IC11: steps=79 seed=11 noisy=1.772 ffrls=41.88 zoh_floor=3.077 frozen_res=1272
+  IC12: steps=80 seed=12 noisy=2.372 ffrls=7.728 zoh_floor=0.5081 frozen_res=1470
+  IC13: steps=101 seed=13 noisy=2.04 ffrls=19.77 zoh_floor=9.148 frozen_res=1220
+  IC14: steps=100 seed=14 noisy=4.025 ffrls=91.57 zoh_floor=23.15 frozen_res=1222
+  IC15: steps=89 seed=15 noisy=2.015 ffrls=10.15 zoh_floor=4.326 frozen_res=819.5
+  IC16: steps=97 seed=16 noisy=2.755 ffrls=18.88 zoh_floor=0.7053 frozen_res=1233
+  IC17: steps=101 seed=17 noisy=2.72 ffrls=40.12 zoh_floor=1.248 frozen_res=1188
+  IC18: steps=78 seed=18 noisy=2.308 ffrls=70.71 zoh_floor=2.198 frozen_res=368.4
+  IC19: steps=86 seed=19 noisy=7.417 ffrls=93.38 zoh_floor=2.247 frozen_res=1330
+  IC20: steps=81 seed=20 noisy=5.087 ffrls=65.23 zoh_floor=2.513 frozen_res=1337
+  IC21: steps=100 seed=21 noisy=6.678 ffrls=23.99 zoh_floor=0.2663 frozen_res=1205
+  IC22: steps=92 seed=22 noisy=4.378 ffrls=23.65 zoh_floor=1.26 frozen_res=1203
+  IC23: steps=100 seed=23 noisy=2.073 ffrls=13.79 zoh_floor=11.52 frozen_res=1206
+  IC24: steps=78 seed=24 noisy=3.102 ffrls=51.45 zoh_floor=3.248 frozen_res=1096
+  IC25: steps=81 seed=25 noisy=2.775 ffrls=51.61 zoh_floor=3.833 frozen_res=1076
+  IC26: steps=85 seed=26 noisy=1.988 ffrls=25.38 zoh_floor=2.785 frozen_res=235.4
+  IC27: steps=101 seed=27 noisy=2.031 ffrls=17.77 zoh_floor=10.05 frozen_res=1205
+  IC28: steps=97 seed=28 noisy=5.691 ffrls=20.38 zoh_floor=0.4003 frozen_res=967
+  IC29: steps=88 seed=29 noisy=0.993 ffrls=20.64 zoh_floor=2.8 frozen_res=1354
+  IC30: steps=574 seed=30 noisy=2.945 ffrls=1809 zoh_floor=0.4205 frozen_res=535.4
+  IC31: steps=89 seed=31 noisy=4.413 ffrls=112.6 zoh_floor=1.911 frozen_res=1336
+  IC32: steps=73 seed=32 noisy=11.84 ffrls=2.411 zoh_floor=0.2356 frozen_res=0.02548
+  IC33: steps=76 seed=33 noisy=6.271 ffrls=12.56 zoh_floor=4.832 frozen_res=1079
+  IC34: steps=79 seed=34 noisy=4.632 ffrls=29.46 zoh_floor=7.714 frozen_res=645.6
+  IC35: steps=85 seed=35 noisy=2.633 ffrls=14.47 zoh_floor=1.362 frozen_res=1505
+  IC36: steps=76 seed=36 noisy=3.847 ffrls=11.31 zoh_floor=5.242 frozen_res=1521
+  IC37: steps=97 seed=37 noisy=2.696 ffrls=9.776 zoh_floor=142.7 frozen_res=1188
+  IC38: steps=75 seed=38 noisy=1.89 ffrls=2.105 zoh_floor=16.07 frozen_res=196.8
+  IC39: steps=84 seed=39 noisy=3.773 ffrls=15.57 zoh_floor=2.242 frozen_res=1915
+
+[H1] 统一 NRMSE（全程，跨 IC 中位数 / P95）
+  analytic_noisy     median=2.88  p95=7.422  max=11.84
+  sparse_ffrls       median=19.89  p95=94.34  max=1809
+  zoh_drift_floor    median=2.649  p95=23.21  max=142.7
+
+[H1] 逐参数 NRMSE 中位数
+  param         analytic_noisy        sparse_ffrls     zoh_drift_floor
+  A21_D1               0.09396                   1               1.405
+  B1_D1                 0.5857               5.568               0.153
+  B2_D1                 0.3551               5.731              0.1368
+  C1_D1                 0.8076               2.699              0.2959
+  A21_D2                0.1282                   1               1.411
+  B1_D2                 0.4346               2.263             0.09609
+  B2_D2                 0.3566               5.816              0.1448
+  C1_D2                 0.8253               1.727              0.2604
+  A21_T                  8.226                1.11             0.06697
+  B1_T                  0.6388              0.8039              0.0321
+  B2_T                  0.4142              0.6937             0.03561
+
+[H1] 结果写入 ident\results\h1_val_N40_eta0

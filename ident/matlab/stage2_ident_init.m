@@ -44,6 +44,11 @@ function ident = stage2_ident_init(cfg)
     ident.rls_P_trace_max = local_get(cfg, 'rls_P_trace_max', 1.0);
     ident.rls_r0     = local_get(cfg, 'rls_r0', 1.0e4);    % m
     ident.rls_a0     = local_get(cfg, 'rls_a0', 50.0);      % m/s^2
+    % 端局门控：r→0 时回归量 phi 的距离分量塌缩、A21 发散，
+    % 该周期的线性模型退化，继续更新只会把发散的 rddot 摊到 B 分量上。
+    % 门控只读 KF 后验 r_hat / rdot_hat，不读真值几何。0=关闭。
+    ident.rls_gate_r_min   = local_get(cfg, 'rls_gate_r_min', 0.0);
+    ident.rls_gate_tgo_min = local_get(cfg, 'rls_gate_tgo_min', 0.0);
     ident.KD1        = local_get(cfg, 'KD1', 4.0);
     ident.KD2        = local_get(cfg, 'KD2', 4.0);
     ident.max_ov_D   = 10.0 * g0;
@@ -56,10 +61,17 @@ function ident = stage2_ident_init(cfg)
         error('stage2_ident_init:BadPTraceMax', ...
             'rls_P_trace_max 须为正有限标量或 Inf');
     end
-    if ~(isscalar(ident.sigma_r) && isfinite(ident.sigma_r) && ident.sigma_r > 0 && ...
-            isscalar(ident.sigma_rdot) && isfinite(ident.sigma_rdot) && ident.sigma_rdot > 0)
+    if ~(isscalar(ident.rls_gate_r_min) && isfinite(ident.rls_gate_r_min) && ...
+            ident.rls_gate_r_min >= 0 && ...
+            isscalar(ident.rls_gate_tgo_min) && ...
+            isfinite(ident.rls_gate_tgo_min) && ident.rls_gate_tgo_min >= 0)
+        error('stage2_ident_init:BadGate', ...
+            'rls_gate_r_min 与 rls_gate_tgo_min 须为非负有限标量；0=关闭');
+    end
+    if ~(isscalar(ident.sigma_r) && isfinite(ident.sigma_r) && ident.sigma_r >= 0 && ...
+            isscalar(ident.sigma_rdot) && isfinite(ident.sigma_rdot) && ident.sigma_rdot >= 0)
         error('stage2_ident_init:BadMeasurementNoise', ...
-            'sigma_r 与 sigma_rdot 须为正数，并直接构成式(62d)的 R_xi');
+            'sigma_r 与 sigma_rdot 须为非负数，并直接构成式(62d)的 R_xi');
     end
 
     F = [1, dt, 0.5*dt^2;
@@ -91,6 +103,8 @@ function ident = stage2_ident_init(cfg)
         ch(i).r_hat_prev = 0;
         ch(i).theta_true_hold = nan(nths(i), 1);
         ch(i).has_theta_true_hold = false;
+        ch(i).theta_noisy_hold = nan(nths(i), 1);
+        ch(i).has_theta_noisy_hold = false;
         ch(i).initialized = false;
     end
     ident.ch = ch;

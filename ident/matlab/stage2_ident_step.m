@@ -27,10 +27,12 @@ function [ident, coeffs, id_diag] = stage2_ident_step(ident, truth_geo, a_D1, a_
     computePN = H.computePN;
     saturate = H.saturate;
 
-    [ident, nD1] = local_noise_channel(ident);
-    [ident, nD2] = local_noise_channel(ident);
-    [ident, nT]  = local_noise_channel(ident);
-    [ident, nAtt] = local_noise_att(ident);
+    noise = stage2_measurement_noise(ident, ident.step_count);
+    nD1 = noise.D1;
+    nD2 = noise.D2;
+    nT = noise.T;
+    nAtt = noise.att;
+    ident.noise_draw = noise.draw_end;
 
     mD1 = local_apply_noise(truth_geo.D1, nD1);
     mD2 = local_apply_noise(truth_geo.D2, nD2);
@@ -84,12 +86,20 @@ function [ident, coeffs, id_diag] = stage2_ident_step(ident, truth_geo, a_D1, a_
     meas_pack = {mD1, mD2, mT};
     do_rls = ident.has_prev;
     eta = ident.rls_eta;
+    rls_gated = false(3, 1);
     theta_true_causal = cell(1, 3);
+    theta_noisy_causal = cell(1, 3);
     for i = 1:3
         if ident.ch(i).has_theta_true_hold
             theta_true_causal{i} = ident.ch(i).theta_true_hold;
         else
             theta_true_causal{i} = nan(ident.ch(i).n_theta, 1);
+        end
+        if isfield(ident.ch(i), 'has_theta_noisy_hold') && ...
+                ident.ch(i).has_theta_noisy_hold
+            theta_noisy_causal{i} = ident.ch(i).theta_noisy_hold;
+        else
+            theta_noisy_causal{i} = nan(ident.ch(i).n_theta, 1);
         end
     end
 
@@ -119,7 +129,8 @@ function [ident, coeffs, id_diag] = stage2_ident_step(ident, truth_geo, a_D1, a_
                 ident.F_xi, ident.Q_xi, ident.H_xi, ident.R_xi);
         end
 
-        if do_rls
+        rls_gated(i) = local_endgame_gate(ident, ident.ch(i).xi);
+        if do_rls && ~rls_gated(i)
             y = ident.ch(i).xi(3);
             if ident.ch(i).n_theta == 4
                 phi = [ident.ch(i).r_hat_prev; ident.a_M_sat_prev(1); ident.a_M_sat_prev(2); 1];
@@ -215,6 +226,7 @@ function [ident, coeffs, id_diag] = stage2_ident_step(ident, truth_geo, a_D1, a_
     id_diag.theta_true_causal = theta_true_causal;
     id_diag.theta_true_current = theta_true_current;
     id_diag.theta_noisy = theta_warm;
+    id_diag.theta_noisy_causal = theta_noisy_causal;
     id_diag.theta_hat = th_hat;
     q_hat = [sqrt(max(th_hat{1}(1), 0)); sqrt(max(th_hat{2}(1), 0)); ...
         sqrt(max(th_hat{3}(1), 0))];
@@ -243,9 +255,13 @@ function [ident, coeffs, id_diag] = stage2_ident_step(ident, truth_geo, a_D1, a_
     id_diag.rdot_true = rdot_true;
     id_diag.rddot_true = rddot_true;
     id_diag.frozen_model_residual = frozen_model_residual;
-    id_diag.did_rls = do_rls;
+    % did_rls 表示"本拍三通道是否都真正执行了回归"；端局门控生效时为 false。
+    id_diag.did_rls = do_rls && ~any(rls_gated);
+    id_diag.rls_gated = rls_gated;
     id_diag.meas_r = [mD1.r; mD2.r; mT.r];
     id_diag.meas_rdot = [mD1.rdot; mD2.rdot; mT.rdot];
+    id_diag.meas_qy = [mD1.qy; mD2.qy; mT.qy];
+    id_diag.meas_qz = [mD1.qz; mD2.qz; mT.qz];
     id_diag.a_cmd_err = [NaN; NaN];  % 由 stage2_step 在算出双路径指令后回填
     id_diag.a_cmd_err_sat = [NaN; NaN];
     id_diag.a_D_pn = [a_D1_pn(:); a_D2_pn(:)];
@@ -254,9 +270,28 @@ function [ident, coeffs, id_diag] = stage2_ident_step(ident, truth_geo, a_D1, a_
     for i = 1:3
         ident.ch(i).theta_true_hold = theta_true_current{i};
         ident.ch(i).has_theta_true_hold = true;
+        ident.ch(i).theta_noisy_hold = theta_warm{i};
+        ident.ch(i).has_theta_noisy_hold = true;
     end
     ident.r_true_prev = r_true;
     ident.rdot_true_prev = rdot_true;
+end
+
+function gated = local_endgame_gate(ident, xi)
+%LOCAL_ENDGAME_GATE  仅凭 KF 后验判断本通道是否进入回归失效的交汇末段。
+    gated = false;
+    r_hat = xi(1);
+    rdot_hat = xi(2);
+    if ident.rls_gate_r_min > 0 && r_hat < ident.rls_gate_r_min
+        gated = true;
+        return;
+    end
+    if ident.rls_gate_tgo_min > 0 && rdot_hat < 0
+        tgo_hat = -r_hat / rdot_hat;
+        if tgo_hat < ident.rls_gate_tgo_min
+            gated = true;
+        end
+    end
 end
 
 function S = local_scale(ident, n)
@@ -283,41 +318,6 @@ function P = local_cap_covariance_trace(P, p_trace_max)
         P = P * (p_trace_max / trP);
         P = 0.5 * (P + P');
     end
-end
-
-function [ident, n] = local_noise_channel(ident)
-    n = struct();
-    [ident, n.r]    = local_randn(ident, ident.sigma_r);
-    [ident, n.rdot] = local_randn(ident, ident.sigma_rdot);
-    [ident, n.qy]   = local_randn(ident, ident.sigma_q);
-    [ident, n.qz]   = local_randn(ident, ident.sigma_q);
-    [ident, n.qdy]  = local_randn(ident, ident.sigma_qdot);
-    [ident, n.qdz]  = local_randn(ident, ident.sigma_qdot);
-end
-
-function [ident, n] = local_noise_att(ident)
-    n = struct();
-    [ident, n.theta_M]  = local_randn(ident, ident.sigma_theta);
-    [ident, n.psi_M]    = local_randn(ident, ident.sigma_psi);
-    [ident, n.theta_D1] = local_randn(ident, ident.sigma_theta);
-    [ident, n.psi_D1]   = local_randn(ident, ident.sigma_psi);
-    [ident, n.theta_D2] = local_randn(ident, ident.sigma_theta);
-    [ident, n.psi_D2]   = local_randn(ident, ident.sigma_psi);
-end
-
-function [ident, x] = local_randn(ident, sigma)
-    ident.noise_draw = ident.noise_draw + 1;
-    u1 = local_hash01(ident.noise_seed, ident.noise_draw, 1);
-    u2 = local_hash01(ident.noise_seed, ident.noise_draw, 2);
-    u1 = max(u1, 1e-12);
-    z = sqrt(-2 * log(u1)) * cos(2 * pi * u2);
-    x = sigma * z;
-end
-
-function u = local_hash01(seed, draw, lane)
-    v = double(seed) * 1.0e-3 + double(draw) * 17.0 + double(lane) * 0.37;
-    u = abs(sin(v * 12.9898) * 43758.5453);
-    u = u - floor(u);
 end
 
 function v = local_field_or(s, name, default)

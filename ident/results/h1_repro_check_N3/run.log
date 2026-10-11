@@ -1,0 +1,33 @@
+[H1] model=td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model
+[H1] samples=D:\LTY\yan\yanerxia\GAIL\samples_clean_val.mat  episodes=3
+[H1] shadow=True (指令恒为 analytic_truth，三路估计共享同一轨迹)
+[H1] actor_obs_mode=filtered  lambda=0.98  eta=0.1  P_trace_max=1.0
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+  IC0: steps=78 seed=0 noisy=2.005 ffrls=12.82 zoh_floor=3.311 frozen_res=1344
+  IC1: steps=96 seed=1 noisy=2.914 ffrls=60.56 zoh_floor=2.365 frozen_res=2248
+  IC2: steps=78 seed=2 noisy=3.054 ffrls=43.39 zoh_floor=5.911 frozen_res=709.3
+
+[H1] 统一 NRMSE（全程，跨 IC 中位数 / P95）
+  analytic_noisy     median=2.914  p95=3.04  max=3.054
+  sparse_ffrls       median=43.39  p95=58.84  max=60.56
+  zoh_drift_floor    median=3.311  p95=5.651  max=5.911
+
+[H1] 逐参数 NRMSE 中位数
+  param         analytic_noisy        sparse_ffrls     zoh_drift_floor
+  A21_D1                0.1215                   1               10.82
+  B1_D1                 0.3557              0.6728             0.09737
+  B2_D1                 0.3998               1.325              0.1288
+  C1_D1                  0.815               1.072              0.3008
+  A21_D2                0.1107                   1               1.387
+  B1_D2                 0.3477                24.5              0.3646
+  B2_D2                 0.3875               41.78              0.4437
+  C1_D2                 0.6942                3.88              0.5562
+  A21_T                  8.001               2.042             0.09397
+  B1_T                  0.4564              0.9397             0.03127
+  B2_T                   0.462              0.9244             0.04838
+
+[H1] 结果写入 ident\results\h1_repro_check_N3

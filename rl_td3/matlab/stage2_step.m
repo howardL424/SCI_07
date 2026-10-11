@@ -45,6 +45,11 @@ function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
     else
         apply_cmd = logical(cfg.ident_apply_cmd);
     end
+    if ~isfield(cfg, 'actor_obs_mode') || isempty(cfg.actor_obs_mode)
+        actor_obs_mode = 'truth';
+    else
+        actor_obs_mode = char(cfg.actor_obs_mode);
+    end
 
     M  = state_abs(1:6)';
     D1 = state_abs(7:12)';
@@ -87,7 +92,9 @@ function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
     use_analytic = true;
     c = [];
 
-    if ~strcmp(coeff_mode, 'analytic_truth')
+    need_measurement_state = ~strcmp(coeff_mode, 'analytic_truth') || ...
+        strcmp(actor_obs_mode, 'filtered');
+    if need_measurement_state
         if isempty(ident_state)
             ident_state = stage2_ident_init(cfg);
         end
@@ -191,17 +198,13 @@ function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
     D2_new = updateState(D2, a_D2, dt);
     t_new  = t + dt;
 
-    [qy_D1M_n, qz_D1M_n, r_MD1_n] = computeLOS(D1_new(1:3), M_new(1:3));
-    [qy_D2M_n, qz_D2M_n, r_MD2_n] = computeLOS(D2_new(1:3), M_new(1:3));
-    [qy_MT_n,  qz_MT_n,  r_MT_n]  = computeLOS(M_new(1:3),  T_pos);
-    [rdot_MD1_n, ~, ~] = computeMDDot(M_new, D1_new, r_MD1_n, qy_D1M_n, qz_D1M_n);
-    [rdot_MD2_n, ~, ~] = computeMDDot(M_new, D2_new, r_MD2_n, qy_D2M_n, qz_D2M_n);
+    [~, ~, r_MD1_n] = computeLOS(D1_new(1:3), M_new(1:3));
+    [~, ~, r_MD2_n] = computeLOS(D2_new(1:3), M_new(1:3));
+    [~, ~, r_MT_n]  = computeLOS(M_new(1:3), T_pos);
 
-    tgo_norm_n = max(0.0, (Tev - t_new) / max(Tev, 1e-6));
-    obs_next = [r_MD1_n; rdot_MD1_n; qy_D1M_n; qz_D1M_n;
-                r_MD2_n; rdot_MD2_n; qy_D2M_n; qz_D2M_n;
-                r_MT_n;  qy_MT_n;   qz_MT_n;  M_new(6);  tgo_norm_n];
     state_abs_next = [M_new(:); D1_new(:); D2_new(:)];
+    obs_next = stage2_actor_obs_from_abs( ...
+        core, state_abs_next, t_new, Tev, ident_state);
 
     intercepted = (min(r_MD1_n, r_MD2_n) <= cfg.kill_radius);
     stage2_done = (t_new >= Tev) && ~intercepted;
@@ -222,6 +225,7 @@ function [obs_next, state_abs_next, t_new, fact, ident_state] = ...
     fact.gamma            = gamma;
     fact.action_mapping_version = amap;
     fact.coeff_mode       = coeff_mode;
+    fact.actor_obs_mode   = actor_obs_mode;
     fact.ident_diag       = ident_diag;
 end
 

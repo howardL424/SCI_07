@@ -1,0 +1,41 @@
+{
+  "schema_version": "p0_4_artifact_manifest_v1",
+  "dataset_role": "test",
+  "valid_samples_per_group": 300,
+  "group_count": 4,
+  "strict_pairing_passed": true,
+  "frozen_protocol": {
+    "path": "ident/protocols/p0_4_protocol.draft.json",
+    "sha256": "115b223636e1f60346c016adea1e35f4ef85976227a055ceec1c6b08a4d36905"
+  },
+  "artifacts": {
+    "run.log": {
+      "sha256": "a02a64f32ca77b1253f8163ada8c5d8287087cb15fc95435b68acf54889c3f93",
+      "bytes": 72630
+    },
+    "run_config.json": {
+      "sha256": "4f2d3b329b6d57826944eb271c21d0652c9f412c59c958a2bdd1c76c69d9f1ab",
+      "bytes": 9183
+    },
+    "summary.json": {
+      "sha256": "0a4ff378b52ce047c43d0983aba143f871906c3b803f94d7a24b7e71f8835913",
+      "bytes": 67860
+    },
+    "metrics_bc_td3__analytic_noisy.npz": {
+      "sha256": "9bb7abf3e0e6f1b209e33c59741edf13b15b6240f6cb03351979db8e7eb5138f",
+      "bytes": 87331
+    },
+    "metrics_bc_td3__sparse_ffrls.npz": {
+      "sha256": "4cfdc8ffd8022223a55ad04bcf2497eb5f7cfa459ef7a2621cb33626758dd3ed",
+      "bytes": 87116
+    },
+    "metrics_td3__analytic_noisy.npz": {
+      "sha256": "ba2583791f2b20a836d5fccdc5be9bb4a090002453974b2b361333278132647b",
+      "bytes": 87276
+    },
+    "metrics_td3__sparse_ffrls.npz": {
+      "sha256": "9e8dc23b203ad7853872b751daaeee906f432f09d70da1e06a15dd1429a73b61",
+      "bytes": 87132
+    }
+  }
+}

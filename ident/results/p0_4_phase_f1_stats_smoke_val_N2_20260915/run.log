@@ -1,0 +1,41 @@
+[p0-4] 结果目录：ident\results\p0_4_phase_f1_stats_smoke_val_N2_20260915
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+
+===== td3__analytic_noisy =====
+  IC0: seed=0 both=1 r_min=9.45 r_AT=0.07 NRMSE=6.354
+  IC1: seed=1 both=1 r_min=7.05 r_AT=0.16 NRMSE=5.894
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+
+===== td3__sparse_ffrls =====
+  IC0: seed=0 both=1 r_min=130.28 r_AT=0.12 NRMSE=5.105
+  IC1: seed=1 both=1 r_min=30.30 r_AT=0.18 NRMSE=34.72
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+
+===== bc_td3__analytic_noisy =====
+  IC0: seed=0 both=1 r_min=24.32 r_AT=0.16 NRMSE=5.951
+  IC1: seed=1 both=0 r_min=4.23 r_AT=9471.75 NRMSE=8.13
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+
+===== bc_td3__sparse_ffrls =====
+  IC0: seed=0 both=1 r_min=161.58 r_AT=0.03 NRMSE=3.976
+  IC1: seed=1 both=1 r_min=32.24 r_AT=0.17 NRMSE=15.6
+[p0-4] 严格配对通过：2 个 IC

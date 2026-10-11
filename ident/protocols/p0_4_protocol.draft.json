@@ -1,0 +1,277 @@
+{
+  "schema_version": "p0_4_experiment_protocol_v1",
+  "status": "frozen",
+  "created_at": "2026-09-15",
+  "frozen_at": "2026-09-15T18:15:00+08:00",
+  "phase": "F1_frozen_before_final_test",
+  "sources": [
+    "参数辨识新对话&新增实验清单md/EXPERIMENTS_TODO_SECTION6.md",
+    "参数辨识新对话&新增实验清单md/PARAMETER_IDENTIFICATION_SESSION_SUMMARY_20260914_2.md",
+    "参数辨识新对话&新增实验清单md/PARAMETER_IDENTIFICATION_REFACTOR_TODO_20260915.md"
+  ],
+  "implementation_status": {
+    "phase_C_strict_episode_pairing": "complete",
+    "phase_D_unified_2x2_evaluator": "complete",
+    "phase_D_validation_smoke": {
+      "status": "passed",
+      "valid_ic_count": 2,
+      "result_directory": "ident/results/p0_4_phase_d_e_smoke_val_N2_20260915",
+      "strict_pairing": true
+    },
+    "phase_E_unified_nrmse": "complete",
+    "phase_F_statistics_smoke": {
+      "status": "passed",
+      "valid_ic_count": 2,
+      "result_directory": "ident/results/p0_4_phase_f1_stats_smoke_val_N2_20260915"
+    },
+    "phase_F1_freeze": "complete",
+    "phase_F2_final_test": "authorized_not_run",
+    "phase_F_started": true
+  },
+  "repository": {
+    "root": ".",
+    "git_commit": "1a8c25bd0e145054415d017e2884cfaafa7f94bc",
+    "working_tree_at_audit": {
+      "dirty": true,
+      "porcelain_entry_count": 50,
+      "note": "冻结发生在既有未提交改造工作区；为保证可追溯性，关键实现文件逐一记录SHA256，正式run_config另存完整porcelain清单。"
+    }
+  },
+  "implementation_files_sha256": {
+    "ident/scripts/run_p0_4_evaluation.py": "3d95f981ea6343b9a86cdffcd462323bfe536628ad4752df31e176908894f789",
+    "rl_td3/evaluate_td3.py": "00a97e9c88efda8923409f18858914e4c5aef55e1a73eb8b81adc1988061ab51",
+    "rl_td3/evasion_env.py": "0762803e38b57a6b255637ed65b031319d9d5f5f8b2054a7555dbe7935eb8de1",
+    "rl_td3/matlab/env_step.m": "84857e352cea98fc60fedf56d5480cc2a1382cc903e836c601417f44baf49db7",
+    "rl_td3/matlab/stage2_step.m": "e0e974911e398c295e7a7c19bb58e021e6fd4679dfc2e78921df3a557bc1a1d6",
+    "ident/matlab/stage2_ident_step.m": "c3a5eb64db61023054bce66c3c2421a809d4835a5b024d3cb397f69c5312ca8e",
+    "ident/ident_protocol.py": "78792dd2c9e7f0d6763aeeeb9edbac8b54401f0035ae9bc4cec68408664c4554",
+    "ident/ident_cfg.py": "721202c70ba960626beee5071fe83d843f3b0870e21dbf3b1aadf8dac65aa96c"
+  },
+  "policies": {
+    "td3": {
+      "label": "TD3",
+      "checkpoint": "td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model.zip",
+      "sha256": "e264801aba90956ade44bc104400772d5e9d79f747bc11e2dbe45c46592f014e",
+      "training_steps": 300000,
+      "checkpoint_status": "frozen_final",
+      "paper_alignment": "与会话总结指定的纯TD3候选及论文第6章300000步设置一致"
+    },
+    "bc_td3": {
+      "label": "BC-TD3",
+      "checkpoint": "rl_td3/checkpoints/training_300k_20260730_1917/best/best_model.zip",
+      "sha256": "859d7f9a89c3e672c592eb9f28d485fd255b35e45b6171b35c5b52bf2d7d27a7",
+      "training_steps": 300000,
+      "checkpoint_status": "frozen_final",
+      "paper_alignment": "与会话总结指定的BC-TD3候选及论文第6章300000步设置一致"
+    },
+    "shared_interface": {
+      "sb3_policy_class": "stable_baselines3.td3.policies.TD3Policy",
+      "observation_dimension": 13,
+      "checkpoint_observation_box": {
+        "low": -5.0,
+        "high": 5.0
+      },
+      "observation_normalization": {
+        "enabled": true,
+        "version": "obs_scale_0714_v1",
+        "scale": [
+          30000.0,
+          1200.0,
+          1.5707963267948966,
+          3.141592653589793,
+          30000.0,
+          1200.0,
+          1.5707963267948966,
+          3.141592653589793,
+          15000.0,
+          1.5707963267948966,
+          3.141592653589793,
+          1000.0,
+          1.0
+        ],
+        "clipped": false
+      },
+      "historical_actor_obs_mode": "truth",
+      "p0_4_actor_obs_mode": "filtered",
+      "action_dimension": 3,
+      "action_box": {
+        "low": -1.0,
+        "high": 1.0
+      },
+      "action_mapping_version": "ratio_log_box_v1",
+      "action_order": [
+        "rhoE_n",
+        "rhoT_n",
+        "gamma_n"
+      ],
+      "fixed_w": 10000.0
+    }
+  },
+  "actor_observation_contract": {
+    "dimension": 13,
+    "order": [
+      "r_MD1",
+      "rdot_MD1",
+      "qy_D1M",
+      "qz_D1M",
+      "r_MD2",
+      "rdot_MD2",
+      "qy_D2M",
+      "qz_D2M",
+      "r_MT",
+      "qy_MT",
+      "qz_MT",
+      "V_M",
+      "tgo_norm"
+    ],
+    "p0_4_sources": [
+      "D1_KF_range_posterior",
+      "D1_KF_range_rate_posterior",
+      "D1_noisy_LOS_elevation",
+      "D1_noisy_LOS_azimuth",
+      "D2_KF_range_posterior",
+      "D2_KF_range_rate_posterior",
+      "D2_noisy_LOS_elevation",
+      "D2_noisy_LOS_azimuth",
+      "target_KF_range_posterior",
+      "target_noisy_LOS_elevation",
+      "target_noisy_LOS_azimuth",
+      "onboard_self_speed_assumed_accurate",
+      "deterministic_remaining_evasion_time"
+    ],
+    "initial_and_subsequent_observations_share_contract": true,
+    "truth_mode_allowed_for_p0_4": false
+  },
+  "matlab_python_config": {
+    "dt": 0.1,
+    "dstar": 20.0,
+    "KD1": 4.0,
+    "KD2": 4.0,
+    "KM": 3.0,
+    "g0": 9.81,
+    "coeff_modes": [
+      "analytic_noisy",
+      "sparse_ffrls"
+    ],
+    "ident_apply_cmd": true,
+    "actor_obs_mode": "filtered",
+    "sigma_scale": 30.0,
+    "sigma_q": 0.05235987755982989,
+    "sigma_qdot": 0.03,
+    "sigma_theta": 0.05235987755982989,
+    "sigma_psi": 0.05235987755982989,
+    "sigma_r": 10.0,
+    "sigma_rdot": 0.5,
+    "kf_qj": 10000.0,
+    "kf_sigma_a0": 50.0,
+    "rls_lambda": 0.98,
+    "rls_mu": 0.001,
+    "rls_eta": 0.1,
+    "rls_P0": 10000.0,
+    "rls_P_trace_max": 1.0,
+    "rls_r0": 10000.0,
+    "rls_a0": 50.0,
+    "noise_seed_rule": "base_noise_seed + local_idx"
+  },
+  "diagnostic_protocol": {
+    "info_vector_length": 96,
+    "theta_analytic_noisy_causal_slice_matlab": "86:96",
+    "theta_analytic_noisy_causal_slice_python": "85:96",
+    "causal_alignment": "estimate[k] versus vartheta[k-1]"
+  },
+  "unified_identification_metric": {
+    "name": "componentwise_scaled_parameter_nrmse",
+    "scales": {
+      "A21": 10000.0,
+      "B1_B2": 50.0,
+      "C1": 1.0
+    },
+    "component_denominator": "max(RMS(scaled_truth_j), 1.0)",
+    "aggregation": "RMS of 11 component NRMSE values",
+    "burn_in_steps": 5,
+    "report_full_and_post_burn_in": true
+  },
+  "paper_sync": {
+    "authoritative_after_final_freeze": "matlab_python_config中的冻结值",
+    "known_differences": [
+      {
+        "field": "sigma_r",
+        "protocol_value": "10 m",
+        "paper_draft_value": "5 m"
+      },
+      {
+        "field": "kf_sigma_a0",
+        "protocol_value": "50 m/s^2",
+        "paper_draft_value": "18g"
+      },
+      {
+        "field": "kf_process_noise",
+        "protocol_value": "kf_qj=10000（离散Q矩阵强度参数）",
+        "paper_draft_value": "sigma_j=20 m/s^3/sqrt(Hz)"
+      }
+    ],
+    "resolution": "Phase F1已冻结机器协议；论文必须按本协议同步，不得为匹配临时文稿改动冻结参数。"
+  },
+  "success_criteria": {
+    "dual_ncv_evasion": "r_MD1_min >= 6 m and r_MD2_min >= 6 m",
+    "target_arrival": "r_AT_end <= 10 m",
+    "r_AT_end_implementation": "stage3_rollout返回的r_minT（最近接/终端脱靶量代理），Python字段r_minT；最终结果统一重命名为r_AT_end",
+    "joint_task": "dual_ncv_evasion and target_arrival",
+    "kill_radius_m": 6.0,
+    "target_arrival_threshold_m": 10.0
+  },
+  "datasets": {
+    "training": {
+      "path": "samples_clean.mat",
+      "role": "training",
+      "access_before_F2": "allowed"
+    },
+    "validation": {
+      "path": "samples_clean_val.mat",
+      "role": "validation",
+      "access_before_F2": "allowed"
+    },
+    "legacy_observed_test": {
+      "path": "samples_clean_test_0728.mat",
+      "role": "development_only_contaminated",
+      "reason": "前20个有效初态曾参与P_trace_max预研，不能再描述为完全盲测",
+      "access_before_F2": "allowed",
+      "access_note": "允许其它MC与开发代码正常读取；该标记只约束P0-4论文最终统计口径，不实施代码门禁",
+      "eligible_as_final_test": false
+    },
+    "final_test": {
+      "strategy": "independent_300_generated_before_phase_B_and_reserved_until_freeze",
+      "planned_path": "samples_clean_test.mat",
+      "planned_generator": "expert_trajectory/lhsyangbenshengcheng_beta_0_test.m",
+      "planned_valid_samples": 300,
+      "generation_seed": 2026091501,
+      "status": "ready_reserved",
+      "sha256": "b9b9f2dbf9679dc774a8c4c231a51d343b2921c814ca2bb39047b43d090a24a4",
+      "stored_rows": 444,
+      "valid_samples": 300,
+      "access_before_F2": "allowed_but_not_used_for_p0_4_selection",
+      "run_count_limit_after_freeze": 1
+    }
+  },
+  "phase_guards": {
+    "enforcement": "none",
+    "code_access_gate_enabled": false,
+    "dataset_roles_are_metadata_only": true,
+    "legacy_observed_test_forbidden": false,
+    "final_test_advisory_requires": [
+      "phase_F1_complete",
+      "protocol_status_frozen",
+      "final_test_data_status_ready",
+      "all_models_and_hyperparameters_frozen"
+    ],
+    "test_role_hyperparameter_override_forbidden_by_code": false,
+    "test_role_checkpoint_selection_forbidden_by_code": false
+  },
+  "freeze_state": {
+    "models_frozen_for_p0_4": true,
+    "hyperparameters_finally_frozen": true,
+    "protocol_finally_frozen": true,
+    "final_test_authorized": true
+  },
+  "provenance_note": "Phase F1依据验证集2 IC四组冒烟、统计输出冒烟、checkpoint与关键实现SHA256完成冻结。正式测试只允许使用上述配置运行一次，不根据结果回到验证集调参。"
+}

@@ -16,9 +16,11 @@ function core = stage2_core_init(cfg_in)
 %   辨识相关 cfg（默认 analytic_truth，不影响旧入口）:
 %     .coeff_mode = 'analytic_truth' | 'analytic_noisy' | 'sparse_ffrls'
 %     .ident_apply_cmd = true/false（false=影子：估参但不改指令）
+%     .actor_obs_mode = 'truth' | 'noisy' | 'filtered'
 %     .sigma_scale .sigma_q .sigma_qdot .sigma_theta .sigma_psi .sigma_r .sigma_rdot
 %     .kf_qj .kf_sigma_a0
 %     .rls_lambda .rls_mu .rls_eta .rls_P0 .rls_P_trace_max .rls_r0 .rls_a0
+%     .rls_gate_r_min .rls_gate_tgo_min（端局回归门控；0=关闭）
 %     .noise_seed
 
     ident_addpath();
@@ -42,6 +44,7 @@ function core = stage2_core_init(cfg_in)
     % ---- 参数辨识 / 测量噪声（Plan 1）----
     d.coeff_mode       = 'analytic_truth';
     d.ident_apply_cmd  = true;
+    d.actor_obs_mode   = 'truth';            % 历史checkpoint兼容默认
     d.sigma_scale      = 30.0;              % GAIL 2026-08-06 标定倍率
     d.sigma_q          = 3.0 * pi / 180;    % rad (=0.1 deg × 30)
     d.sigma_qdot       = 0.03;              % rad/s (=0.001 × 30)
@@ -58,6 +61,8 @@ function core = stage2_core_init(cfg_in)
     d.rls_P_trace_max  = 1.0;              % 20 IC 影子扫描选定；Inf=关闭
     d.rls_r0           = 1.0e4;
     d.rls_a0           = 50.0;
+    d.rls_gate_r_min   = 0.0;              % 0=关闭端局门控（P0-4 冻结行为）
+    d.rls_gate_tgo_min = 0.0;              % 0=关闭端局门控（P0-4 冻结行为）
     d.noise_seed       = 0;
 
     fn = fieldnames(d);
@@ -68,6 +73,11 @@ function core = stage2_core_init(cfg_in)
     end
     cfg_in.coeff_mode = char(cfg_in.coeff_mode);
     cfg_in.ident_apply_cmd = logical(cfg_in.ident_apply_cmd);
+    cfg_in.actor_obs_mode = char(cfg_in.actor_obs_mode);
+    if ~any(strcmp(cfg_in.actor_obs_mode, {'truth','noisy','filtered'}))
+        error('stage2_core_init:BadActorObsMode', ...
+            'actor_obs_mode须为truth、noisy或filtered');
+    end
 
     core = struct();
     core.cfg = cfg_in;

@@ -1,4 +1,4 @@
-"""参数辨识配置与 MATLAB/Python 85维诊断协议测试。"""
+"""参数辨识配置与 MATLAB/Python 96维诊断协议测试。"""
 
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ def test_ident_defaults_and_removed_kf_covariance_fields():
     assert IDENT_CLI_DEFAULTS["sigma_r"] == 10.0
     assert IDENT_CLI_DEFAULTS["sigma_rdot"] == 0.5
     assert IDENT_CLI_DEFAULTS["rls_P_trace_max"] == 1.0
+    assert IDENT_CLI_DEFAULTS["actor_obs_mode"] == "truth"
     assert "kf_sigma_r" not in IDENT_CLI_DEFAULTS
     assert "kf_sigma_rdot" not in IDENT_CLI_DEFAULTS
 
@@ -30,11 +31,15 @@ def test_ident_defaults_and_removed_kf_covariance_fields():
     cfg = matlab_cfg_from_args(parser.parse_args([]))
     assert cfg["sigma_r"] == 10.0
     assert cfg["sigma_rdot"] == 0.5
+    assert cfg["actor_obs_mode"] == "truth"
     assert "kf_sigma_r" not in cfg
     assert "kf_sigma_rdot" not in cfg
 
+    filtered = parser.parse_args(["--actor-obs-mode", "filtered"])
+    assert matlab_cfg_from_args(filtered)["actor_obs_mode"] == "filtered"
 
-def test_ident_protocol_85_slices_and_causal_aliases():
+
+def test_ident_protocol_96_slices_and_causal_aliases():
     vec = np.arange(IDENT_INFO_LEN, dtype=np.float64)
     vec[57:68] = np.nan  # 首拍 causal 真值允许为 NaN
     diag = parse_ident_diag(vec)
@@ -48,6 +53,9 @@ def test_ident_protocol_85_slices_and_causal_aliases():
     np.testing.assert_array_equal(diag["theta_true_current"], vec[68:79])
     np.testing.assert_array_equal(diag["frozen_model_residual"], vec[79:82])
     np.testing.assert_array_equal(diag["qdot_err_command"], vec[82:85])
+    np.testing.assert_array_equal(
+        diag["theta_analytic_noisy_causal"], vec[85:96]
+    )
     np.testing.assert_allclose(
         diag["theta_true"], diag["theta_true_causal"], equal_nan=True
     )
@@ -62,6 +70,6 @@ def test_base_protocol_has_no_ident_diag():
 
 if __name__ == "__main__":
     test_ident_defaults_and_removed_kf_covariance_fields()
-    test_ident_protocol_85_slices_and_causal_aliases()
+    test_ident_protocol_96_slices_and_causal_aliases()
     test_base_protocol_has_no_ident_diag()
     print("protocol tests: 3 passed")

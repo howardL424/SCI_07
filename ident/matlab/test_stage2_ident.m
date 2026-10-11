@@ -4,7 +4,7 @@ function ok = test_stage2_ident()
 %   ok = test_stage2_ident()
 %
 %   覆盖量测协方差、KF、因果回归、ZOH真值、拟冻结残差、
-%   三种时间轴、协方差迹投影、固定参数收敛及85维诊断协议。
+%   三种时间轴、协方差迹投影、固定参数收敛及96维诊断协议。
 
     this_dir = fileparts(mfilename('fullpath'));
     gail_root = fullfile(this_dir, '..', '..');
@@ -24,8 +24,10 @@ function ok = test_stage2_ident()
         'RLS 协方差迹投影', ...
         '固定参数带噪持续激励收敛', ...
         'episode 重置', ...
-        '85维 MATLAB 诊断协议', ...
-        '投影系数与 coeffs 入口回归'};
+        '96维 MATLAB 诊断协议', ...
+        '投影系数与 coeffs 入口回归', ...
+        '13维 Actor 观测数据源', ...
+        '跨方法逐episode噪声严格配对'};
     tests = { ...
         @test_stage2_core_equiv, ...
         @local_test_config_and_Rxi, ...
@@ -38,7 +40,9 @@ function ok = test_stage2_ident()
         @local_test_fixed_parameter_convergence, ...
         @local_test_reset, ...
         @local_test_info_protocol, ...
-        @local_test_coeff_regressions};
+        @local_test_coeff_regressions, ...
+        @local_test_actor_observation_sources, ...
+        @local_test_strict_episode_noise_pairing};
 
     ok = true;
     for k = 1:numel(tests)
@@ -80,7 +84,7 @@ function ok = local_test_config_and_Rxi()
         ~isfield(core.cfg, 'kf_sigma_rdot'), ...
         '配置仍生成已删除的 kf_sigma_r/kf_sigma_rdot') && ok;
 
-    bad = {-1, 0};
+    bad = {-1};
     for i = 1:numel(bad)
         ok = local_expect_error( ...
             @() stage2_ident_init(struct('sigma_r', bad{i}, 'sigma_rdot', 0.5)), ...
@@ -468,19 +472,19 @@ function ok = local_test_info_protocol()
     clear env_step
     [~, state1, ~, ~, info1] = ...
         env_step(state0, 0, 5, 0, action, cfg);
-    ok = local_check(numel(info1) == 85, ...
-        sprintf('首拍 info_vec 长度应为85，实际%d', numel(info1))) && ok;
+    ok = local_check(numel(info1) == 96, ...
+        sprintf('首拍 info_vec 长度应为96，实际%d', numel(info1))) && ok;
     ok = local_check(all(isnan(info1(19:29))) && ...
-        all(isnan(info1(58:68))), ...
-        '首拍 causal 参数误差/真值应为 NaN') && ok;
+        all(isnan(info1(58:68))) && all(isnan(info1(86:96))), ...
+        '首拍 causal 参数误差/真值/含噪解析估计应为 NaN') && ok;
     ok = local_check(all(isfinite(info1(47:57))) && ...
         all(isfinite(info1(69:79))), ...
         '首拍 theta_hat/theta_true_current 应为有限值') && ok;
 
     [~, ~, ~, ~, info2] = ...
         env_step(state1, 0.1, 5, 0, action, cfg);
-    ok = local_check(numel(info2) == 85, ...
-        '第二拍 info_vec 长度应保持85') && ok;
+    ok = local_check(numel(info2) == 96, ...
+        '第二拍 info_vec 长度应保持96') && ok;
     ok = local_check(max(abs(info2(58:68) - info1(69:79))) < 1e-12, ...
         'MATLAB 协议 causal 真值未映射上一拍 current 真值') && ok;
     ok = local_check(max(abs(info2(19:29) - ...
@@ -527,6 +531,155 @@ function ok = local_test_coeff_regressions()
         '式(13)/(15) B系数投影恒等式失败') && ok;
 end
 
+function ok = local_test_actor_observation_sources()
+    ok = true;
+    state0 = local_state();
+    Tev = 5;
+    action = [0.1; -0.2; 0.3];
+
+    cfg_t = local_cfg();
+    cfg_t.actor_obs_mode = 'truth';
+    core_t = stage2_core_init(cfg_t);
+    truth0 = stage2_obs_from_abs(core_t, state0, 0, Tev);
+    actor_truth0 = stage2_actor_obs_from_abs(core_t, state0, 0, Tev);
+    ok = local_check(max(abs(actor_truth0-truth0)) < 1e-14, ...
+        'truth Actor观测未复现历史13维真值路径') && ok;
+
+    cfg_z = cfg_t;
+    cfg_z.coeff_mode = 'sparse_ffrls';
+    cfg_z.sigma_r = 0;
+    cfg_z.sigma_rdot = 0;
+    cfg_z.sigma_q = 0;
+    cfg_z.sigma_qdot = 0;
+    cfg_z.sigma_theta = 0;
+    cfg_z.sigma_psi = 0;
+    cfg_z.actor_obs_mode = 'noisy';
+    core_zn = stage2_core_init(cfg_z);
+    noisy_zero0 = stage2_actor_obs_from_abs(core_zn, state0, 0, Tev);
+    ok = local_check(max(abs(noisy_zero0-truth0)) < 1e-14, ...
+        '零噪声时noisy初始观测不等于真值观测') && ok;
+
+    cfg_z.actor_obs_mode = 'filtered';
+    core_zf = stage2_core_init(cfg_z);
+    filtered_zero0 = stage2_actor_obs_from_abs(core_zf, state0, 0, Tev);
+    [filtered_zero1, state_z1, t_z1] = ...
+        stage2_step(core_zf, state0, 0, Tev, action, []);
+    truth_z1 = stage2_obs_from_abs(core_zf, state_z1, t_z1, Tev);
+    ok = local_check(max(abs(filtered_zero0-truth0)) < 1e-14 && ...
+        max(abs(filtered_zero1-truth_z1)) < 1e-8, ...
+        '零噪声时filtered初始或后续观测不等于真值观测') && ok;
+
+    cfg_f = local_cfg();
+    cfg_f.coeff_mode = 'sparse_ffrls';
+    cfg_f.actor_obs_mode = 'filtered';
+    cfg_f.noise_seed = 123;
+    core_f = stage2_core_init(cfg_f);
+    obs_f0a = stage2_actor_obs_from_abs(core_f, state0, 0, Tev);
+    obs_f0b = stage2_actor_obs_from_abs(core_f, state0, 0, Tev);
+    ok = local_check(max(abs(obs_f0a-obs_f0b)) < 1e-14, ...
+        '相同seed与IC的初始Actor观测不可复现') && ok;
+    ok = local_check(max(abs(obs_f0a-truth0)) > 1e-6, ...
+        '非零噪声filtered初始观测仍恒等于真值') && ok;
+
+    [obs_f1a, state_f1, t_f1, ~, ident_f1] = ...
+        stage2_step(core_f, state0, 0, Tev, action, []);
+    [obs_f1b, ~, ~] = stage2_step(core_f, state0, 0, Tev, action, []);
+    ok = local_check(max(abs(obs_f1a-obs_f1b)) < 1e-12, ...
+        '相同seed与IC的逐拍Actor观测不可复现') && ok;
+
+    [~, ~, ~, fact_f2] = ...
+        stage2_step(core_f, state_f1, t_f1, Tev, action, ident_f1);
+    d2 = fact_f2.ident_diag;
+    expected_ranges = [d2.r_hat(1); d2.rdot_hat(1); ...
+        d2.r_hat(2); d2.rdot_hat(2); d2.r_hat(3)];
+    actual_ranges = obs_f1a([1;2;5;6;9]);
+    ok = local_check(max(abs(actual_ranges-expected_ranges)) < 1e-8, ...
+        'filtered Actor距离/距离率未与下一拍辨识KF后验对齐') && ok;
+    expected_los = [d2.meas_qy(1); d2.meas_qz(1); ...
+        d2.meas_qy(2); d2.meas_qz(2)];
+    actual_los = obs_f1a([3;4;7;8]);
+    ok = local_check(max(abs(actual_los-expected_los)) < 1e-12, ...
+        'Actor D1/D2 LOS角未使用辨识器同源含噪量测') && ok;
+    ok = local_check(obs_f1a(12) == state_f1(6) && ...
+        abs(obs_f1a(13) - max(0,(Tev-t_f1)/Tev)) < 1e-14, ...
+        'Actor自身速度或tgo_norm不符合协议') && ok;
+
+    cfg_other = cfg_f;
+    cfg_other.noise_seed = cfg_f.noise_seed + 1;
+    core_other = stage2_core_init(cfg_other);
+    obs_other = stage2_actor_obs_from_abs(core_other, state0, 0, Tev);
+    ok = local_check(max(abs(obs_other-obs_f0a)) > 1e-6, ...
+        '不同noise_seed未产生不同Actor噪声轨迹') && ok;
+end
+
+function ok = local_test_strict_episode_noise_pairing()
+    ok = true;
+    state_a = local_state();
+    state_s = state_a;
+    Tev = 5;
+    action = [0.15; -0.25; 0.2];
+
+    cfg_a = local_cfg();
+    cfg_a.coeff_mode = 'analytic_noisy';
+    cfg_a.actor_obs_mode = 'filtered';
+    cfg_a.noise_seed = 301;
+    cfg_s = cfg_a;
+    cfg_s.coeff_mode = 'sparse_ffrls';
+    core_a = stage2_core_init(cfg_a);
+    core_s = stage2_core_init(cfg_s);
+    ident_a = [];
+    ident_s = [];
+    t_a = 0;
+    t_s = 0;
+    first_noise = [];
+    first_noisy_theta = [];
+
+    for k = 1:4
+        [~, state_a, t_a, fact_a, ident_a] = ...
+            stage2_step(core_a, state_a, t_a, Tev, action, ident_a);
+        [~, state_s, t_s, fact_s, ident_s] = ...
+            stage2_step(core_s, state_s, t_s, Tev, action, ident_s);
+        da = fact_a.ident_diag;
+        ds = fact_s.ident_diag;
+        noise_a = [da.meas_r-da.r_true; da.meas_rdot-da.rdot_true];
+        noise_s = [ds.meas_r-ds.r_true; ds.meas_rdot-ds.rdot_true];
+        ok = local_check(max(abs(noise_a-noise_s)) < 1e-10, ...
+            sprintf('第%d拍 analytic_noisy/sparse_ffrls 噪声未配对', k)) && ok;
+        if k == 1
+            first_noise = noise_a;
+            first_noisy_theta = da.theta_noisy;
+            ok = local_check(all(isnan(local_flat_theta( ...
+                da.theta_noisy_causal))), ...
+                '首拍含噪解析因果估计应为 NaN') && ok;
+        elseif k == 2
+            ok = local_check(max(abs(local_flat_theta( ...
+                da.theta_noisy_causal)-local_flat_theta(first_noisy_theta))) ...
+                < 1e-12, '含噪解析参数未按上一拍因果对齐') && ok;
+        end
+    end
+
+    cfg_other = cfg_a;
+    cfg_other.noise_seed = cfg_a.noise_seed + 1;
+    core_other = stage2_core_init(cfg_other);
+    [~, ~, ~, fact_other] = ...
+        stage2_step(core_other, local_state(), 0, Tev, action, []);
+    d_other = fact_other.ident_diag;
+    other_noise = [d_other.meas_r-d_other.r_true; ...
+        d_other.meas_rdot-d_other.rdot_true];
+    ok = local_check(max(abs(other_noise-first_noise)) > 1e-6, ...
+        '相邻episode使用不同seed时仍重复相同噪声序列') && ok;
+
+    clear env_step
+    [~, state_1, ~, ~, info_1] = ...
+        env_step(local_state(), 0, Tev, 0, action, cfg_s);
+    env_step(state_1, 0.1, Tev, 0, action, cfg_s);
+    [~, ~, ~, ~, info_reset] = ...
+        env_step(local_state(), 0, Tev, 0, action, cfg_s);
+    ok = local_check(all(isnan(info_reset(86:96))) && ...
+        max(abs(info_reset(10:15)-info_1(10:15))) < 1e-12, ...
+        't=0新episode未同时重置辨识状态和噪声拍号') && ok;
+end
+
 function cfg = local_cfg()
     cfg = struct( ...
         'dt', 0.1, 'g0', 9.81, ...
@@ -538,6 +691,7 @@ function cfg = local_cfg()
         'rls_P0', 1e4, 'rls_P_trace_max', 1.0, ...
         'rls_r0', 1e4, 'rls_a0', 50, ...
         'KD1', 4, 'KD2', 4, 'noise_seed', 0, ...
+        'actor_obs_mode', 'truth', ...
         'dstar', 20, 'w', 1e4);
 end
 

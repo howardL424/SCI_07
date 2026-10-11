@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 IDENT_CLI_DEFAULTS = dict(
     coeff_mode="analytic_truth",
+    actor_obs_mode="truth",
     ident_apply_cmd=True,
     sigma_scale=30.0,
     sigma_q=3.0 * 3.141592653589793 / 180.0,  # 0.1 deg × 30
@@ -27,6 +28,8 @@ IDENT_CLI_DEFAULTS = dict(
     rls_P_trace_max=1.0,  # 20 IC 影子扫描选定；inf=关闭
     rls_r0=1.0e4,
     rls_a0=50.0,
+    rls_gate_r_min=0.0,  # 端局回归门控；0=关闭，保持 P0-4 冻结行为
+    rls_gate_tgo_min=0.0,  # 端局回归门控；0=关闭，保持 P0-4 冻结行为
     noise_seed=0,
 )
 
@@ -45,6 +48,13 @@ def add_ident_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         "--ident-shadow",
         action="store_true",
         help="影子模式：跑 Kalman/RLS 诊断但不改指令（仅 sparse_ffrls 有意义）",
+    )
+    g.add_argument(
+        "--actor-obs-mode",
+        type=str,
+        default=IDENT_CLI_DEFAULTS["actor_obs_mode"],
+        choices=["truth", "noisy", "filtered"],
+        help="13维Actor观测来源；P0-4正式实验须用noisy或filtered",
     )
     g.add_argument(
         "--sigma-scale",
@@ -99,6 +109,18 @@ def add_ident_args(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     g.add_argument("--rls-r0", type=float, default=IDENT_CLI_DEFAULTS["rls_r0"])
     g.add_argument("--rls-a0", type=float, default=IDENT_CLI_DEFAULTS["rls_a0"])
     g.add_argument(
+        "--rls-gate-r-min",
+        type=float,
+        default=IDENT_CLI_DEFAULTS["rls_gate_r_min"],
+        help="KF 后验距离低于该值时暂停该通道回归 (m)；0=关闭",
+    )
+    g.add_argument(
+        "--rls-gate-tgo-min",
+        type=float,
+        default=IDENT_CLI_DEFAULTS["rls_gate_tgo_min"],
+        help="KF 后验剩余时间低于该值时暂停该通道回归 (s)；0=关闭",
+    )
+    g.add_argument(
         "--noise-seed",
         type=int,
         default=IDENT_CLI_DEFAULTS["noise_seed"],
@@ -116,6 +138,9 @@ def matlab_cfg_from_args(
     apply_cmd = not bool(getattr(args, "ident_shadow", False))
     cfg: Dict[str, Any] = {
         "coeff_mode": str(args.coeff_mode),
+        "actor_obs_mode": str(
+            getattr(args, "actor_obs_mode", IDENT_CLI_DEFAULTS["actor_obs_mode"])
+        ),
         "ident_apply_cmd": apply_cmd,
         "sigma_scale": float(getattr(args, "sigma_scale", IDENT_CLI_DEFAULTS["sigma_scale"])),
         "sigma_q": float(getattr(args, "sigma_q", IDENT_CLI_DEFAULTS["sigma_q"])),
@@ -135,6 +160,12 @@ def matlab_cfg_from_args(
         ),
         "rls_r0": float(getattr(args, "rls_r0", IDENT_CLI_DEFAULTS["rls_r0"])),
         "rls_a0": float(getattr(args, "rls_a0", IDENT_CLI_DEFAULTS["rls_a0"])),
+        "rls_gate_r_min": float(
+            getattr(args, "rls_gate_r_min", IDENT_CLI_DEFAULTS["rls_gate_r_min"])
+        ),
+        "rls_gate_tgo_min": float(
+            getattr(args, "rls_gate_tgo_min", IDENT_CLI_DEFAULTS["rls_gate_tgo_min"])
+        ),
         "noise_seed": int(args.noise_seed),
     }
     if action_mapping is not None:

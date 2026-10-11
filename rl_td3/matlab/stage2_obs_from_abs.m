@@ -1,5 +1,6 @@
 function obs = stage2_obs_from_abs(core, state_abs, t, Tev)
-%STAGE2_OBS_FROM_ABS  由绝对态构造 13 维相对观测（不推进动力学）。
+%STAGE2_OBS_FROM_ABS  由绝对态构造真值13维相对观测（不推进动力学）。
+% 含噪/滤波Actor观测统一由 stage2_actor_obs_from_abs 构造。
 
     H = core.H;
     M  = state_abs(1:6)';

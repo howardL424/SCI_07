@@ -23,6 +23,7 @@ function [obs, state_abs, Tev, zT0, ok] = env_reset(row, cfg_in)
 %      11  qz_MT    M→T 方位角 (rad)
 %      12  V_M      攻弹速度 (m/s)
 %      13  tgo_norm 归一化剩余规避时间 =1 (初始)
+%     观测数据源由 cfg_in.actor_obs_mode=truth|noisy|filtered 显式指定。
 %     state_abs  [18×1 double]  绝对状态 [M(6); D1(6); D2(6)]，供 env_step 使用
 %     Tev        规避段估计时长 (s)
 %     zT0        规避段开始时攻-目标 ZEM (m)，用于 reward 归一化
@@ -59,20 +60,8 @@ function [obs, state_abs, Tev, zT0, ok] = env_reset(row, cfg_in)
     D2 = tau.D2(:, i0)';
 
     Tev  = max(tau.t(i_e) - tau.t(i0), 1.0);   % 防零除
-    T_pos = [0, 0, 0];
-
-    % ---- 计算初始 13维 obs ----
-    H = evasion_helpers();
-    [qy_D1M, qz_D1M, r_MD1] = H.computeLOS(D1(1:3), M(1:3));
-    [qy_D2M, qz_D2M, r_MD2] = H.computeLOS(D2(1:3), M(1:3));
-    [qy_MT,  qz_MT,  r_MT]  = H.computeLOS(M(1:3),  T_pos);
-    [rdot_MD1, ~, ~]         = H.computeMDDot(M, D1, r_MD1, qy_D1M, qz_D1M);
-    [rdot_MD2, ~, ~]         = H.computeMDDot(M, D2, r_MD2, qy_D2M, qz_D2M);
-
-    obs = [r_MD1; rdot_MD1; qy_D1M; qz_D1M;
-           r_MD2; rdot_MD2; qy_D2M; qz_D2M;
-           r_MT;  qy_MT;   qz_MT;  M(6);  1.0];   % 13×1, tgo_norm=1
-
     zT0       = target_zem(M);
     state_abs = [M(:); D1(:); D2(:)];   % 18×1
+    core = stage2_core_init(cfg_in);
+    obs = stage2_actor_obs_from_abs(core, state_abs, 0.0, Tev, []);
 end

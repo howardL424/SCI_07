@@ -1,7 +1,7 @@
 """纯 TD3 参数辨识配对闭环消融与蒙特卡洛门控。
 
 默认在验证集前30个有效IC上运行四种模式；各模式使用同一IC和噪声种子。
-超参数冻结后，可显式指定测试集并令 ``--episodes 0`` 跑完整300组终验。
+数据集角色写入结果元数据，但脚本不实施代码级访问限制。
 
 用法：
   E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe \\
@@ -143,14 +143,22 @@ def _modes(args: argparse.Namespace) -> list[tuple[str, dict]]:
 _CONTINUOUS_METRICS = (
     "r_MD1_min",
     "r_MD2_min",
+    "r_MD_min",
     "r_minT",
+    "r_AT_end",
     "a_energy",
+    "energy_int",
+    "energy_kJ",
+    "energy_stage2_kJ",
+    "energy_stage3_kJ",
     "a_total_variation",
     "saturation_rate",
     "theta_causal_rmse",
     "theta_causal_tail_rmse",
     "theta_command_rmse",
     "theta_command_tail_rmse",
+    "theta_scaled_nrmse",
+    "theta_scaled_nrmse_post_burnin",
     "frozen_model_rmse",
     "frozen_model_tail_rmse",
     "a_cmd_rmse",
@@ -204,7 +212,10 @@ def _summarize_rows(rows: list[dict], cfg: dict) -> dict:
         {
             "local_idx": int(r["local_idx"]),
             "row_idx": int(r["row_idx"]),
+            "noise_seed": int(r["noise_seed"]),
             "steps": int(r["steps"]),
+            "coeff_mode": str(r["coeff_mode"]),
+            "actor_obs_mode": str(r["actor_obs_mode"]),
             **{
                 key: bool(r[key])
                 for key in ("evade_ok", "strike_ok", "both_ok", "intercepted")
@@ -220,7 +231,10 @@ def _save_mode_metrics(out_dir: Path, mode_name: str, rows: list[dict]) -> None:
     payload = {
         "local_idx": np.asarray([r["local_idx"] for r in rows], dtype=np.int64),
         "row_idx": np.asarray([r["row_idx"] for r in rows], dtype=np.int64),
+        "noise_seed": np.asarray([r["noise_seed"] for r in rows], dtype=np.int64),
         "steps": np.asarray([r["steps"] for r in rows], dtype=np.int64),
+        "coeff_mode": np.asarray([r["coeff_mode"] for r in rows]),
+        "actor_obs_mode": np.asarray([r["actor_obs_mode"] for r in rows]),
     }
     for key in ("evade_ok", "strike_ok", "both_ok", "intercepted"):
         payload[key] = np.asarray([r[key] for r in rows], dtype=bool)
@@ -282,13 +296,6 @@ def _paired_comparison(
 
 def main() -> None:
     args = parse_args()
-    sample_name = Path(args.samples).name.lower()
-    if sample_name == "samples_clean_test.mat" and args.dataset_role != "test":
-        raise SystemExit(
-            "使用 samples_clean_test.mat 时必须显式指定 --dataset-role test"
-        )
-    if args.dataset_role == "test" and args.eta_grid:
-        raise SystemExit("测试集禁止 --eta-grid 调参；请先在验证集冻结超参数")
     model_path = args.model
     if not model_path.endswith(".zip"):
         zip_path = model_path + ".zip"
@@ -348,12 +355,14 @@ def main() -> None:
         rows = []
         for i in range(n_ic):
             # 每局独立噪声：noise_seed + local_idx，保证跨模式同 IC 对齐
-            cfg_i = dict(cfg)
-            cfg_i["noise_seed"] = int(args.noise_seed) + i
-            env.matlab_cfg = cfg_i
-            # 迫使下一拍 env_step 重建 cache（通过改 cfg 字段）
-            # MATLAB persistent 靠 cfg_cache_key；Python 每次 step 传 cfg
-            ep = run_episode(env, model, seed=args.seed if i == 0 else None, local_idx=i)
+            episode_noise_seed = int(args.noise_seed) + i
+            ep = run_episode(
+                env,
+                model,
+                seed=args.seed if i == 0 else None,
+                local_idx=i,
+                noise_seed=episode_noise_seed,
+            )
             if ep is None:
                 print(f"  [skip] local_idx={i}")
                 continue
@@ -400,6 +409,7 @@ def main() -> None:
             f"r1={st['r_MD1_min']['mean']:.1f} "
             f"r2={st['r_MD2_min']['mean']:.1f} "
             f"rT={st['r_minT']['mean']:.2f}  "
+            f"E={st['energy_kJ']['median']:.4f}kJ  "
             f"sat={100*st['saturation_rate']['mean']:.1f}%"
         )
 

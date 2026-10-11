@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 
-IDENT_INFO_LEN = 85
+IDENT_INFO_LEN = 96
 
 
 def parse_ident_diag(info_vec: np.ndarray) -> Optional[Dict[str, Any]]:
@@ -46,7 +46,7 @@ def parse_ident_diag(info_vec: np.ndarray) -> Optional[Dict[str, Any]]:
                 "theta_true_causal": theta_true_causal.copy(),
             }
         )
-    if vec.size >= IDENT_INFO_LEN:
+    if vec.size >= 85:
         theta_true_current = vec[68:79].copy()
         theta_hat = vec[46:57]
         diag.update(
@@ -57,4 +57,6 @@ def parse_ident_diag(info_vec: np.ndarray) -> Optional[Dict[str, Any]]:
                 "qdot_err_command": vec[82:85].copy(),
             }
         )
+    if vec.size >= IDENT_INFO_LEN:
+        diag["theta_analytic_noisy_causal"] = vec[85:96].copy()
     return diag

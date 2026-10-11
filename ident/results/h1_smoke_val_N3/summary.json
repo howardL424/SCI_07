@@ -1,0 +1,246 @@
+{
+  "task": "h1_shared_replay_diag",
+  "timestamp": "20260915_193820",
+  "model": "td3_baseline/checkpoints/training_300k_20260730_1917/best/best_model",
+  "samples": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean_val.mat",
+  "dataset_role": "validation",
+  "episodes": 3,
+  "shadow_mode": true,
+  "command_source": "analytic_truth",
+  "matlab_python_config": {
+    "coeff_mode": "sparse_ffrls",
+    "actor_obs_mode": "filtered",
+    "ident_apply_cmd": false,
+    "sigma_scale": 30.0,
+    "sigma_q": 0.05235987755982988,
+    "sigma_qdot": 0.03,
+    "sigma_theta": 0.05235987755982988,
+    "sigma_psi": 0.05235987755982988,
+    "sigma_r": 10.0,
+    "sigma_rdot": 0.5,
+    "kf_qj": 10000.0,
+    "kf_sigma_a0": 50.0,
+    "rls_lambda": 0.98,
+    "rls_mu": 0.001,
+    "rls_eta": 0.1,
+    "rls_P0": 10000.0,
+    "rls_P_trace_max": 1.0,
+    "rls_r0": 10000.0,
+    "rls_a0": 50.0,
+    "noise_seed": 0,
+    "action_mapping_version": "ratio_log_box_v1"
+  },
+  "nrmse": {
+    "definition": "componentwise_scaled_parameter_nrmse",
+    "shared_with": "evaluate_td3._theta_scaled_nrmse",
+    "burn_in_steps": 5,
+    "denominator_floor": 1.0,
+    "causal_alignment": "estimate[k] versus vartheta[k-1]",
+    "parameter_order": [
+      "A21_D1",
+      "B1_D1",
+      "B2_D1",
+      "C1_D1",
+      "A21_D2",
+      "B1_D2",
+      "B2_D2",
+      "C1_D2",
+      "A21_T",
+      "B1_T",
+      "B2_T"
+    ]
+  },
+  "estimators": {
+    "analytic_noisy": "含噪量测代入解析式（P0-4 无辨识基线）",
+    "sparse_ffrls": "因果稀疏 FF-RLS 估计",
+    "zoh_drift_floor": "神谕 vartheta_true[k] 对 vartheta_true[k-1]；与估计器无关的 ZOH 违背下界"
+  },
+  "nrmse__analytic_noisy": {
+    "n": 3,
+    "median": 2.9135783793857133,
+    "iqr_low": 2.4593789041986884,
+    "iqr_high": 2.983742354901559,
+    "p95": 3.039873535314236,
+    "max": 3.0539063304174054
+  },
+  "nrmse_post_burnin__analytic_noisy": {
+    "n": 3,
+    "median": 2.900578829808437,
+    "iqr_low": 2.376633461918127,
+    "iqr_high": 2.961114472747566,
+    "p95": 3.009542987098869,
+    "max": 3.0216501156866946
+  },
+  "nrmse_components_median__analytic_noisy": {
+    "A21_D1": 0.12154685926712568,
+    "B1_D1": 0.35573706103526886,
+    "B2_D1": 0.3997525704339951,
+    "C1_D1": 0.81501564564822,
+    "A21_D2": 0.11071085560465195,
+    "B1_D2": 0.3476856667514031,
+    "B2_D2": 0.3875171590324544,
+    "C1_D2": 0.694171869958073,
+    "A21_T": 8.001396444955985,
+    "B1_T": 0.456368915253028,
+    "B2_T": 0.46201699313326827
+  },
+  "nrmse_components_max__analytic_noisy": {
+    "A21_D1": 2.9066287528522,
+    "B1_D1": 4.127254018165689,
+    "B2_D1": 1.0407633266197234,
+    "C1_D1": 0.987015250054504,
+    "A21_D2": 2.8230210324926817,
+    "B1_D2": 3.5890966663346355,
+    "B2_D2": 1.3973331869539254,
+    "C1_D2": 0.9154948235519328,
+    "A21_T": 8.45083384197514,
+    "B1_T": 2.686929600919194,
+    "B2_T": 0.6547294287571193
+  },
+  "nrmse__sparse_ffrls": {
+    "n": 3,
+    "median": 43.39332308225711,
+    "iqr_low": 28.107384055917283,
+    "iqr_high": 51.97443526518738,
+    "p95": 58.839325011531585,
+    "max": 60.55554744811764
+  },
+  "nrmse_post_burnin__sparse_ffrls": {
+    "n": 3,
+    "median": 43.547258053508195,
+    "iqr_low": 28.171526580382157,
+    "iqr_high": 52.17128372300461,
+    "p95": 59.070504258601744,
+    "max": 60.79530939250103
+  },
+  "nrmse_components_median__sparse_ffrls": {
+    "A21_D1": 1.000000009633104,
+    "B1_D1": 0.6728148139950506,
+    "B2_D1": 1.325253743869489,
+    "C1_D1": 1.0715683917226402,
+    "A21_D2": 0.9999999661905933,
+    "B1_D2": 24.503772541758316,
+    "B2_D2": 41.775697369431526,
+    "C1_D2": 3.8804359123441454,
+    "A21_T": 2.0417503552976077,
+    "B1_T": 0.9397449012119118,
+    "B2_T": 0.9244404370495821
+  },
+  "nrmse_components_max__sparse_ffrls": {
+    "A21_D1": 1.3400870486527539,
+    "B1_D1": 0.9537869352777574,
+    "B2_D1": 2.060058821148938,
+    "C1_D1": 2.691022677948412,
+    "A21_D2": 0.9999999992368651,
+    "B1_D2": 143.3664922381228,
+    "B2_D2": 198.73237716819082,
+    "C1_D2": 15.305290668627148,
+    "A21_T": 3.976082551584353,
+    "B1_T": 1.80511168464104,
+    "B2_T": 0.9335447185843972
+  },
+  "nrmse__zoh_drift_floor": {
+    "n": 3,
+    "median": 3.3112330394543528,
+    "iqr_low": 2.8382312608231883,
+    "iqr_high": 4.6108835103077155,
+    "p95": 5.650603886990405,
+    "max": 5.910533981161078
+  },
+  "nrmse_post_burnin__zoh_drift_floor": {
+    "n": 3,
+    "median": 3.3112363091324513,
+    "iqr_low": 2.838259455674182,
+    "iqr_high": 4.610909561055605,
+    "p95": 5.650648162594129,
+    "max": 5.91058281297876
+  },
+  "nrmse_components_median__zoh_drift_floor": {
+    "A21_D1": 10.822761348548262,
+    "B1_D1": 0.09736766327813996,
+    "B2_D1": 0.1287550217799945,
+    "C1_D1": 0.3007911820606774,
+    "A21_D2": 1.3867307981733716,
+    "B1_D2": 0.36457194605700133,
+    "B2_D2": 0.44374605208956897,
+    "C1_D2": 0.5561506887980667,
+    "A21_T": 0.0939692305448862,
+    "B1_T": 0.03127105138907635,
+    "B2_T": 0.04838460081197571
+  },
+  "nrmse_components_max__zoh_drift_floor": {
+    "A21_D1": 19.541142861988433,
+    "B1_D1": 0.24809936838666438,
+    "B2_D1": 0.13704495605830028,
+    "C1_D1": 0.49741834478932134,
+    "A21_D2": 1.4134376664578228,
+    "B1_D2": 0.4579794554588158,
+    "B2_D2": 0.4574362176400859,
+    "C1_D2": 1.038537914195809,
+    "A21_T": 0.10907632477775901,
+    "B1_T": 0.031512768885812,
+    "B2_T": 0.06813679781379511
+  },
+  "frozen_model_rmse": {
+    "n": 3,
+    "median": 1344.1532500119076,
+    "iqr_low": 1026.7277817227687,
+    "iqr_high": 1795.991498978582,
+    "p95": 2157.4620981519215,
+    "max": 2247.8297479452563
+  },
+  "rddot_err_rmse_per_channel_median": [
+    11.18019766648944,
+    241.04231069970794,
+    8.739318450185486
+  ],
+  "p_trace_tail_per_channel_median": [
+    0.9549869701816021,
+    0.9550564220401486,
+    0.8105914544359585
+  ],
+  "per_episode": [
+    {
+      "local_idx": 0,
+      "row_idx": 0,
+      "noise_seed": 0,
+      "steps": 78,
+      "did_rls_rate": 0.9871794871794872,
+      "nrmse__analytic_noisy": 2.005179429011663,
+      "nrmse__sparse_ffrls": 12.821445029577452,
+      "nrmse__zoh_drift_floor": 3.3112330394543528,
+      "nrmse_post_burnin__analytic_noisy": 1.8526880940278168,
+      "nrmse_post_burnin__sparse_ffrls": 12.79579510725612,
+      "nrmse_post_burnin__zoh_drift_floor": 3.3112363091324513,
+      "frozen_model_rmse": 1344.1532500119076
+    },
+    {
+      "local_idx": 1,
+      "row_idx": 1,
+      "noise_seed": 1,
+      "steps": 96,
+      "did_rls_rate": 0.9895833333333334,
+      "nrmse__analytic_noisy": 2.9135783793857133,
+      "nrmse__sparse_ffrls": 60.55554744811764,
+      "nrmse__zoh_drift_floor": 2.3652294821920234,
+      "nrmse_post_burnin__analytic_noisy": 2.900578829808437,
+      "nrmse_post_burnin__sparse_ffrls": 60.79530939250103,
+      "nrmse_post_burnin__zoh_drift_floor": 2.3652826022159124,
+      "frozen_model_rmse": 2247.8297479452563
+    },
+    {
+      "local_idx": 2,
+      "row_idx": 2,
+      "noise_seed": 2,
+      "steps": 78,
+      "did_rls_rate": 0.9871794871794872,
+      "nrmse__analytic_noisy": 3.0539063304174054,
+      "nrmse__sparse_ffrls": 43.39332308225711,
+      "nrmse__zoh_drift_floor": 5.910533981161078,
+      "nrmse_post_burnin__analytic_noisy": 3.0216501156866946,
+      "nrmse_post_burnin__sparse_ffrls": 43.547258053508195,
+      "nrmse_post_burnin__zoh_drift_floor": 5.91058281297876,
+      "frozen_model_rmse": 709.3023134336295
+    }
+  ]
+}
