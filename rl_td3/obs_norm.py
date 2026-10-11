@@ -15,6 +15,14 @@ OBS_DIM = 13
 
 # 与 MATLAB transition_schema_meta.obs_norm_version 保持同步
 OBS_NORM_VERSION = "obs_scale_0714_v1"
+OBS_SCHEMA_VERSION = "stage2_relative_obs_13d_v1"
+
+# ── 16D 扩展（加法式新增；13D 默认路径不受影响） ──
+# rel13_qmag16_v1 = [obs13, Q1, Q2, QT]，详见 rl_td3/obs_qmag.py 与
+# rl_td3/matlab/stage2_qmag_from_abs.m。默认训练仍使用 13D。
+OBS_SCHEMA_REL13_QMAG16 = "rel13_qmag16_v1"
+OBS_DIM_16 = 16
+OBS16_NORM_VERSION = "obs_scale_0714_v1+qmag_q995_v1"
 
 # [r_MD1, rdot_MD1, qy_D1, qz_D1, r_MD2, rdot_MD2, qy_D2, qz_D2,
 #  r_MT, qy_MT, qz_MT, V_M, tgo_norm]

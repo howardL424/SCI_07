@@ -15,6 +15,8 @@ function out = simulate_baseline_episode(M0, D10, D20, mode, cfg)
 %
 %   输出 out 字段：
 %     r_MD1_min, r_MD2_min, r_minT, intercepted, evade_ok, strike_ok, both_ok, t_end
+%     energy_int, energy_kJ          全过程 ∫||a_M||²dt 及 0.5*∫/1000 [kJ]
+%     energy_from_pen_kJ             规避触发后至结束（含末端 PN）
 
     if nargin < 5 || isempty(cfg)
         cfg = struct();
@@ -57,6 +59,8 @@ function out = simulate_baseline_episode(M0, D10, D20, mode, cfg)
     flag_cpa = 0;
     r_MT_prev = inf;
     stage = 1;
+    energy_int = 0;
+    energy_int_from_pen = 0;
 
     % 噪声状态：按 noise_hold_dt 重采样并保持（避免 dt=1ms 时等价噪声过强）
     noise = struct('draw', 0, 't_next', -inf, ...
@@ -143,6 +147,10 @@ function out = simulate_baseline_episode(M0, D10, D20, mode, cfg)
             end
         end
         a_M_cmd = saturate(a_M_cmd, max_a_M);
+        energy_int = energy_int + (a_M_cmd(1)^2 + a_M_cmd(2)^2) * dt;
+        if penetration_started
+            energy_int_from_pen = energy_int_from_pen + (a_M_cmd(1)^2 + a_M_cmd(2)^2) * dt;
+        end
 
         M = updateState(M, a_M_cmd, dt);
         D1 = updateState(D1, a_D1_cmd, dt);
@@ -190,6 +198,9 @@ function out = simulate_baseline_episode(M0, D10, D20, mode, cfg)
         'strike_ok', strike_ok, ...
         'both_ok', both_ok, ...
         't_end', t, ...
+        'energy_int', energy_int, ...
+        'energy_kJ', 0.5 * energy_int / 1000, ...
+        'energy_from_pen_kJ', 0.5 * energy_int_from_pen / 1000, ...
         'mode', lower(char(mode)));
 end
 

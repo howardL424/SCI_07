@@ -281,10 +281,13 @@ def _traj_intercepted(trans_intercepted, n: int) -> bool:
     return bool(np.any(a[:n]))
 
 
-def load_phys_transitions_from_expert_lib(expert_path: str) -> dict:
+def load_phys_transitions_from_expert_lib(expert_path: str, *, load_abs: bool = False) -> dict:
     """
     从新 schema expert_lib 直接读取物理 transition（无需 rebuild_*）。
     返回字段与 load_aligned_transitions 对齐；rewards 占位，由 reward_projection 填充。
+
+    可撤回性：默认 load_abs=False，返回字段与历史完全一致；
+    16D 实验显式传 load_abs=True 时才额外返回 state_abs / next_state_abs（[N,18]）。
     """
     results = _load_results(expert_path)
     trajs = _iter_trajectories(results)
@@ -302,6 +305,8 @@ def load_phys_transitions_from_expert_lib(expert_path: str) -> dict:
     source_idx_l: list[int] = []
     r_min1_l: list[float] = []
     r_min2_l: list[float] = []
+    state_abs_l: list[np.ndarray] = []
+    next_abs_l: list[np.ndarray] = []
     n_clip_total = 0
     tid = 0
 
@@ -358,6 +363,16 @@ def load_phys_transitions_from_expert_lib(expert_path: str) -> dict:
         next_l.append(ns)
         step_int_l.append(step_int)
         dones_l.append(done)
+        if load_abs:
+            sabs = _get_transition_field(traj, "state_abs")
+            nabs = _get_transition_field(traj, "next_state_abs")
+            if sabs is None or nabs is None:
+                raise ValueError(
+                    f"轨迹 source_idx={src_i+1} 缺少 state_abs/next_state_abs，"
+                    "无法派生 16D Q；请确认专家库为新 extract 生成。"
+                )
+            state_abs_l.append(_as_NxD(sabs, 18)[:n])
+            next_abs_l.append(_as_NxD(nabs, 18)[:n])
         traj_ids_l.append(np.full(n, tid, dtype=np.int32))
         n_steps_l.append(n)
         intercepted_l.append(1 if _traj_intercepted(it, n) else 0)
@@ -406,6 +421,9 @@ def load_phys_transitions_from_expert_lib(expert_path: str) -> dict:
             _field(results, "action_mapping_version", "td3_box_log_v1")
         ),
     }
+    if load_abs:
+        out["state_abs"] = np.concatenate(state_abs_l, axis=0)
+        out["next_state_abs"] = np.concatenate(next_abs_l, axis=0)
     return out
 
 
@@ -440,12 +458,21 @@ def apply_action_mapping(
 def load_transition_data(
     expert_path: str,
     aligned_path: Optional[str] = None,
+    *,
+    load_abs: bool = False,
 ) -> dict:
     """
     统一入口：新库优先直接读物理 transition；否则读 aligned 派生表。
+    load_abs=True 时新库额外返回 state_abs / next_state_abs（16D Q 派生用）；
+    旧 aligned 路径无绝对态，此时直接报错（避免静默错一拍）。
     """
     if expert_lib_has_phys_schema(expert_path):
-        return load_phys_transitions_from_expert_lib(expert_path)
+        return load_phys_transitions_from_expert_lib(expert_path, load_abs=load_abs)
+    if load_abs:
+        raise ValueError(
+            "load_abs=True 需要新 schema 专家库（含 state_abs/next_state_abs），"
+            f"但 {expert_path} 未检出 phys_transition schema。"
+        )
     if aligned_path is None:
         aligned_path = DEFAULT_ALIGNED_PATH
     return load_aligned_transitions(aligned_path)

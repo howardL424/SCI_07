@@ -1,0 +1,64 @@
+{
+  "arm": "16D",
+  "obs_schema": "rel13_qmag16_v1",
+  "samples_file": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean_val.mat",
+  "n_ic_requested": 2,
+  "order_seed": 0,
+  "local_idx": [
+    36,
+    291
+  ],
+  "row_idx": [
+    36,
+    291
+  ],
+  "seeds": {
+    "0": {
+      "checkpoint": "D:\\LTY\\yan\\yanerxia\\GAIL\\BC-TD3性能改进实验_9月\\P1_E2S16D_QMAG_20260928\\runs\\ab16_s0\\bc_ab16_s0_best.pt",
+      "checkpoint_epoch": 14,
+      "q_scale": [
+        0.11943868782847487,
+        0.29516345854787485,
+        0.0210193132641204
+      ],
+      "elapsed_sec": 4.7989819049835205,
+      "summary": {
+        "n": 2,
+        "both_ok_rate": 0.5,
+        "evade_ok_rate": 0.5,
+        "strike_ok_rate": 0.5,
+        "intercepted_rate": 0.5,
+        "mean_reward": 41.49998633034194
+      },
+      "failures": [],
+      "episodes": [
+        {
+          "local_idx": 36,
+          "row_idx": 36,
+          "both_ok": true,
+          "evade_ok": true,
+          "strike_ok": true,
+          "intercepted": false,
+          "r_min1": 11.943506026802732,
+          "r_min2": 26.441442205430704,
+          "r_minT": 0.16364277066755542,
+          "total_reward": 124.4145064695774,
+          "steps": 76
+        },
+        {
+          "local_idx": 291,
+          "row_idx": 291,
+          "both_ok": false,
+          "evade_ok": false,
+          "strike_ok": false,
+          "intercepted": true,
+          "r_min1": 515.8040596937499,
+          "r_min2": 3.941932033051853,
+          "r_minT": NaN,
+          "total_reward": -41.414533808893516,
+          "steps": 74
+        }
+      ]
+    }
+  }
+}

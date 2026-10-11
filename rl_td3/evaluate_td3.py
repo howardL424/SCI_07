@@ -16,6 +16,7 @@ evaluate_td3.py — 加载训练好的 TD3/TD3BC 模型进行蒙特卡洛评估�
     {training_dir}/monte_carlo_eval_{best|final|...}_seed{seed}_{时间戳}.log
 逐轮指标（散点图用）同步写入同目录同名 .npz：
     r_MD1_min / r_MD2_min / r_minT （及 evade_ok / strike_ok / both_ok / row_idx / local_idx）
+    energy_kJ / energy_stage2_kJ / energy_stage3_kJ（全过程及分段能耗，单位 kJ）
 """
 
 from __future__ import annotations
@@ -34,6 +35,53 @@ from action_mapping import DEFAULT_ACTION_MAPPING
 from evasion_env import EvasionEnv, KILL_R, SAMPLES_TEST_FILE, STRIKE_OK
 from ident_cfg import IDENT_CLI_DEFAULTS, add_ident_args, matlab_cfg_from_args
 from td3_bc import TD3BC
+
+# 制导周期与论文能耗换算：Energy = 0.5 * ∫ ||a_M||² dt / 1000  [kJ]
+STAGE2_DT = 0.1
+ENERGY_KJ_FROM_INT = 0.5 / 1000.0
+DEFAULT_NRMSE_BURN_IN_STEPS = 5
+DEFAULT_NRMSE_DENOM_FLOOR = 1.0
+
+
+def _trapz(y, x=None, dx: float = 1.0) -> float:
+    """兼容 NumPy 1.x `trapz` 与 2.x `trapezoid`。"""
+    y = np.asarray(y, dtype=np.float64).reshape(-1)
+    if y.size < 2:
+        return 0.0
+    trapz = getattr(np, "trapezoid", None) or getattr(np, "trapz")
+    if x is None:
+        return float(trapz(y, dx=dx))
+    return float(trapz(y, np.asarray(x, dtype=np.float64).reshape(-1)))
+
+
+def accel_integral(a_sq, *, t=None, dt: float = STAGE2_DT) -> float:
+    """J_u = ∫ ||a||² dt。优先用时间向量梯形积分，否则等间隔 dt。"""
+    a_sq = np.asarray(a_sq, dtype=np.float64).reshape(-1)
+    finite = np.isfinite(a_sq)
+    if not finite.any():
+        return 0.0
+    a_use = a_sq[finite]
+    if t is not None:
+        t_arr = np.asarray(t, dtype=np.float64).reshape(-1)
+        if t_arr.size == a_sq.size:
+            t_use = t_arr[finite]
+            if t_use.size >= 2:
+                return _trapz(a_use, t_use)
+    if a_use.size == 1:
+        return float(a_use[0] * dt)
+    return _trapz(a_use, dx=dt)
+
+
+def accel_energy_kj(a_sq, *, t=None, dt: float = STAGE2_DT) -> float:
+    """论文能耗 Energy = 0.5 * ∫ ||a||² dt / 1000  [kJ]。"""
+    return ENERGY_KJ_FROM_INT * accel_integral(a_sq, t=t, dt=dt)
+
+
+def energy_int_to_kj(energy_int: float) -> float:
+    """把 ∫ ||a||² dt 换成 kJ（与 table2 MATLAB 口径一致）。"""
+    if not np.isfinite(energy_int):
+        return float("nan")
+    return float(ENERGY_KJ_FROM_INT * energy_int)
 
 
 class _Tee:
@@ -145,6 +193,10 @@ def save_mc_metrics(results: list[dict], path: Path) -> Path:
     }
     optional_metrics = (
         "a_energy",
+        "energy_int",
+        "energy_kJ",
+        "energy_stage2_kJ",
+        "energy_stage3_kJ",
         "a_total_variation",
         "saturation_rate",
         "theta_causal_rmse",
@@ -158,14 +210,18 @@ def save_mc_metrics(results: list[dict], path: Path) -> Path:
         "a_cmd_sat_rmse",
         "a_cmd_sat_tail_rmse",
     )
+    saved_optional = []
     for key in optional_metrics:
         if all(key in r for r in results):
             payload[key] = np.asarray([r[key] for r in results], dtype=np.float64)
+            saved_optional.append(key)
     np.savez_compressed(path, **payload)
+    extra = (", " + ", ".join(saved_optional)) if saved_optional else ""
     print(
         f"[evaluate] 逐轮指标已写入 {path}\n"
         f"           keys: r_MD1_min, r_MD2_min, r_minT, "
         f"evade_ok, strike_ok, both_ok, intercepted, row_idx, local_idx"
+        f"{extra}"
     )
     return path
 
@@ -214,7 +270,7 @@ def parse_args() -> argparse.Namespace:
         type=str,
         default=None,
         help=(
-            "逐轮 r_MD1_min/r_MD2_min/r_minT 的 npz 路径"
+            "逐轮 r_MD1_min/r_MD2_min/r_minT/energy_kJ 的 npz 路径"
             "（默认与日志同 stem 的 .npz）"
         ),
     )
@@ -245,6 +301,52 @@ def _normalize_theta_error(value, *, r0: float, a0: float) -> np.ndarray:
     return err
 
 
+def _theta_scaled_nrmse(
+    estimates: list[np.ndarray],
+    truths: list[np.ndarray],
+    *,
+    r0: float,
+    a0: float,
+    start_step: int = 0,
+    denominator_floor: float = DEFAULT_NRMSE_DENOM_FLOOR,
+) -> tuple[float, np.ndarray, int]:
+    """计算11参数缩放域、逐参数归一化后再汇总的NRMSE。"""
+    if not estimates or not truths or len(estimates) != len(truths):
+        return float("nan"), np.full(11, np.nan), 0
+    start = max(0, int(start_step))
+    if start >= len(estimates):
+        return float("nan"), np.full(11, np.nan), 0
+    est = np.stack(estimates[start:], axis=0)
+    true = np.stack(truths[start:], axis=0)
+    if est.size == 0 or true.size == 0:
+        return float("nan"), np.full(11, np.nan), 0
+
+    scale = np.asarray(
+        [r0, a0, a0, 1.0, r0, a0, a0, 1.0, r0, a0, a0],
+        dtype=np.float64,
+    )
+    est_sc = est * scale
+    true_sc = true * scale
+    component = np.full(11, np.nan, dtype=np.float64)
+    valid_steps = 0
+    for j in range(11):
+        finite = np.isfinite(est_sc[:, j]) & np.isfinite(true_sc[:, j])
+        valid_steps = max(valid_steps, int(np.sum(finite)))
+        if not finite.any():
+            continue
+        error_rms = float(
+            np.sqrt(np.mean((est_sc[finite, j] - true_sc[finite, j]) ** 2))
+        )
+        truth_rms = float(np.sqrt(np.mean(true_sc[finite, j] ** 2)))
+        denominator = max(truth_rms, float(denominator_floor))
+        component[j] = error_rms / denominator
+    finite_component = component[np.isfinite(component)]
+    if finite_component.size == 0:
+        return float("nan"), component, valid_steps
+    aggregate = float(np.sqrt(np.mean(finite_component**2)))
+    return aggregate, component, valid_steps
+
+
 def _rows_rmse(rows: list[np.ndarray], *, tail: bool = False) -> float:
     """计算逐拍向量的整体RMSE；tail取后20%且至少5拍。"""
     if not rows:
@@ -266,6 +368,9 @@ def run_episode(
     render: bool = False,
     seed: int | None = None,
     local_idx: int | None = None,
+    noise_seed: int | None = None,
+    nrmse_burn_in_steps: int = DEFAULT_NRMSE_BURN_IN_STEPS,
+    nrmse_denominator_floor: float = DEFAULT_NRMSE_DENOM_FLOOR,
 ):
     """运行一个 episode，返回统计指标。
 
@@ -274,12 +379,17 @@ def run_episode(
     warm-start 失败时返回 None（仅定点模式；随机模式由 env 内部重试）。
     """
     try:
+        reset_options = {}
         if local_idx is not None:
-            obs, info0 = env.reset(
-                seed=seed, options={"local_idx": int(local_idx)}
-            )
+            reset_options["local_idx"] = int(local_idx)
+        if noise_seed is not None:
+            reset_options["noise_seed"] = int(noise_seed)
+        if local_idx is not None:
+            obs, info0 = env.reset(seed=seed, options=reset_options)
         else:
-            obs, info0 = env.reset(seed=seed) if seed is not None else env.reset()
+            obs, info0 = env.reset(
+                seed=seed, options=reset_options or None
+            )
     except RuntimeError as e:
         if local_idx is not None and "warm-start" in str(e):
             return None
@@ -296,13 +406,19 @@ def run_episode(
     step = 0
     a_prev: np.ndarray | None = None
     a_energy = 0.0
+    a_sq_stage2: list[float] = []
+    t_stage2: list[float] = []
     a_total_variation = 0.0
     saturated_steps = 0
     theta_causal_rows: list[np.ndarray] = []
     theta_command_rows: list[np.ndarray] = []
+    theta_hat_rows: list[np.ndarray] = []
+    theta_noisy_causal_rows: list[np.ndarray] = []
+    theta_true_causal_rows: list[np.ndarray] = []
     frozen_rows: list[np.ndarray] = []
     a_cmd_rows: list[np.ndarray] = []
     a_cmd_sat_rows: list[np.ndarray] = []
+    info: dict = {}
 
     while not terminated:
         action, _ = model.predict(obs, deterministic=True)
@@ -319,7 +435,10 @@ def run_episode(
         a_sat = np.asarray(info.get("a_M_sat", [np.nan, np.nan]), dtype=float)
         a_raw = np.asarray(info.get("a_M_raw", a_sat), dtype=float)
         if np.isfinite(a_sat).all():
-            a_energy += 0.1 * float(np.dot(a_sat, a_sat))
+            a_sq = float(np.dot(a_sat, a_sat))
+            a_energy += STAGE2_DT * a_sq
+            a_sq_stage2.append(a_sq)
+            t_stage2.append(float(info.get("t", step * STAGE2_DT)))
             if a_prev is not None:
                 a_total_variation += float(np.linalg.norm(a_sat - a_prev))
             a_prev = a_sat.copy()
@@ -344,6 +463,15 @@ def run_episode(
                 _normalize_theta_error(
                     ident_diag.get("theta_err_command"), r0=r0, a0=a0
                 )
+            )
+            theta_hat_rows.append(_metric_vector(ident_diag.get("theta_hat"), 11))
+            theta_noisy_causal_rows.append(
+                _metric_vector(
+                    ident_diag.get("theta_analytic_noisy_causal"), 11
+                )
+            )
+            theta_true_causal_rows.append(
+                _metric_vector(ident_diag.get("theta_true_causal"), 11)
             )
             frozen_rows.append(
                 _metric_vector(ident_diag.get("frozen_model_residual"), 3)
@@ -370,22 +498,83 @@ def run_episode(
     if not strike_ok and np.isfinite(r_minT):
         strike_ok = r_minT <= STRIKE_OK
 
+    energy_stage2_int = accel_integral(a_sq_stage2, t=t_stage2, dt=STAGE2_DT)
+    energy_stage3_int = float(info.get("stage3_energy_int", 0.0) or 0.0)
+    if not np.isfinite(energy_stage3_int):
+        energy_stage3_int = 0.0
+    energy_int = energy_stage2_int + energy_stage3_int
+    energy_stage2_kJ = energy_int_to_kj(energy_stage2_int)
+    energy_stage3_kJ = energy_int_to_kj(energy_stage3_int)
+    energy_kJ = energy_int_to_kj(energy_int)
+    r_AT_end = (
+        float(r_minT)
+        if np.isfinite(r_minT)
+        else float(info.get("r_MT", np.nan))
+    )
+    r0 = float(env.matlab_cfg.get("rls_r0", IDENT_CLI_DEFAULTS["rls_r0"]))
+    a0 = float(env.matlab_cfg.get("rls_a0", IDENT_CLI_DEFAULTS["rls_a0"]))
+    coeff_mode = str(env.matlab_cfg.get("coeff_mode", "analytic_truth"))
+    theta_estimator_rows = (
+        theta_noisy_causal_rows
+        if coeff_mode == "analytic_noisy"
+        else theta_hat_rows
+    )
+    theta_scaled_nrmse, theta_scaled_nrmse_components, nrmse_valid_steps = (
+        _theta_scaled_nrmse(
+            theta_estimator_rows,
+            theta_true_causal_rows,
+            r0=r0,
+            a0=a0,
+            denominator_floor=nrmse_denominator_floor,
+        )
+    )
+    (
+        theta_scaled_nrmse_post_burnin,
+        theta_scaled_nrmse_post_burnin_components,
+        nrmse_post_burnin_valid_steps,
+    ) = _theta_scaled_nrmse(
+        theta_estimator_rows,
+        theta_true_causal_rows,
+        r0=r0,
+        a0=a0,
+        start_step=nrmse_burn_in_steps,
+        denominator_floor=nrmse_denominator_floor,
+    )
+
     return {
         "total_reward": total_reward,
         "r_MD1_min": r_MD1_min,
         "r_MD2_min": r_MD2_min,
+        "r_MD_min": min(r_MD1_min, r_MD2_min),
         "r_minT": r_minT,
+        "r_AT_end": r_AT_end,
         "intercepted": intercepted,
         "evade_ok": evade_ok,
         "strike_ok": strike_ok,
         "both_ok": evade_ok and strike_ok,
         "a_energy": a_energy,
+        "energy_int": energy_int,
+        "energy_kJ": energy_kJ,
+        "energy_stage2_kJ": energy_stage2_kJ,
+        "energy_stage3_kJ": energy_stage3_kJ,
         "a_total_variation": a_total_variation,
         "saturation_rate": saturated_steps / max(step, 1),
         "theta_causal_rmse": _rows_rmse(theta_causal_rows),
         "theta_causal_tail_rmse": _rows_rmse(theta_causal_rows, tail=True),
         "theta_command_rmse": _rows_rmse(theta_command_rows),
         "theta_command_tail_rmse": _rows_rmse(theta_command_rows, tail=True),
+        "theta_scaled_nrmse": theta_scaled_nrmse,
+        "theta_scaled_nrmse_post_burnin": theta_scaled_nrmse_post_burnin,
+        "theta_scaled_nrmse_components": theta_scaled_nrmse_components,
+        "theta_scaled_nrmse_post_burnin_components": (
+            theta_scaled_nrmse_post_burnin_components
+        ),
+        "theta_scaled_nrmse_valid_steps": nrmse_valid_steps,
+        "theta_scaled_nrmse_post_burnin_valid_steps": (
+            nrmse_post_burnin_valid_steps
+        ),
+        "nrmse_burn_in_steps": int(nrmse_burn_in_steps),
+        "nrmse_denominator_floor": float(nrmse_denominator_floor),
         "frozen_model_rmse": _rows_rmse(frozen_rows),
         "frozen_model_tail_rmse": _rows_rmse(frozen_rows, tail=True),
         "a_cmd_rmse": _rows_rmse(a_cmd_rows),
@@ -395,7 +584,73 @@ def run_episode(
         "steps": step,
         "row_idx": int(info0.get("row_idx", -1)),
         "local_idx": int(info0.get("local_idx", -1)),
+        "noise_seed": int(
+            info0.get(
+                "noise_seed",
+                env.matlab_cfg.get("noise_seed", 0),
+            )
+        ),
+        "coeff_mode": coeff_mode,
+        "actor_obs_mode": str(
+            info0.get(
+                "actor_obs_mode",
+                env.matlab_cfg.get("actor_obs_mode", "truth"),
+            )
+        ),
     }
+
+
+def _finite_quantile_stats(values) -> tuple[np.ndarray, float, float, float, float, float]:
+    """返回有限样本及 mean/std/median/Q1/Q3；无样本时统计量为 NaN。"""
+    arr = np.asarray(values, dtype=float)
+    finite = arr[np.isfinite(arr)]
+    if finite.size == 0:
+        nan = float("nan")
+        return finite, nan, nan, nan, nan, nan
+    q1, med, q3 = np.quantile(finite, [0.25, 0.5, 0.75])
+    return (
+        finite,
+        float(finite.mean()),
+        float(finite.std()),
+        float(med),
+        float(q1),
+        float(q3),
+    )
+
+
+def _print_energy_stats(results: list[dict], both_ok: list[dict]) -> None:
+    """打印飞行全过程能耗（stage2+stage3）及分段分解。"""
+    if not results or not all("energy_kJ" in r for r in results):
+        return
+    _, mean, std, med, q1, q3 = _finite_quantile_stats(
+        [r["energy_kJ"] for r in results]
+    )
+    _, m2, s2, med2, *_ = _finite_quantile_stats(
+        [r.get("energy_stage2_kJ", np.nan) for r in results]
+    )
+    _, m3, s3, med3, *_ = _finite_quantile_stats(
+        [r.get("energy_stage3_kJ", np.nan) for r in results]
+    )
+    print(
+        f"  全过程能耗 Energy  mean±std (kJ)    : {mean:.4f} ± {std:.4f}"
+        f"  median={med:.4f}  IQR=[{q1:.4f},{q3:.4f}]"
+    )
+    print(
+        f"    规避段 stage2                 : {m2:.4f} ± {s2:.4f}"
+        f"  median={med2:.4f}"
+    )
+    print(
+        f"    末端 PN stage3                : {m3:.4f} ± {s3:.4f}"
+        f"  median={med3:.4f}"
+    )
+    if both_ok:
+        _, _, _, med_ok, q1_ok, q3_ok = _finite_quantile_stats(
+            [r["energy_kJ"] for r in both_ok]
+        )
+        print(
+            f"    联合成功子集                  : median={med_ok:.4f} kJ"
+            f"  IQR=[{q1_ok:.4f},{q3_ok:.4f}]  (n={len(both_ok)})"
+        )
 
 
 def print_stats(label: str, results: list[dict]):
@@ -433,6 +688,7 @@ def print_stats(label: str, results: list[dict]):
     else:
         print("  终端脱靶 r_minT  : (无有效样本，可能全部被拦截)")
     print(f"  累计奖励         mean±std            : {rw_arr.mean():.2f} ± {rw_arr.std():.2f}")
+    _print_energy_stats(results, both_ok)
 
 
 def _run_eval(
@@ -510,11 +766,13 @@ def _run_eval(
             done_so_far = [r for r in results if r["both_ok"]]
             rT = ep_result["r_minT"]
             rT_str = f"{rT:.2f}m" if np.isfinite(rT) else "nan"
+            e = ep_result.get("energy_kJ", float("nan"))
+            e_str = f"{e:.3f}kJ" if np.isfinite(e) else "nan"
             print(
                 f"  [done {done_n:3d} | scanned {ep+1:3d}/{n_plan}] "
                 f"双防+打击成功率 {100*len(done_so_far)/done_n:.1f}%  "
                 f"r_MD1_min={ep_result['r_MD1_min']:.1f}m  "
-                f"r_minT={rT_str}"
+                f"r_minT={rT_str}  Energy={e_str}"
             )
 
     if sweep_all and n_skip:

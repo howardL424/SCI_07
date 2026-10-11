@@ -17,11 +17,14 @@ from bc_actor import (  # noqa: E402
     BcActor,
     compute_bc_metrics,
     copy_bc_weights_to_td3_actor,
+    copy_bc_weights_to_td3_actors,
     evaluate_bc,
     load_bc_checkpoint,
     save_bc_checkpoint,
     train_bc_epoch,
+    validate_bc_checkpoint,
 )
+from obs_norm import OBS_NORM_VERSION, OBS_SCHEMA_VERSION  # noqa: E402
 from expert_sampling import (  # noqa: E402
     bc_arrays_from_plan,
     build_expert_sample_plan,
@@ -143,8 +146,77 @@ def test_copy_to_sb3_shapes():
     )
 
 
+def test_warmstart_actor_target_outputs_and_metadata():
+    """Actor/target 均须与 BC 输出一致，schema 或映射不匹配时拒绝加载。"""
+    import gymnasium as gym
+    from stable_baselines3 import TD3
+
+    class _BoxEnv(gym.Env):
+        observation_space = gym.spaces.Box(
+            low=-10, high=10, shape=(13,), dtype=np.float32
+        )
+        action_space = gym.spaces.Box(
+            low=-1, high=1, shape=(3,), dtype=np.float32
+        )
+
+        def reset(self, *, seed=None, options=None):
+            super().reset(seed=seed)
+            return np.zeros(13, dtype=np.float32), {}
+
+        def step(self, action):
+            return np.zeros(13, dtype=np.float32), 0.0, True, False, {}
+
+    model = TD3(
+        "MlpPolicy",
+        _BoxEnv(),
+        policy_kwargs=dict(net_arch=[256, 256]),
+        verbose=0,
+        device="cpu",
+    )
+    bc = BcActor(obs_dim=13, act_dim=3, net_arch=(256, 256))
+    payload = {
+        "obs_dim": 13,
+        "act_dim": 3,
+        "net_arch": [256, 256],
+        "config": {
+            "action_mapping": "ratio_log_box_v1",
+            "obs_schema_version": OBS_SCHEMA_VERSION,
+            "obs_norm_version": OBS_NORM_VERSION,
+        },
+    }
+    validate_bc_checkpoint(
+        payload,
+        obs_dim=13,
+        act_dim=3,
+        net_arch=(256, 256),
+        action_mapping="ratio_log_box_v1",
+    )
+    copy_bc_weights_to_td3_actors(model.actor, model.actor_target, bc)
+    obs = torch.randn(32, 13)
+    with torch.no_grad():
+        expected = bc(obs)
+        assert torch.allclose(model.actor(obs), expected)
+        assert torch.allclose(model.actor_target(obs), expected)
+
+    bad = dict(payload)
+    bad["config"] = dict(payload["config"], action_mapping="td3_box_log_v1")
+    try:
+        validate_bc_checkpoint(
+            bad,
+            obs_dim=13,
+            act_dim=3,
+            net_arch=(256, 256),
+            action_mapping="ratio_log_box_v1",
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("不兼容 action_mapping 应被拒绝")
+
+
 if __name__ == "__main__":
     test_metrics_and_fit()
     test_plan_bc_arrays_and_roundtrip()
     test_copy_to_sb3_shapes()
+    test_warmstart_actor_target_outputs_and_metadata()
     print("OK: test_bc_actor")

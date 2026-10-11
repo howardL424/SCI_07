@@ -17,6 +17,14 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+from obs_norm import (
+    OBS_DIM_16,
+    OBS_NORM_VERSION,
+    OBS_SCHEMA_REL13_QMAG16,
+    OBS_SCHEMA_VERSION,
+    OBS16_NORM_VERSION,
+)
+
 
 ACTION_NAMES = ("gamma_n", "wT_n", "wE_n")
 BOUNDARY_THRESH = 0.99
@@ -215,6 +223,69 @@ def load_bc_checkpoint(
     return actor, payload
 
 
+def validate_bc_checkpoint(
+    payload: dict[str, Any],
+    *,
+    obs_dim: int,
+    act_dim: int,
+    net_arch: Sequence[int],
+    action_mapping: str,
+) -> None:
+    """拒绝把维数、观测语义或动作映射不兼容的 BC 权重用于 TD3。"""
+    expected = {
+        "obs_dim": int(obs_dim),
+        "act_dim": int(act_dim),
+        "net_arch": [int(v) for v in net_arch],
+    }
+    actual = {
+        "obs_dim": int(payload.get("obs_dim", -1)),
+        "act_dim": int(payload.get("act_dim", -1)),
+        "net_arch": [int(v) for v in payload.get("net_arch", ())],
+    }
+    for key, value in expected.items():
+        if actual[key] != value:
+            raise ValueError(
+                f"BC checkpoint {key} 不兼容: {actual[key]!r} != {value!r}"
+            )
+
+    config = payload.get("config") or {}
+    # 16D 扩展兼容：obs_dim=16 时允许新 schema/norm 版本，其余仍严格匹配。
+    # 13D 默认行为不变；16D checkpoint 与 13D 互斥（由 obs_dim 字段保证）。
+    if int(obs_dim) == int(OBS_DIM_16):
+        allowed_schema = {OBS_SCHEMA_REL13_QMAG16}
+        allowed_norm = {OBS16_NORM_VERSION}
+    else:
+        allowed_schema = {OBS_SCHEMA_VERSION}
+        allowed_norm = {OBS_NORM_VERSION}
+    required = {
+        "action_mapping": action_mapping,
+    }
+    for key, value in required.items():
+        got = config.get(key)
+        if got is None:
+            raise ValueError(f"BC checkpoint 缺少兼容性字段 config.{key}")
+        if got != value:
+            raise ValueError(
+                f"BC checkpoint config.{key} 不兼容: {got!r} != {value!r}"
+            )
+    got_schema = config.get("obs_schema_version")
+    if got_schema is None:
+        raise ValueError("BC checkpoint 缺少兼容性字段 config.obs_schema_version")
+    if got_schema not in allowed_schema:
+        raise ValueError(
+            f"BC checkpoint config.obs_schema_version 不兼容: {got_schema!r} "
+            f"不在 {sorted(allowed_schema)!r}（obs_dim={obs_dim}）"
+        )
+    got_norm = config.get("obs_norm_version")
+    if got_norm is None:
+        raise ValueError("BC checkpoint 缺少兼容性字段 config.obs_norm_version")
+    if got_norm not in allowed_norm:
+        raise ValueError(
+            f"BC checkpoint config.obs_norm_version 不兼容: {got_norm!r} "
+            f"不在 {sorted(allowed_norm)!r}（obs_dim={obs_dim}）"
+        )
+
+
 def copy_bc_weights_to_td3_actor(td3_actor: nn.Module, bc_actor: BcActor) -> None:
     """
     将 BcActor 权重写入 SB3 TD3 Actor（仅 mu.* Linear 层）。
@@ -233,3 +304,13 @@ def copy_bc_weights_to_td3_actor(td3_actor: nn.Module, bc_actor: BcActor) -> Non
         else:
             raise KeyError(f"TD3 actor 缺少键 {k}")
     td3_actor.load_state_dict(mapped, strict=False)
+
+
+def copy_bc_weights_to_td3_actors(
+    td3_actor: nn.Module,
+    td3_actor_target: nn.Module,
+    bc_actor: BcActor,
+) -> None:
+    """原位初始化 TD3 Actor 及 Actor target，不替换优化器引用的模块。"""
+    copy_bc_weights_to_td3_actor(td3_actor, bc_actor)
+    copy_bc_weights_to_td3_actor(td3_actor_target, bc_actor)

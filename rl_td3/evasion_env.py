@@ -1,14 +1,15 @@
 """
 evasion_env.py — Gymnasium 环境：双防御者规避 + 目标打击一体化制导律权重训练
 动作空间：归一化 [-1,1]³（默认 ratio_log_box_v1: [ρE_n, ρT_n, γ_n]），w 固定 1e4，d*=20m
-状态空间：13维时变态势，经 obs_norm 固定逐维物理归一化后输入网络
+状态空间：13维时变态势；actor_obs_mode显式区分真值、含噪和滤波数据源，
+再经 obs_norm 固定逐维物理归一化后输入网络
 MATLAB Engine 调用 env_reset.m / env_step.m / stage3_rollout.m
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 
 import matlab.engine
 import numpy as np
@@ -69,6 +70,20 @@ LEGACY_OBS_HIGH = np.array(
 )
 
 
+def _matlab_struct_scalar(obj, name: str, default: float = 0.0) -> float:
+    """从 MATLAB Engine struct/dict 读取标量字段。"""
+    if obj is None:
+        return float(default)
+    if isinstance(obj, dict):
+        val = obj.get(name, default)
+    else:
+        val = getattr(obj, name, default)
+    arr = np.asarray(val, dtype=np.float64).reshape(-1)
+    if arr.size == 0 or not np.isfinite(arr[0]):
+        return float(default)
+    return float(arr[0])
+
+
 def _matlab_stage3_traj_to_dict(traj_ml) -> dict:
     """将 stage3_rollout 第 5 输出 struct/dict 转为 Python dict（行向量时间序列）。"""
     empty = {
@@ -81,6 +96,7 @@ def _matlab_stage3_traj_to_dict(traj_ml) -> dict:
         "r_MT": np.zeros(0, dtype=np.float64),
         "r_MD1": np.zeros(0, dtype=np.float64),
         "r_MD2": np.zeros(0, dtype=np.float64),
+        "energy_int": 0.0,
     }
     if traj_ml is None:
         return empty
@@ -115,6 +131,7 @@ def _matlab_stage3_traj_to_dict(traj_ml) -> dict:
         "r_MT": _vec1("r_MT"),
         "r_MD1": _vec1("r_MD1"),
         "r_MD2": _vec1("r_MD2"),
+        "energy_int": _matlab_struct_scalar(traj_ml, "energy_int", 0.0),
     }
 
 
@@ -137,20 +154,74 @@ class EvasionEnv(gym.Env):
         action_mapping: str = DEFAULT_ACTION_MAPPING,
         obs_normalize: bool = True,
         record_stage3_traj: bool = False,
+        actor_obs_mode: Optional[str] = None,
+        # ── 16D 扩展（opt-in；默认 13D，行为不变） ──
+        obs_schema: str = "rel13_v1",
+        q_scale: Optional[Sequence[float]] = None,
     ):
         super().__init__()
 
         self.samples_file = samples_file
         self.action_mapping = str(action_mapping)
+        self.obs_schema = str(obs_schema)
+        if self.obs_schema not in ("rel13_v1", "rel13_qmag16_v1"):
+            raise ValueError(
+                f"obs_schema 须为 'rel13_v1' 或 'rel13_qmag16_v1'，收到 {self.obs_schema!r}"
+            )
+        self.obs_dim = 16 if self.obs_schema == "rel13_qmag16_v1" else int(OBS_DIM)
         self.obs_normalize = bool(obs_normalize)
         self.record_stage3_traj = bool(record_stage3_traj)
         self.matlab_cfg = dict(matlab_cfg or {})
         self.matlab_cfg.setdefault("action_mapping_version", self.action_mapping)
+        cfg_actor_mode = str(self.matlab_cfg.get("actor_obs_mode", "truth"))
+        if actor_obs_mode is not None and "actor_obs_mode" in self.matlab_cfg:
+            if str(actor_obs_mode) != cfg_actor_mode:
+                raise ValueError(
+                    "actor_obs_mode参数与matlab_cfg['actor_obs_mode']不一致"
+                )
+        self.actor_obs_mode = (
+            str(actor_obs_mode) if actor_obs_mode is not None else cfg_actor_mode
+        )
+        if self.actor_obs_mode not in {"truth", "noisy", "filtered"}:
+            raise ValueError(
+                "actor_obs_mode须为'truth'、'noisy'或'filtered'，"
+                f"收到{self.actor_obs_mode!r}"
+            )
+        self.matlab_cfg["actor_obs_mode"] = self.actor_obs_mode
+        # 16D 首轮仅 truth：Q 必须与 Actor 实际可获得口径一致，当前拒绝
+        # 把解析真值 Q 拼入含噪/滤波观测（防信息泄漏）。
+        if self.obs_schema == "rel13_qmag16_v1":
+            if self.actor_obs_mode != "truth":
+                raise ValueError(
+                    "16D obs_schema 当前仅支持 actor_obs_mode='truth'，"
+                    f"收到 {self.actor_obs_mode!r}（noisy/filtered 的 Q 口径待定义）"
+                )
+            if not self.obs_normalize:
+                raise ValueError("16D obs_schema 需要 obs_normalize=True")
+            if q_scale is None:
+                raise ValueError(
+                    "16D obs_schema 需要显式传入 q_scale（训练集估计的 3 通道 scale）"
+                )
+            self.q_scale = np.asarray(q_scale, dtype=np.float64).ravel()
+            if self.q_scale.size != 3 or not np.all(np.isfinite(self.q_scale)):
+                raise ValueError(f"q_scale 须为 3 维有限值，收到 {q_scale!r}")
+            if np.any(self.q_scale <= 0):
+                raise ValueError(f"q_scale 须为正，收到 {q_scale!r}")
+        else:
+            self.q_scale = None
+        # MC 评估默认只要 stage3 能耗标量；落盘轨迹时才分配缓冲
+        self.matlab_cfg["return_traj"] = bool(self.record_stage3_traj)
         self.max_retries = max_retries
 
         if self.obs_normalize:
             # 网络输入为归一化观测（obs/OBS_SCALE，不裁剪）；Box 仅定义空间
             obs_bound = np.full(OBS_DIM, OBS_BOX_HIGH, dtype=np.float32)
+            if self.obs_schema == "rel13_qmag16_v1":
+                from obs_qmag import Q_BOX_HIGH  # noqa: E402
+
+                obs_bound = np.concatenate(
+                    [obs_bound, np.full(3, Q_BOX_HIGH, dtype=np.float32)]
+                )
             self.observation_space = spaces.Box(
                 low=-obs_bound, high=obs_bound, dtype=np.float32
             )
@@ -201,13 +272,24 @@ class EvasionEnv(gym.Env):
         self._r_min1: float = np.inf
         self._r_min2: float = np.inf
         self._stage2_core = None  # 懒初始化，供 reset_from_abs
+        self._episode_noise_seed = int(self.matlab_cfg.get("noise_seed", 0))
 
     def _format_obs(self, obs_phys: np.ndarray) -> np.ndarray:
-        """按 obs_normalize 开关输出网络观测。"""
+        """按 obs_normalize 开关输出网络观测（13D 默认；16D 追加归一化 Q）。"""
         x = np.asarray(obs_phys, dtype=np.float32).ravel()
         if self.obs_normalize:
-            return normalize_obs(x)
-        return x.astype(np.float32)
+            out = normalize_obs(x)
+        else:
+            out = x.astype(np.float32)
+        if self.obs_schema == "rel13_qmag16_v1":
+            if self._state_abs is None or np.asarray(self._state_abs).size != 18:
+                raise RuntimeError("16D 观测需要 18 维 state_abs（env 未初始化？）")
+            from obs_qmag import qmag_from_state_abs  # noqa: E402
+
+            q = qmag_from_state_abs(np.asarray(self._state_abs, dtype=np.float64))
+            qn = (q / self.q_scale).astype(np.float32)
+            out = np.concatenate([np.asarray(out, dtype=np.float32).ravel(), qn])
+        return out
 
     @property
     def n_samples(self) -> int:
@@ -247,6 +329,9 @@ class EvasionEnv(gym.Env):
         return self._format_obs(obs_phys), {
             "row_idx": row_idx,
             "local_idx": local_idx,
+            "actor_obs_mode": self.actor_obs_mode,
+            "obs_schema": self.obs_schema,
+            "noise_seed": self._episode_noise_seed,
         }
 
     def reset(
@@ -257,6 +342,12 @@ class EvasionEnv(gym.Env):
     ):
         super().reset(seed=seed)
         options = options or {}
+        if "noise_seed" in options:
+            episode_noise_seed = int(options["noise_seed"])
+            self.matlab_cfg["noise_seed"] = episode_noise_seed
+            self._episode_noise_seed = episode_noise_seed
+        else:
+            self._episode_noise_seed = int(self.matlab_cfg.get("noise_seed", 0))
 
         # 定点初态（训后 MC 测全 test 集）：失败不换行
         if "local_idx" in options:
@@ -303,7 +394,7 @@ class EvasionEnv(gym.Env):
         if self._stage2_core is None:
             self._stage2_core = self._eng.stage2_core_init(self.matlab_cfg, nargout=1)
         sabs_ml = matlab.double(self._state_abs.tolist())
-        obs_ml = self._eng.stage2_obs_from_abs(
+        obs_ml = self._eng.stage2_actor_obs_from_abs(
             self._stage2_core,
             sabs_ml,
             float(self._t),
@@ -369,6 +460,8 @@ class EvasionEnv(gym.Env):
             "r_min1":      float(self._r_min1),
             "r_min2":      float(self._r_min2),
             "t":           self._t,
+            "actor_obs_mode": self.actor_obs_mode,
+            "noise_seed": self._episode_noise_seed,
             "r_minT":      np.nan,
             "R1":          0.0,
             "bonus":       0.0,
@@ -376,24 +469,23 @@ class EvasionEnv(gym.Env):
             "strike_ok":   False,
             "reached":     False,   # 兼容旧评估脚本：打击成功才为 True
             "zT":          r_MT,    # 兼容旧字段名：现为当前 r_MT，非 ZEM
+            "stage3_energy_int": 0.0,
         }
-        # env_step 辨识扩展；85维版本同时给出因果/当前参数真值。
+        # env_step 辨识扩展；96维版本同时给出两类因果估计及参数真值。
         ident_diag = parse_ident_diag(info_vec)
         if ident_diag is not None:
             info["ident_diag"] = ident_diag
 
-        # 规避段正常结束 → MATLAB 一次 PN 跑完 stage3，结算终端奖励
+        # 规避段正常结束 → MATLAB 一次 PN 跑完 stage3，结算终端奖励与能耗
         if terminated and stage2_done and not intercepted:
             sabs_ml = matlab.double(self._state_abs.tolist())
+            self.matlab_cfg["return_traj"] = bool(self.record_stage3_traj)
+            r_minT_ml, reached_ml, diverged_ml, n_ml, traj_ml = self._eng.stage3_rollout(
+                sabs_ml, float(self._t), self.matlab_cfg, nargout=5
+            )
+            stage3_energy_int = _matlab_struct_scalar(traj_ml, "energy_int", 0.0)
             if self.record_stage3_traj:
-                r_minT_ml, reached_ml, diverged_ml, n_ml, traj_ml = self._eng.stage3_rollout(
-                    sabs_ml, float(self._t), self.matlab_cfg, nargout=5
-                )
                 info["stage3_traj"] = _matlab_stage3_traj_to_dict(traj_ml)
-            else:
-                r_minT_ml, reached_ml, diverged_ml, n_ml = self._eng.stage3_rollout(
-                    sabs_ml, float(self._t), self.matlab_cfg, nargout=4
-                )
             r_minT = float(r_minT_ml)
             reached_pn = bool(reached_ml)
             diverged = bool(diverged_ml)
@@ -418,6 +510,7 @@ class EvasionEnv(gym.Env):
                 "diverged":  diverged,
                 "n_steps_stage3": n_steps_stage3,
                 "zT":        r_minT,      # 评估打印终端精度时用 r_minT
+                "stage3_energy_int": stage3_energy_int,
             })
 
         return self._format_obs(obs_phys), reward, terminated, False, info

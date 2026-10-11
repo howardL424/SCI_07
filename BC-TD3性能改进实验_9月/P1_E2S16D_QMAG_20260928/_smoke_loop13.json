@@ -1,0 +1,60 @@
+{
+  "arm": "13D",
+  "obs_schema": "rel13_v1",
+  "samples_file": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean_val.mat",
+  "n_ic_requested": 2,
+  "order_seed": 0,
+  "local_idx": [
+    36,
+    291
+  ],
+  "row_idx": [
+    36,
+    291
+  ],
+  "seeds": {
+    "0": {
+      "checkpoint": "D:\\LTY\\yan\\yanerxia\\GAIL\\BC-TD3性能改进实验_9月\\P1_E2S16D_QMAG_20260928\\runs\\ab13_s0\\bc_ab13_s0_best.pt",
+      "checkpoint_epoch": 21,
+      "q_scale": null,
+      "elapsed_sec": 9.298072814941406,
+      "summary": {
+        "n": 2,
+        "both_ok_rate": 1.0,
+        "evade_ok_rate": 1.0,
+        "strike_ok_rate": 1.0,
+        "intercepted_rate": 0.0,
+        "mean_reward": 124.73566559835112
+      },
+      "failures": [],
+      "episodes": [
+        {
+          "local_idx": 36,
+          "row_idx": 36,
+          "both_ok": true,
+          "evade_ok": true,
+          "strike_ok": true,
+          "intercepted": false,
+          "r_min1": 11.94473324064079,
+          "r_min2": 25.770689318259745,
+          "r_minT": 0.19611736875940655,
+          "total_reward": 124.3176828269276,
+          "steps": 76
+        },
+        {
+          "local_idx": 291,
+          "row_idx": 291,
+          "both_ok": true,
+          "evade_ok": true,
+          "strike_ok": true,
+          "intercepted": false,
+          "r_min1": 23.032161797144532,
+          "r_min2": 6.755690671035431,
+          "r_minT": 0.06601638024140219,
+          "total_reward": 125.15364836977464,
+          "steps": 80
+        }
+      ]
+    }
+  }
+}

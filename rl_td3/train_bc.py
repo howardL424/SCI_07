@@ -58,7 +58,13 @@ from load_expert_buffer import (  # noqa: E402
     apply_action_mapping,
     load_transition_data,
 )
-from obs_norm import normalize_obs  # noqa: E402
+from obs_norm import (  # noqa: E402
+    OBS_NORM_VERSION,
+    OBS_SCHEMA_VERSION,
+    normalize_obs,
+)
+from obs_norm import OBS16_NORM_VERSION as _OBS16_NORM_VERSION  # noqa: E402
+from obs_norm import OBS_SCHEMA_REL13_QMAG16 as _SCHEMA_16  # noqa: E402
 from reward_projection import DEFAULT_REWARD_CFG  # noqa: E402
 
 
@@ -150,6 +156,20 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--smoke", action="store_true", help="冒烟：少 epoch、小预算")
     p.add_argument("--patience", type=int, default=DEFAULTS["patience"])
     p.add_argument("--no-log", action="store_true")
+    # ── 16D 扩展（opt-in；默认 13D，行为不变） ──
+    p.add_argument(
+        "--obs-schema",
+        type=str,
+        default="rel13_v1",
+        choices=["rel13_v1", "rel13_qmag16_v1"],
+        help="观测 schema：默认 rel13_v1（13D）；16D 需显式指定 rel13_qmag16_v1",
+    )
+    p.add_argument(
+        "--q-scale-path",
+        type=str,
+        default=None,
+        help="16D 用 Q scale npz（默认按训练集 99.5%% 分位数估计并落盘）",
+    )
     args = p.parse_args()
     if args.smoke:
         args.epochs = min(args.epochs, 5)
@@ -176,6 +196,9 @@ def _metrics_row(label: str, m) -> str:
 
 def prepare_bc_data(args: argparse.Namespace) -> dict[str, Any]:
     print(f"[train_bc] 加载 transition：expert={args.expert}")
+    use_16d = getattr(args, "obs_schema", "rel13_v1") == "rel13_qmag16_v1"
+    if use_16d:
+        print("[train_bc] obs_schema=rel13_qmag16_v1（16D，opt-in）")
     data = load_transition_data(args.expert, aligned_path=args.aligned)
     src_map = str(data.get("action_mapping_version", ACTION_MAPPING_TD3_BOX))
     data = apply_action_mapping(data, args.action_mapping, source_version=src_map)
@@ -192,7 +215,26 @@ def prepare_bc_data(args: argparse.Namespace) -> dict[str, Any]:
     cache = _load_terminal_cache(
         args.terminal_cache, args.expert, require_path_match=True, verbose=True
     )
-    states_n = normalize_obs(data["states"]).astype(np.float32)
+    if use_16d:
+        # 旧库 + aligned：Q 由专家库 state_abs 经 source_idx 前缀映射派生，
+        # 与 data['states'] 同 flat 顺序，配对 A/B 的 plan 下标可直接复用。
+        from obs_qmag import (  # noqa: E402
+            Q_SCALE_QUANTILE,
+            estimate_q_scales,
+            normalize_obs16,
+            qmag_for_aligned_data,
+        )
+
+        q_all, q_report = qmag_for_aligned_data(data, args.expert)
+        print(f"[train_bc] Q 映射校验：{q_report}")
+        print(
+            f"[train_bc] Q 派生完成：n={len(q_all)}  "
+            f"Q1[{q_all[:,0].min():.4f},{q_all[:,0].max():.4f}] "
+            f"Q2[{q_all[:,1].min():.4f},{q_all[:,1].max():.4f}] "
+            f"QT[{q_all[:,2].min():.4f},{q_all[:,2].max():.4f}]"
+        )
+    else:
+        states_n = normalize_obs(data["states"]).astype(np.float32)
     actions = np.asarray(data["actions"], dtype=np.float32)
     names = action_names(args.action_mapping)
 
@@ -245,6 +287,40 @@ def prepare_bc_data(args: argparse.Namespace) -> dict[str, Any]:
         plan.save(out_plan)
         print(f"[train_bc] 新建采样计划已保存：{out_plan}")
 
+    if use_16d:
+        # Q scale 只用训练 Actor 子集估计（验证集不参与），落盘备查。
+        q_scale_arg = getattr(args, "q_scale_path", None)
+        if q_scale_arg and Path(q_scale_arg).exists():
+            q_scale = np.asarray(
+                np.load(q_scale_arg)["q_scale"], dtype=np.float64
+            ).ravel()
+            print(f"[train_bc] 已载入 Q scale：{q_scale_arg} → {q_scale}")
+        else:
+            q_scale = estimate_q_scales(
+                q_all[np.asarray(plan.actor_step_indices, dtype=np.int64)],
+                quantile=Q_SCALE_QUANTILE,
+            )
+            scale_out = Path(args.save_dir) / f"q_scale_seed{args.sample_seed}.npz"
+            scale_out.parent.mkdir(parents=True, exist_ok=True)
+            np.savez(
+                scale_out,
+                q_scale=q_scale,
+                quantile=np.array(Q_SCALE_QUANTILE),
+                obs_schema_version=np.array(_SCHEMA_16),
+                obs_norm_version=np.array(_OBS16_NORM_VERSION),
+            )
+            print(f"[train_bc] Q scale（train 99.5% 分位）：{q_scale}，已保存 {scale_out}")
+        states_n = normalize_obs16(
+            np.asarray(data["states"], dtype=np.float64), q_all, q_scale
+        ).astype(np.float32)
+        from obs_qmag import overflow_ratio_q  # noqa: E402
+
+        ov = overflow_ratio_q(states_n, limit=1.0)
+        ov5 = overflow_ratio_q(states_n, limit=5.0)
+        print(
+            f"[train_bc] 16D 归一化 |x|>1：obs13={ov['obs13']*100:.2f}% "
+            f"Q={ov['q']*100:.2f}%；|x|>5：obs13={ov5['obs13']*100:.2f}% Q={ov5['q']*100:.2f}%"
+        )
     s_tr, a_tr, s_va, a_va = bc_arrays_from_plan(states_n, actions, plan)
     print(
         f"[train_bc] BC 数据：train={len(s_tr)}  val={len(s_va)}  "
@@ -267,14 +343,37 @@ def prepare_bc_data(args: argparse.Namespace) -> dict[str, Any]:
         "states_norm_all": states_n,
         "action_mapping": args.action_mapping,
         "action_names": names,
+        "obs_dim": 16 if use_16d else 13,
+        "obs_schema": getattr(args, "obs_schema", "rel13_v1"),
+        "obs_schema_version": _SCHEMA_16 if use_16d else OBS_SCHEMA_VERSION,
+        "obs_norm_version": _OBS16_NORM_VERSION if use_16d else OBS_NORM_VERSION,
+        "q_scale": q_scale.tolist() if use_16d else None,
     }
 
 
 def run_training(args: argparse.Namespace, pack: dict[str, Any], save_dir: Path) -> dict[str, Any]:
     device = torch.device(args.device)
-    actor = BcActor(obs_dim=13, act_dim=3, net_arch=DEFAULTS["net_arch"]).to(device)
+    obs_dim = int(pack.get("obs_dim", 13))
+    actor = BcActor(obs_dim=obs_dim, act_dim=3, net_arch=DEFAULTS["net_arch"]).to(device)
     opt = torch.optim.Adam(actor.parameters(), lr=args.lr)
     rng = np.random.default_rng(args.seed)
+    checkpoint_config = {
+        "seed": args.seed,
+        "sample_seed": args.sample_seed,
+        "lr": args.lr,
+        "batch": args.batch,
+        "budget": args.budget,
+        "actor_exclude_intercepted": not args.actor_include_intercepted,
+        "actor_eligible": (
+            "all" if args.actor_include_intercepted else args.actor_eligible
+        ),
+        "expert": args.expert,
+        "action_mapping": args.action_mapping,
+        "obs_schema_version": pack.get("obs_schema_version", OBS_SCHEMA_VERSION),
+        "obs_norm_version": pack.get("obs_norm_version", OBS_NORM_VERSION),
+    }
+    if pack.get("q_scale") is not None:
+        checkpoint_config["q_scale"] = list(pack["q_scale"])
 
     history: list[dict[str, Any]] = []
     best_val = float("inf")
@@ -320,19 +419,7 @@ def run_training(args: argparse.Namespace, pack: dict[str, Any], save_dir: Path)
                 best_path,
                 actor,
                 metrics={"train": m_tr.to_dict(), "val": m_va.to_dict()},
-                config={
-                    "seed": args.seed,
-                    "sample_seed": args.sample_seed,
-                    "lr": args.lr,
-                    "batch": args.batch,
-                    "budget": args.budget,
-                    "actor_exclude_intercepted": not args.actor_include_intercepted,
-                    "actor_eligible": (
-                        "all" if args.actor_include_intercepted else args.actor_eligible
-                    ),
-                    "expert": args.expert,
-                    "action_mapping": args.action_mapping,
-                },
+                config=checkpoint_config,
                 epoch=epoch,
             )
             print(f"  → 新最佳 val MSE={best_val:.6f}，已保存 {best_path}")
@@ -347,7 +434,7 @@ def run_training(args: argparse.Namespace, pack: dict[str, Any], save_dir: Path)
         final_path,
         actor,
         metrics=history[-1] if history else {},
-        config={"seed": args.seed, "action_mapping": args.action_mapping},
+        config=checkpoint_config,
         epoch=history[-1]["epoch"] if history else 0,
     )
 
@@ -644,6 +731,7 @@ def main() -> None:
         print("  纯 Actor BC 诊断")
         print(f"  seed={args.seed}  sample_seed={args.sample_seed}")
         print(f"  action_mapping={args.action_mapping}")
+        print(f"  obs_schema={getattr(args, 'obs_schema', 'rel13_v1')}")
         print(f"  epochs={args.epochs}  lr={args.lr}  batch={args.batch}")
         print(f"  device={args.device}  save_dir={save_dir}")
         print("=" * 60)
