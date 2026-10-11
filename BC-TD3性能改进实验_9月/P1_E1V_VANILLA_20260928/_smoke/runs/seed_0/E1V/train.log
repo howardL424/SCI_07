@@ -1,0 +1,88 @@
+[train] 终端输出同时写入 D:\LTY\yan\yanerxia\GAIL\P1_E1V_VANILLA_20260928\_smoke\runs\seed_0\E1V\train.log
+============================================================
+  训练方案: BC 预填充 + 衰减 BC 正则 + TD3
+  运行模式: 正式训练
+  总步数  : 1,000
+  学习率  : 0.0001（Actor / Critic 统一）
+  运行名称: p1_E1V_seed0
+  seed    : 0（sample_seed=0）
+  BC 预填充: 否
+  采样模式: balanced（actor_eligible=both_ok；include_intercepted=False）
+  动作映射: ratio_log_box_v1
+  BC 正则  : λ0=0.0, 衰减步数=200,000
+  BC 初始化: D:\LTY\yan\yanerxia\GAIL\P1_E1_BC_WARMSTART_20260927\runs\seed_0\bc\bc_seed0_best.pt
+  终端缓存: D:\LTY\yan\yanerxia\GAIL\rl_td3\data\expert_terminal_cache.npz
+  专家库  : E:\matlab\result_0714\expert_lib_1000.mat
+  对齐数据: D:\LTY\yan\yanerxia\GAIL\rl_td3\data\expert_transitions_aligned.mat
+  评估 ep 数: 5（每 500 步，固定初态遍历）
+  训练初态: D:\LTY\yan\yanerxia\GAIL\samples_clean.mat
+  评估初态: D:\LTY\yan\yanerxia\GAIL\samples_clean_val.mat（EvalCallback / best_model）
+  梯度裁剪: ±10.0
+  保存目录: D:\LTY\yan\yanerxia\GAIL\P1_E1V_VANILLA_20260928\_smoke\runs\seed_0\E1V
+============================================================
+[EvasionEnv] samples_clean.mat: 保留 2351/3400 行（已滤除全零 1049 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[FixedICEvalEnv] 固定评估初态 5/300 个（order_seed=0），row_idx 前 10: [36, 291, 128, 116, 266]
+[FixedICEvalEnv] 评估初态清单已写入 D:\LTY\yan\yanerxia\GAIL\P1_E1V_VANILLA_20260928\_smoke\runs\seed_0\E1V\eval_logs\eval_ic_pool.json
+[train] 评估协议: 每 500 步遍历同一组 5 个 val 初态（deterministic，无采样噪声）
+Using cuda device
+Wrapping the env in a DummyVecEnv.
+[train] BC Actor warm-start 完成: epoch=21, sha256=866198ddc4cda902c83bd9ae37ef1382450b5cae039fc048678dfb6e4bc06792, 输出误差(actor/target)=0.000e+00/0.000e+00
+[train] 运行配置已写入 D:\LTY\yan\yanerxia\GAIL\P1_E1V_VANILLA_20260928\_smoke\runs\seed_0\E1V\run_config.json
+
+[train] 开始 TD3BC 训练，共 1,000 步…
+Logging to D:\LTY\yan\yanerxia\GAIL\P1_E1V_VANILLA_20260928\_smoke\runs\seed_0\E1V\tb_logs\TD3_1
+Eval num_timesteps=0, episode_reward=125.85 +/- 1.43
+Episode length: 86.00 +/- 11.59
+Success rate: 100.00%
+---------------------------------
+| eval/              |          |
+|    mean_ep_length  | 86       |
+|    mean_reward     | 126      |
+|    success_rate    | 1        |
+| time/              |          |
+|    total_timesteps | 0        |
+---------------------------------
+New best mean reward!
+Validation metrics: both_ok=100.00%, evade_ok=100.00%, strike_ok=100.00%, intercepted=0.00%
+[GradClipCallback] 已为 36 个参数张量注册梯度裁剪钩子 (±10.0)
+Eval num_timesteps=500, episode_reward=125.85 +/- 1.43
+Episode length: 86.00 +/- 11.59
+Success rate: 100.00%
+---------------------------------
+| eval/              |          |
+|    mean_ep_length  | 86       |
+|    mean_reward     | 126      |
+|    success_rate    | 1        |
+| time/              |          |
+|    total_timesteps | 500      |
+---------------------------------
+Validation metrics: both_ok=100.00%, evade_ok=100.00%, strike_ok=100.00%, intercepted=0.00%
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 87.3     |
+|    ep_rew_mean     | 126      |
+| time/              |          |
+|    episodes        | 10       |
+|    fps             | 33       |
+|    time_elapsed    | 26       |
+|    total_timesteps | 873      |
+---------------------------------
+Eval num_timesteps=1000, episode_reward=125.85 +/- 1.43
+Episode length: 86.00 +/- 11.59
+Success rate: 100.00%
+---------------------------------
+| eval/              |          |
+|    mean_ep_length  | 86       |
+|    mean_reward     | 126      |
+|    success_rate    | 1        |
+| time/              |          |
+|    total_timesteps | 1000     |
+---------------------------------
+Validation metrics: both_ok=100.00%, evade_ok=100.00%, strike_ok=100.00%, intercepted=0.00%
+
+[train] 训练完成，最终模型已保存至 D:\LTY\yan\yanerxia\GAIL\P1_E1V_VANILLA_20260928\_smoke\runs\seed_0\E1V\p1_E1V_seed0.zip

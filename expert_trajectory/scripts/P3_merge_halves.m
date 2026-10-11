@@ -1,10 +1,17 @@
 addpath(fileparts(fileparts(mfilename('fullpath'))));  % expert_trajectory/
 setup_expert_path();
-[expertRoot, projectRoot] = project_paths();
+[expertRoot, projectRoot] = project_paths(); %#ok<ASGLU>
 
-f1 = fullfile(expertRoot, 'expert_lib_1000_half1.mat');
-f2 = fullfile(expertRoot, 'expert_lib_1000_half2.mat');
-out = fullfile(expertRoot, 'expert_lib_1000.mat');
+% f1 = fullfile(expertRoot, 'expert_lib_1000_half1.mat');
+% f2 = fullfile(expertRoot, 'expert_lib_1000_half2.mat');
+% out = fullfile(expertRoot, 'expert_lib_1000.mat');
+resultDir = 'E:\matlab\result_1010';
+if ~isfolder(resultDir)
+    mkdir(resultDir);
+end
+f1 = fullfile(resultDir, 'expert_lib_1000_half1.mat');
+f2 = fullfile(resultDir, 'expert_lib_1000_half2.mat');
+out = fullfile(resultDir, 'expert_lib_1000.mat');
 
 if ~isfile(f1)
     error('P3_merge_halves:MissingHalf1', '未找到 %s', f1);
@@ -20,7 +27,8 @@ if any(ismember(r1.valid_pos, r2.valid_pos))
     error('P3_merge_halves:Overlap', '两批 valid_pos 有重叠，不能合并');
 end
 
-sc = load(fullfile(projectRoot, 'samples_clean.mat'), 'samples_clean');
+% sc = load(fullfile(projectRoot, 'samples_clean.mat'), 'samples_clean');
+sc = load(fullfile(projectRoot, 'samples_clean_kuoda_train.mat'), 'samples_clean');
 nValid = nnz(any(sc.samples_clean ~= 0, 2));
 % 统一为行向量，避免两批 orientation 不一致导致 horzcat 失败
 vp1 = r1.valid_pos(:).'; vp2 = r2.valid_pos(:).';

@@ -1,0 +1,16 @@
+﻿{
+    "experiment":  "P0: pure online TD3 baseline under the P1 protocol (no expert Replay, no BC reg, no BC init)",
+    "created_at":  "2026-09-28T14:53:54.9726747+08:00",
+    "smoke":  false,
+    "seeds":  "0",
+    "steps":  150000,
+    "eval_freq":  25000,
+    "n_eval":  150,
+    "eval_at_start":  true,
+    "action_mapping":  "ratio_log_box_v1",
+    "observation":  "13D clean, identification disabled",
+    "entry":  "td3_baseline/train_td3_pure.py (SB3 TD3, hyperparameters aligned with rl_td3/train_td3.py DEFAULTS)",
+    "reference":  "P1_E1_BC_WARMSTART_20260927 (E0/E1) and P1_E1V_VANILLA_20260928 (E1V), same 150 fixed val ICs, eval_ic_seed=0",
+    "python":  "E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe",
+    "git_commit":  "1a8c25bd0e145054415d017e2884cfaafa7f94bc"
+}

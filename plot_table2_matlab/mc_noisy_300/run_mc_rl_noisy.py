@@ -1,7 +1,7 @@
 """四方法带噪 MC 中的 TD3 / BC-TD3 部分（不带辨识，coeff_mode=analytic_noisy）。
 
-同一 checkpoint、同一 test-IC 顺序、每局 noise_seed = noise_seed0 + local_idx，
-与 PN/正弦 MC 及 ident 消融脚本对齐。
+同一 checkpoint、同一 test-IC 顺序、每局
+noise_seed = noise_seed0 + local_idx。
 
 用法：
   E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe \\
@@ -44,7 +44,7 @@ DEFAULT_MODELS = {
     "bctd3": _GAIL
     / "rl_td3"
     / "checkpoints"
-    / "training_500k_20260728_1455"
+    / "training_300k_20260730_1917"
     / "best"
     / "best_model",
 }

@@ -1,0 +1,167 @@
+{
+  "budget": 200,
+  "complete_seeds": [
+    0
+  ],
+  "missing": [
+    "P1_E1_BC_WARMSTART_20260927\\_smoke\\runs\\seed_21\\E0\\eval_logs\\success_metrics.json",
+    "P1_E1_BC_WARMSTART_20260927\\_smoke\\runs\\seed_21\\E1\\eval_logs\\success_metrics.json",
+    "P1_E1_BC_WARMSTART_20260927\\_smoke\\runs\\seed_42\\E0\\eval_logs\\success_metrics.json",
+    "P1_E1_BC_WARMSTART_20260927\\_smoke\\runs\\seed_42\\E1\\eval_logs\\success_metrics.json"
+  ],
+  "records": {
+    "0": {
+      "E0": {
+        "curve": {
+          "timesteps": [
+            0,
+            100,
+            200
+          ],
+          "both_ok": [
+            0.6,
+            0.8,
+            0.8
+          ],
+          "evade_ok": [
+            0.6,
+            0.8,
+            0.8
+          ],
+          "strike_ok": [
+            0.6,
+            0.8,
+            0.8
+          ],
+          "intercepted": [
+            0.4,
+            0.2,
+            0.2
+          ]
+        },
+        "first_90_step": null,
+        "auc_0_150k": 0.75,
+        "both_ok_at": {
+          "50000": null,
+          "100000": null,
+          "150000": null,
+          "300000": null
+        },
+        "wall_time_seconds": 248.32083250000142,
+        "bc_init": {
+          "enabled": false
+        },
+        "identification_enabled": false
+      },
+      "E1": {
+        "curve": {
+          "timesteps": [
+            0,
+            100,
+            200
+          ],
+          "both_ok": [
+            0.6,
+            1.0,
+            0.8
+          ],
+          "evade_ok": [
+            0.6,
+            1.0,
+            0.8
+          ],
+          "strike_ok": [
+            0.6,
+            1.0,
+            0.8
+          ],
+          "intercepted": [
+            0.4,
+            0.0,
+            0.2
+          ]
+        },
+        "first_90_step": 100,
+        "auc_0_150k": 0.85,
+        "both_ok_at": {
+          "50000": null,
+          "100000": null,
+          "150000": null,
+          "300000": null
+        },
+        "wall_time_seconds": 243.9285951999991,
+        "bc_init": {
+          "enabled": true,
+          "checkpoint": "D:\\LTY\\yan\\yanerxia\\GAIL\\P1_E1_BC_WARMSTART_20260927\\_smoke\\runs\\seed_0\\bc\\bc_seed0_best.pt",
+          "sha256": "dba2c528ef6f70776c8f1c128ea2d799ae3aa03697c2d86e8e4de60aab27831d",
+          "epoch": 2,
+          "obs_dim": 13,
+          "act_dim": 3,
+          "net_arch": [
+            256,
+            256
+          ],
+          "obs_schema_version": "stage2_relative_obs_13d_v1",
+          "obs_norm_version": "obs_scale_0714_v1",
+          "action_mapping": "ratio_log_box_v1",
+          "probe_n": 256,
+          "max_abs_actor_before_vs_bc": 0.6383774876594543,
+          "max_abs_target_before_vs_bc": 0.6383774876594543,
+          "max_abs_actor_vs_bc": 0.0,
+          "max_abs_target_vs_bc": 0.0,
+          "max_abs_actor_vs_target": 0.0
+        },
+        "identification_enabled": false
+      }
+    }
+  },
+  "paired": [
+    {
+      "seed": 0,
+      "first_90_step_delta": -25100,
+      "auc_0_150k_delta": 0.09999999999999998,
+      "final_both_ok_delta": 0.0
+    }
+  ],
+  "aggregate": {
+    "E0": {
+      "first_90_step_censored": {
+        "mean": 25200.0,
+        "std": 0.0
+      },
+      "auc_0_150k": {
+        "mean": 0.75,
+        "std": 0.0
+      },
+      "final_both_ok": {
+        "mean": null,
+        "std": null
+      }
+    },
+    "E1": {
+      "first_90_step_censored": {
+        "mean": 100.0,
+        "std": 0.0
+      },
+      "auc_0_150k": {
+        "mean": 0.85,
+        "std": 0.0
+      },
+      "final_both_ok": {
+        "mean": null,
+        "std": null
+      }
+    }
+  },
+  "auc_relative_gain": 0.1333333333333333,
+  "mean_first_90_step_delta": -25100.0,
+  "final_both_ok_delta": null,
+  "screening_gate": {
+    "screening_complete": false,
+    "direction_better_seed_count": 1,
+    "mean_first_90_advance_at_least_25k": true,
+    "auc_relative_gain_at_least_5pct": true,
+    "final_drop_within_1pp": false,
+    "pass": false
+  }
+}

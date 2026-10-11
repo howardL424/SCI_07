@@ -1,0 +1,51 @@
+% !TeX program = pdflatex
+% English translation of Latex/overleaf_SCI_07 (2026-09-24).
+% The original Chinese project is not modified.
+%
+% When changing the journal template, edit this documentclass / preamble.
+% The body \cite / \section commands can be kept.
+% Elsevier example:
+%   \documentclass[preprint,12pt]{elsarticle}
+% IEEE example:
+%   \documentclass[journal]{IEEEtran}
+
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts,mathtools,bm,amsbsy,amsthm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{needspace}
+\usepackage{booktabs,tabularx,array,makecell,multirow}
+\usepackage{algorithm}
+\usepackage[section]{placeins}
+\usepackage{xcolor}
+\usepackage{setspace}
+\usepackage[backend=biber,style=numeric,sorting=none,maxbibnames=99]{biblatex}
+\addbibresource{refs.bib}
+\usepackage{hyperref}
+\usepackage[nameinlink]{cleveref}
+
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+\graphicspath{{figures/}{./}}
+% Tighten the gap between floats and text so Section 6 figures stay with their references.
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 4pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\allowdisplaybreaks
+\newtheorem{assumption}{Assumption}
+\newtheorem{remark}{Remark}
+\newtheorem{problem}{Problem}
+\crefname{remark}{Remark}{Remarks}
+\Crefname{remark}{Remark}{Remarks}
+\crefname{problem}{Problem}{Problems}
+\Crefname{problem}{Problem}{Problems}
+\crefname{assumption}{Assumption}{Assumptions}
+\Crefname{assumption}{Assumption}{Assumptions}
+\DeclareMathOperator{\diag}{diag}
+% Stacked accents act on the letter only; the subscript sits outside the accent.
+\newcommand{\hatddot}[1]{\hat{\ddot{#1}}}
+\newcommand{\tildedot}[1]{\tilde{\dot{#1}}}

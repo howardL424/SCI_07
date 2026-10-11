@@ -1,0 +1,241 @@
+\section{Online Parameter Identification}
+The closed-loop guidance law \eqref{eq:48} of Section~3 and its integral gains \eqref{eq:34}--\eqref{eq:37} depend on the projection coefficients ${b_i}$ and ${b_T}$, the composite line-of-sight rates ${\dot Q_i}$ and ${\dot Q_T}$, and the line-of-sight projection ${v_{ri}}$ of the NCV maneuver. Under ideal information these quantities can be computed analytically from \eqref{eq:12}--\eqref{eq:15}. Under the measurement conditions of \cref{asm:meas-noise}, substituting noisy line-of-sight and flight-path angles directly into the analytical expressions produces biased and mutually correlated errors in the guidance command. During recursive operation, this section therefore no longer relies on the analytical expressions, which are used only once for filter and parameter initialization. The nontrivial elements of the state-space models \eqref{eq:12} and \eqref{eq:14} are identified online from relative-range kinematics, and the estimates required by the guidance law are supplied to it.
+
+\subsection{Formulation of the parameter-identification problem}
+By the state-space equations \eqref{eq:12} and \eqref{eq:14}, the second row of each equation contains the nontrivial elements. For an evader--NCV pair, the second-order dynamics extracted from \eqref{eq:10} are
+
+\begin{equation}
+\label{eq:49}
+{\ddot r_{ADi}}(t) = \underbrace {(\dot q_{yi}^2 + \dot q_{zi}^2{{\cos }^2}{q_{yi}})}_{A_{21}^{(i)}} \cdot {r_{ADi}}(t) + {B_{1,i}} \cdot {a_{yA}}(t) + {B_{2,i}} \cdot {a_{zA}}(t) + {C_{1i}}(t)
+\end{equation}
+Likewise, for the evader--target pair, \eqref{eq:11} gives
+
+\begin{equation}
+\label{eq:50}
+{\ddot r_{AT}}(t) = \underbrace {(\dot q_\theta ^2 + \dot q_\psi ^2{{\cos }^2}{q_\theta })}_{A_{21}^{(T)}} \cdot {r_{AT}}(t) + {B_{1,T}} \cdot {a_{yA}}(t) + {B_{2,T}} \cdot {a_{zA}}(t)
+\end{equation}
+Equations \eqref{eq:49}--\eqref{eq:50} are linear in the unknown parameters. Comparing \eqref{eq:49} with \eqref{eq:3} shows that ${C_{1i}} =  - {v_{ri}}$, the negative of the projection of the $i$th NCV acceleration onto the line of sight to the evader.
+
+All signals are sampled at the guidance period ${t_k} = k\Delta t$. The acceleration command computed from the parameter estimate at ${t_k}$ is held constant on $[{t_k},{t_{k + 1}})$. The relative acceleration reconstructed at ${t_k}$ must therefore be paired with the acceleration actually applied on $[{t_{k - 1}},{t_k})$, not with the command being computed at ${t_k}$. The causal regression model of an evader--NCV pair is accordingly defined as
+
+\begin{equation}
+\label{eq:51}
+{y_i}(k) = \phi _i^T(k - 1){\kern 1pt} \vartheta _i^{[{t_{k - 1}},{t_k})} + {e_i}(k)
+\end{equation}
+where ${e_i}(k)$ is the regression residual of the channel between the evader and the $i$th NCV, and the remaining quantities are
+
+\begin{equation}
+\label{eq:52}
+{y_i}(k) = \hatddot{r}_{ADi}(k|k),\quad \vartheta _i^{[{t_{k - 1}},{t_k})} = \left[ {\begin{array}{*{20}{c}}
+  {A_{21}^{(i)}} \\ 
+  {{B_{1,i}}} \\ 
+  {{B_{2,i}}} \\ 
+  {{C_{1i}}} 
+\end{array}} \right],\quad {\phi _i}(k - 1) = \left[ {\begin{array}{*{20}{c}}
+  {{{\hat r}_{ADi}}(k - 1|k - 1)} \\ 
+  {{a_{yA}}(k - 1)} \\ 
+  {{a_{zA}}(k - 1)} \\ 
+  1 
+\end{array}} \right]
+\end{equation}
+For the evader--target pair,
+
+\begin{equation}
+\label{eq:53}
+{y_T}(k) = \phi _T^T(k - 1){\kern 1pt} \vartheta _T^{[{t_{k - 1}},{t_k})} + {e_T}(k)
+\end{equation}
+where ${e_T}(k)$ is the regression residual of the evader--target channel, and the remaining quantities are
+
+\begin{equation}
+\label{eq:54}
+{y_T}(k) = \hatddot{r}_{AT}(k|k),\quad \vartheta _T^{[{t_{k - 1}},{t_k})} = \left[ {\begin{array}{*{20}{c}}
+  {A_{21}^{(T)}} \\ 
+  {{B_{1,T}}} \\ 
+  {{B_{2,T}}} 
+\end{array}} \right],\quad {\phi _T}(k - 1) = \left[ {\begin{array}{*{20}{c}}
+  {{{\hat r}_{AT}}(k - 1|k - 1)} \\ 
+  {{a_{yA}}(k - 1)} \\ 
+  {{a_{zA}}(k - 1)} 
+\end{array}} \right]
+\end{equation}
+In \eqref{eq:52} and \eqref{eq:54}, ${a_{yA}}(k - 1)$ and ${a_{zA}}(k - 1)$ are the saturated accelerations actually applied on $[{t_{k - 1}},{t_k})$. The quantity $\hatddot{r}(k|k)$ is the posterior estimate of the relative acceleration using measurements up to ${t_k}$, and $\hat r(k - 1|k - 1)$ in the regressor is the posterior range estimate at the previous instant. Both are provided by the Kalman filter in Section~\ref{subsec:kf}. The vectors $\vartheta _i^{[{t_{k - 1}},{t_k})}$ and $\vartheta _T^{[{t_{k - 1}},{t_k})}$ in \eqref{eq:51} and \eqref{eq:53} are equivalent parameters on $[{t_{k - 1}},{t_k})$. The physical parameters they represent vary continuously with the line-of-sight geometry, but they are treated as constant within a single regression equation. Equation \eqref{eq:55} then fits all data in the forgetting window by the same constant associated with the current interval, and the slow variation of the parameters is tracked by the forgetting factor $\rho$. The estimates $\hat{\vartheta}_{i}(k)$ and $\hat{\vartheta}_{T}(k)$ obtained at ${t_k}$ correspond to $\vartheta _i^{[{t_{k - 1}},{t_k})}$ and $\vartheta _T^{[{t_{k - 1}},{t_k})}$, and are the latest estimates available. The residuals ${e_i}(k)$ and ${e_T}(k)$ consist mainly of the relative-acceleration estimation error and the modeling error incurred by representing time-varying parameters in the forgetting window by a single constant.
+
+Structured identification uses the known sparsity pattern of the state matrices: the $(1,1)$, $(1,2)$, and $(2,2)$ entries of ${{\mathbf{A}}_i}$ and ${{\mathbf{A}}_T}$ are fixed at 0, 1, and 0, and the first rows of ${{\mathbf{B}}_i}$ and ${{\mathbf{B}}_T}$ are zero. Only the nontrivial elements are estimated, which reduces the parameter dimension and preserves physical consistency. These elements are summarized in Table~\ref{tab:nontrivial}.
+
+\begin{table}[htbp]
+\centering
+\caption{Nontrivial elements to be identified.}
+\label{tab:nontrivial}
+\small
+\begin{tabularx}{\linewidth}{lXXX}
+\toprule
+Equation & Matrix & Element & Physical meaning \\
+\midrule
+\eqref{eq:12} & ${{\mathbf{A}}_i}$ & $A_{21}^{(i)} = \dot q_{yi}^2 + \dot q_{zi}^2{\cos ^2}{q_{yi}}$ & Line-of-sight rate coupling \\
+\eqref{eq:12} & ${{\mathbf{B}}_i}$ & ${B_{1,i}},{B_{2,i}}$ & Evader acceleration projection coefficients (NCV direction) \\
+\eqref{eq:12} & ${{\mathbf{C}}_i}$ & ${C_{1i}}$ & NCV maneuver-acceleration bias \\
+\eqref{eq:14} & ${{\mathbf{A}}_T}$ & $A_{21}^{(T)} = \dot q_\theta ^2 + \dot q_\psi ^2{\cos ^2}{q_\theta }$ & Target--evader line-of-sight rate coupling \\
+\eqref{eq:14} & ${{\mathbf{B}}_T}$ & ${B_{1,T}},{B_{2,T}}$ & Evader acceleration projection coefficients (target direction) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\FloatBarrier
+
+Under the measurement conditions of \cref{asm:meas-noise}, $\ddot r$ must be estimated online from the noisy $\tilde{r}$ and $\tildedot{r}$. The regression residuals ${e_i}(k)$ and ${e_T}(k)$ are therefore nonzero, and some free parameters, especially the projection coefficients ${B_{1,i}}$, ${B_{2,i}}$, ${C_{1i}}$, ${B_{1,T}}$, and ${B_{2,T}}$, may be weakly excited in certain geometries. To improve identification stability under weak excitation and to suppress spurious parameter components caused by relative-acceleration estimation error, the diagonal scaling in \eqref{eq:56} is used, and an ${\ell _1}$ (Lasso) penalty is added to the forgetting-factor least-squares cost in the normalized domain~\cite{ljung1999}. The superscript ``sc'' denotes parameters after this scaling. For an evader--NCV pair $(i = 1,2)$,
+
+\begin{equation}
+\label{eq:55}
+{J_{i,k}}\left(\vartheta _i^{{\text{sc}},[{t_{k - 1}},{t_k})}\right) = \sum\limits_{n = 1}^k {{\rho ^{k - n}}} {\left[ {{y_i}(n) - \bar{\phi}_i^T(n - 1)\vartheta _i^{{\text{sc}},[{t_{k - 1}},{t_k})}} \right]^2} + \mu \sum\limits_{j = 2}^4 {\left| {{[\vartheta _i^{{\text{sc}},[{t_{k - 1}},{t_k})}]}_j} \right|}
+\end{equation}
+The same cost ${J_{T,k}}\left(\vartheta _T^{{\text{sc}},[{t_{k - 1}},{t_k})}\right)$ is constructed for the evader--target pair, with the ${\ell _1}$ sum taken over $j = 2,3$. Here $k$ is the current recursion index and $n=1,\ldots,k$ indexes the past samples; $\rho  \in (0,1]$ is the forgetting factor and $\mu  \geqslant 0$ is the sparsity weight. In both costs the ${\ell _1}$ penalty acts only on the projection coefficients and the bias components. The entry ${A_{21}}$ is a nonnegative geometric parameter determined by the sum of squared line-of-sight rates and enters the guidance law through $\dot Q=\sqrt{A_{21}}$, so it is not soft-thresholded as a sparse component. Its nonnegativity is enforced by the projection \eqref{eq:61}. The normalizing transformation is
+
+\begin{equation}
+\label{eq:56}
+\bar{\phi} = {M^{ - 1}}\phi ,\quad \vartheta ^{{\text{sc}},[{t_{k - 1}},{t_k})} = M\vartheta ^{[{t_{k - 1}},{t_k})},\quad {M_i} = \diag({r_0},{a_0},{a_0},1),\quad {M_T} = \diag({r_0},{a_0},{a_0})
+\end{equation}
+where ${r_0}$ and ${a_0}$ are the nominal range and acceleration scales. The transformation leaves the predicted measurement unchanged, that is,
+\[
+\bar{\phi}^{T}\vartheta ^{{\text{sc}},[{t_{k - 1}},{t_k})}
+= {\phi ^T}\vartheta ^{[{t_{k - 1}},{t_k})}.
+\]
+The ${\ell _1}$ term in \eqref{eq:55} penalizes the projection coefficients and the bias components, starting from the second component, in this normalized domain. In the recursion below the superscript ``sc'' is omitted for brevity. All variables are understood to be normalized, and $\hat{\vartheta}_{i}(k)$ and $\hat{\vartheta}_{T}(k)$ still denote the step-$k$ estimates of the equivalent parameters on the current interval.
+
+\begin{problem}[Structured sparse parameter identification]
+\label{prb:id}
+Given the seeker measurements of relative range and range rate in \cref{asm:meas-noise} and the acceleration actually applied by the evader, and subject to the known sparsity pattern of the state matrices, take the forgetting-factor ${\ell _1}$-regularized criterion \eqref{eq:55} as the design criterion. At each guidance period $\Delta t$, using only information up to ${t_k}$, recursively estimate $\vartheta _i^{[{t_{k - 1}},{t_k})}$ ($i = 1,2$) and $\vartheta _T^{[{t_{k - 1}},{t_k})}$ by a proximal (soft-threshold) approximation of this criterion, and thereby provide online estimates of ${{\mathbf{A}}_i}$, ${{\mathbf{B}}_i}$, ${{\mathbf{C}}_i}$, ${{\mathbf{A}}_T}$, and ${{\mathbf{B}}_T}$ to the guidance law.
+\end{problem}
+
+\subsection{Kalman estimation of relative acceleration and range}
+\label{subsec:kf}
+Under the measurement conditions of \cref{asm:meas-noise}, the relative acceleration $\ddot r$ cannot be measured directly, and numerical differentiation of the noisy range rate amplifies the measurement noise by $1/\Delta t$, which is a factor of ten when $\Delta t = 0.1{\kern 1pt} {\text{s}}$. An independent three-state constant-acceleration Kalman filter is therefore assigned to each of the two NCV range channels $i \in \{1,2\}$ and to the target range channel $T$. In what follows, $c$ denotes any one of these range channels. Equations \eqref{eq:12} and \eqref{eq:14} are not used as the filter model, because the nontrivial elements $A_{21}^{(i)},B_{1,i},B_{2,i},C_{1i}$ of an NCV channel and $A_{21}^{(T)},B_{1,T},B_{2,T}$ of the target channel are exactly the quantities to be identified. Building the filter from their estimates would create a circular dependence between identification and filtering. A constant-acceleration model independent of the line-of-sight geometry, with the relative jerk treated as white noise, makes the reconstruction of $\ddot r$ independent of the parameters being estimated. The state and measurement are
+
+\begin{equation}
+\label{eq:62}
+{\xi _c}(k) = {[{r_c}(k),{\dot r_c}(k),{\ddot r_c}(k)]^T},\quad {z_{\xi ,c}}(k) = {[\tilde{r}_{c}(k),\tildedot{r}_{c}(k)]^T}
+\end{equation}
+The discrete process and measurement equations of each channel are
+
+\begin{equation}
+\label{eq:62b}
+{\xi _c}(k) = {{\mathbf{F}}_\xi }{\xi _c}(k - 1) + {w_c}(k - 1),\quad {z_{\xi ,c}}(k) = {{\mathbf{H}}_\xi }{\xi _c}(k) + {\nu _c}(k)
+\end{equation}
+where the state-transition and measurement matrices are
+
+\begin{equation}
+\label{eq:62c}
+{{\mathbf{F}}_\xi } = \left[ {\begin{array}{*{20}{c}}
+  1&{\Delta t}&{\tfrac{1}{2}\Delta {t^2}} \\ 
+  0&1&{\Delta t} \\ 
+  0&0&1 
+\end{array}} \right],\quad {{\mathbf{H}}_\xi } = \left[ {\begin{array}{*{20}{c}}
+  1&0&0 \\ 
+  0&1&0 
+\end{array}} \right]
+\end{equation}
+The process noise ${w_c}\sim \mathcal{N}({\mathbf{0}},{{\mathbf{Q}}_\xi })$ and the measurement noise ${\nu _c}\sim \mathcal{N}({\mathbf{0}},{{\mathbf{R}}_\xi })$ are uncorrelated. Modeling the relative jerk as continuous white noise of intensity $\sigma _j^2$, the discrete-equivalent process covariance and the measurement covariance determined by \eqref{eq:16b} are~\cite{barshalom2001}
+
+\begin{equation}
+\label{eq:62d}
+{{\mathbf{Q}}_\xi } = \sigma _j^2\left[ {\begin{array}{*{20}{c}}
+  {\Delta {t^5}/20}&{\Delta {t^4}/8}&{\Delta {t^3}/6} \\ 
+  {\Delta {t^4}/8}&{\Delta {t^3}/3}&{\Delta {t^2}/2} \\ 
+  {\Delta {t^3}/6}&{\Delta {t^2}/2}&{\Delta t} 
+\end{array}} \right],\quad {{\mathbf{R}}_\xi } = \diag(\sigma _r^2,\sigma _{\dot r}^2)
+\end{equation}
+Within each guidance cycle the standard Kalman recursion first predicts and then updates~\cite{barshalom2001}:
+
+\begin{equation}
+\label{eq:62e}
+\left\{
+\begin{aligned}
+\hat \xi _c^-(k) &= {{\mathbf{F}}_\xi }{{\hat \xi }_c}(k - 1|k - 1),\\
+{\mathbf{P}}_c^-(k) &= {{\mathbf{F}}_\xi }{{\mathbf{P}}_c}(k - 1|k - 1){\mathbf{F}}_\xi ^T + {{\mathbf{Q}}_\xi },\\
+{{\mathbf{K}}_{\xi ,c}}(k) &= {\mathbf{P}}_c^-(k){\mathbf{H}}_\xi ^T
+\left[ {\mathbf{H}}_\xi {\mathbf{P}}_c^-(k){\mathbf{H}}_\xi ^T + {\mathbf{R}}_\xi \right]^{-1},\\
+{{\hat \xi }_c}(k|k) &= \hat \xi _c^-(k)+{{\mathbf{K}}_{\xi ,c}}(k)
+\left[ {z_{\xi ,c}}(k)-{{\mathbf{H}}_\xi }\hat \xi _c^-(k) \right],\\
+{{\mathbf{P}}_c}(k|k) &= \left[ {\mathbf{I}}-{{\mathbf{K}}_{\xi ,c}}(k){{\mathbf{H}}_\xi } \right]{\mathbf{P}}_c^-(k).
+\end{aligned}
+\right.
+\end{equation}
+The regression output ${y_c}(k)$ is the third component of ${\hat \xi _c}(k|k)$, and the range entry of the regressor is the first component of ${\hat \xi _c}(k - 1|k - 1)$.
+
+The filter is initialized by ${\hat \xi _c}(0|0) = {[\tilde{r}_{c}(0),\tildedot{r}_{c}(0),{{\ddot r}_{c,0}}]^T}$, where ${\ddot r_{c,0}}$ is obtained by substituting the initial measurements into the analytical expressions \eqref{eq:10} and \eqref{eq:11}. The NCV acceleration required by an NCV channel is given by the PN model \eqref{eq:9}. The initial covariance is ${{\mathbf{P}}_c}(0|0) = \diag(\sigma _r^2,\sigma _{\dot r}^2,\sigma _{a0}^2)$, where ${\sigma _{a0}}$ is chosen on the order of the sum of the normal load factors available to the evader and the NCVs. The jerk intensity ${\sigma _j}$ sets the trade-off between tracking bandwidth and noise suppression. If ${\sigma _j}$ is too small, the lag of $\hatddot{r}$ grows and biases the estimate when ${C_{1i}}$ changes rapidly with the NCV proportional-navigation acceleration in the terminal phase. If ${\sigma _j}$ is too large, more measurement noise enters ${y_c}$ and then the parameter estimate through \eqref{eq:58}. The values of ${\sigma _j}$, ${\sigma _r}$, and ${\sigma _{\dot r}}$ are given together in Section~6.1.
+
+\subsection{Sparse FF-RLS with an ${\ell _1}$ proximal update}
+For \cref{prb:id}, this subsection constructs a sparse FF-RLS estimator with an ${\ell _1}$ proximal update. In each guidance cycle, a forgetting-factor recursive least-squares quadratic update is performed first~\cite{ljung1999,johnstone1982}. An element-wise soft threshold then realizes the sparse shrinkage corresponding to the ${\ell _1}$ penalty in \eqref{eq:55}, and the estimate of ${A_{21}}$ is projected onto its physically feasible set. This improves tracking of the time-varying parameters under weak excitation and noisy residuals. The soft-threshold step is a separable approximation of the proximal operator of the ${\ell _1}$ term in \eqref{eq:55}. It suppresses small ineffective parameter components caused by noise and weak excitation while preserving the recursive form and the online computational cost. The forgetting factor $\rho$ discounts old data exponentially, so that the estimator can follow the continuing change of the line-of-sight geometry during the engagement. For an evader--NCV pair $(i = 1,2)$, the quadratic update is
+
+\begin{equation}
+\label{eq:57}
+{{\mathbf{K}}_i}(k) = \frac{{{{\mathbf{P}}_i}(k - 1){\kern 1pt} {\phi _i}(k - 1)}}{{\rho  + \phi _i^T(k - 1){\kern 1pt} {{\mathbf{P}}_i}(k - 1){\kern 1pt} {\phi _i}(k - 1)}}
+\end{equation}
+\begin{equation}
+\label{eq:58}
+\bar{\vartheta}_{i}(k) = \hat{\vartheta}_{i}(k - 1) + {{\mathbf{K}}_i}(k)[{y_i}(k) - \phi _i^T(k - 1){\kern 1pt} \hat{\vartheta}_{i}(k - 1)]
+\end{equation}
+\begin{equation}
+\label{eq:59}
+{{\mathbf{P}}_i}(k) = \frac{1}{\rho }[{\mathbf{I}} - {{\mathbf{K}}_i}(k){\kern 1pt} \phi _i^T(k - 1)]{\kern 1pt} {{\mathbf{P}}_i}(k - 1)
+\end{equation}
+where ${{\mathbf{K}}_i}(k)$ is the gain, ${{\mathbf{P}}_i}(k)$ is the estimation-error covariance, and $\bar{\vartheta}_{i}(k)$ is the intermediate estimate from the quadratic update. The update of $\bar{\vartheta}_{T}(k)$ for the evader--target pair has the same form, with every subscript $i$ replaced by $T$. After the RLS update, one element-wise soft threshold is applied to the projection coefficients and the bias components, which realizes the sparse shrinkage of the ${\ell _1}$ penalty:
+
+\begin{equation}
+\label{eq:60}
+{\left[ {{{\hat \vartheta }_i}(k)} \right]_j} = \left\{ {\begin{array}{*{20}{l}}
+  {{{\left[ {{{\bar \vartheta }_i}(k)} \right]}_j},}&{j = 1}\\
+  {{{\left[ {{\mathcal{S}_\eta }\left( {{{\bar \vartheta }_i}(k)} \right)} \right]}_j},}&{j = 2,3, \ldots }
+\end{array}} \right.
+\end{equation}
+where ${[{\mathcal{S}_\eta }(v)]_j} = {\text{sign}}({v_j})\max (|{v_j}| - \eta ,0)$ and $\eta  \geqslant 0$ is the soft threshold in the normalized parameter domain, corresponding to the sparsity weight $\mu$ in \eqref{eq:55} and calibrated by offline simulation. The index $j = 1$ corresponds to ${A_{21}}$ and is not shrunk, while $j \geqslant 2$ corresponds to the projection coefficients and the bias components.
+
+The same operation is applied to $\bar{\vartheta}_{T}(k)$. The vector $\hat{\vartheta}_{i}(k)$ is the final estimate at step $k$. In the next cycle, $\hat{\vartheta}_{i}(k - 1)$ in \eqref{eq:58} takes the value after soft thresholding and the projection below. Because ${A_{21}}$ is a sum of squares and enters the guidance law through $\dot Q = \sqrt {{A_{21}}} $, its estimate is projected onto the physically feasible set:
+
+\begin{equation}
+\label{eq:61}
+\hat A_{21}^{(i)}(k) \leftarrow {\text{max}}(\hat A_{21}^{(i)}(k),0),\quad i \in \{1,2\},\qquad
+\hat A_{21}^{(T)}(k) \leftarrow {\text{max}}(\hat A_{21}^{(T)}(k),0)
+\end{equation}
+The parameter estimates are initialized from the analytical expressions \eqref{eq:12}--\eqref{eq:15}. The initial values are computed from the initial measurements, scaled by $M$, and then enter the recursion. At the same time, ${{\mathbf{P}}_i}(0) = {\delta ^{ - 1}}{\mathbf{I}}$ and ${{\mathbf{P}}_T}(0) = {\delta ^{ - 1}}{\mathbf{I}}$ with $\delta  \ll 1$. For an NCV channel, the initial value of ${C_{1i}}$ uses the NCV acceleration given by the PN model \eqref{eq:9}.
+
+Finally, the identified parameters are reassembled into the state-space matrices:
+
+\begin{equation}
+\label{eq:63}
+\hat{\mathbf{A}}_{i} = \left[ {\begin{array}{*{20}{c}}
+  0&1 \\ 
+  {\hat A_{21}^{(i)}}&0 
+\end{array}} \right],\quad \hat{\mathbf{B}}_{i} = \left[ {\begin{array}{*{20}{c}}
+  0&0 \\ 
+  {{{\hat B}_{1,i}}}&{{{\hat B}_{2,i}}} 
+\end{array}} \right],\quad \hat{\mathbf{C}}_{i} = \left[ {\begin{array}{*{20}{c}}
+  0 \\ 
+  {{{\hat C}_{1i}}} 
+\end{array}} \right]
+\end{equation}
+\begin{equation}
+\label{eq:64}
+\hat{\mathbf{A}}_{T} = \left[ {\begin{array}{*{20}{c}}
+  0&1 \\ 
+  {\hat A_{21}^{(T)}}&0 
+\end{array}} \right],\quad \hat{\mathbf{B}}_{T} = \left[ {\begin{array}{*{20}{c}}
+  0&0 \\ 
+  {{{\hat B}_{1,T}}}&{{{\hat B}_{2,T}}} 
+\end{array}} \right]
+\end{equation}
+Every estimate in \eqref{eq:63}--\eqref{eq:66} has been transformed back to physical units by $\hat{\vartheta}(k) = {M^{ - 1}}\hat{\vartheta}^{{\text{sc}}}(k)$. The quantities required by the guidance law for the $i$th NCV are
+
+\begin{equation}
+\label{eq:65}
+\hat{\dot Q}_{i} = \sqrt {\hat A_{21}^{(i)}} ,\quad \hat{b}_{i} = {\left[ {{{\hat B}_{1,i}},{{\hat B}_{2,i}}} \right]^T},\quad \hat{v}_{ri} =  - \hat{C}_{1i}
+\end{equation}
+The quantities required for the target are
+
+\begin{equation}
+\label{eq:66}
+\hat{\dot Q}_{T} = \sqrt {\hat A_{21}^{(T)}} ,\quad \hat{b}_{T} = {\left[ {{{\hat B}_{1,T}},{{\hat B}_{2,T}}} \right]^T}
+\end{equation}
+These estimates replace the corresponding analytically computed quantities in the optimal guidance law \eqref{eq:48} and the integral gains \eqref{eq:34}--\eqref{eq:37}, which forms a closed-loop identification--guidance architecture.
+\begin{remark}
+The accuracy of the identifier is affected by the following factors. When the forgetting window is short, $r$ varies slowly inside the window and is difficult to distinguish from the constant regressor entry. The accelerations ${a_{yA}}$ and ${a_{zA}}$ are produced by the closed-loop guidance law, so whether each parameter is sufficiently excited depends on how rich the maneuver is during the engagement. The regression output $\hatddot{r}$ is estimated by a constant-acceleration Kalman filter. That model can still lag where $\ddot r$ changes rapidly, and the trade-off between lag and noise suppression is set by ${\sigma _j}$, so some bias remains in the parameter estimates. In addition, ${C_{1i}}$ varies rapidly with the NCV proportional-navigation acceleration in the terminal phase, and the approximation of treating it as constant over one guidance cycle becomes weaker.
+\end{remark}
+

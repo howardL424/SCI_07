@@ -1,0 +1,18 @@
+﻿{
+    "experiment":  "P1/E1V: vanilla BC warm-start + standard TD3 (no expert Replay, no online BC reg)",
+    "created_at":  "2026-09-28T08:48:57.3921296+08:00",
+    "smoke":  false,
+    "seeds":  [
+                  0,
+                  42
+              ],
+    "steps":  50000,
+    "eval_freq":  25000,
+    "n_eval":  150,
+    "action_mapping":  "ratio_log_box_v1",
+    "observation":  "13D clean, identification disabled",
+    "condition":  "E1V: paired BC ckpt -\u003e Actor/Actor-target init, --no-bc, --bc-lambda0 0, learning_starts=1000, random Critic",
+    "reference":  "P1_E1_BC_WARMSTART_20260927 (E0/E1, same 150 fixed val ICs, eval_ic_seed=0)",
+    "python":  "E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe",
+    "git_commit":  "1a8c25bd0e145054415d017e2884cfaafa7f94bc"
+}

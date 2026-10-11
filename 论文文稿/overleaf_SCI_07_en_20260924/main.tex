@@ -1,0 +1,79 @@
+\input{preamble}
+
+\title{Identification-aided Integrated Evasion and Guidance against Two Non-Cooperative Vehicles via Behavior-Cloning-Enhanced Reinforcement Learning}
+\author{%
+Taiyuan Liang\textsuperscript{1,}\thanks{Corresponding author.}\qquad
+Yin Pei\textsuperscript{1}\qquad
+Ben Yang\textsuperscript{1}\\[0.6em]
+{\normalsize 1.~China Academy of Launch Vehicle Technology, Beijing 100076, China}%
+}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+In three-dimensional terminal flight, an evader may face two Non-Cooperative Vehicles (NCVs) while still required to reach a fixed target under limited overload. Existing evasion guidance is mostly planar and single-NCV oriented, treating evasion, arrival and energy as separable requirements. To address this, this paper proposes an integrated evasion and guidance law enhanced by behavior-cloning-based reinforcement learning. Firstly, a three-dimensional four-body relative motion model is established, and a unified performance index is built on channel-wise zero-effort miss. Then, the maximum principle reduces the coupled terminal conditions to a set of linear algebraic equations, yielding a closed-form feedback guidance law that explicitly integrates evasion against both NCVs and terminal arrival at the target. Furthermore, Kalman filtering is combined with a forgetting-factor recursive least-squares identifier with sparse regularization, which estimates only the non-trivial model coefficients from noisy measurements. Finally, expert trajectories from shooting-based optimization provide behavior cloning pre-training and replay buffer pre-filling, and TD3 fine-tuning schedules the guidance weights online. Monte Carlo simulations show that the evader stays clear of both NCVs while meeting the terminal accuracy requirement. The resulting success rate of simultaneous evasion and target arrival exceeds that of proportional navigation, programmed sinusoidal maneuvering and TD3 without behavior cloning. Under measurement noise, online identification keeps this success rate above that of the same policy without identification.
+\end{abstract}
+
+\noindent\textbf{Keywords:} Three-dimensional four-body kinematics; Integrated evasion and guidance; Optimal control; Deep reinforcement learning; Online parameter identification
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% AGENT WARNING (2026-09-14) --- read before quoting equation numbers; not in the PDF.
+%
+% When writing "Eq.~(n)" to the user, in the text, or in revision notes, use the
+% number printed in the PDF. Do not treat a \label{eq:xx} name (eq:48, eq:16b,
+% eq:62g, etc.) as the equation number.
+%
+% Labels are historical anchors and are not synchronized with the counter.
+% Inserted or split equations (eq:16b, eq:62b--g) and the \input order shift
+% label digits relative to the printed numbers. Examples in the current draft
+% (from main.aux in this directory; after recompilation use the latest aux/PDF):
+%   \label{eq:16b} -> Eq.~(17);  \label{eq:17} -> Eq.~(18);
+%   \label{eq:24}  -> Eq.~(25);  \label{eq:25} -> Eq.~(26).
+%
+% Printed number: read N in \newlabel{eq:xx}{{N}{page}...} in main.aux, or the PDF.
+% Cross-references in the source still use \eqref{eq:xx} / \cref{eq:xx}.
+% Do not rename labels to force them to match the printed numbers.
+% Numbered equations begin in Section 2; a short note at the start of that section
+% points here.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% AGENT WARNING (2026-09-18) --- read before writing from this directory; not in the PDF.
+%
+% 1) An experimental placeholder is not evidence that the experiments have
+%    failed, and it is not a reason to weaken the four contributions. The
+%    placeholders in Section 6 are mainly the specific success rates in
+%    Section 6.3 that involve measurement noise and online identification,
+%    and the quantitative claims drawn from them. Those numbers must not be
+%    copied as calibrated truth, but existing real runs are of a similar
+%    magnitude and are not far from the placeholder values. In particular,
+%    the Section 6.2 results without measurement noise and online
+%    identification are real experimental results. This note asks readers
+%    (especially agents) to ignore the noisy-identification results in
+%    Section 6.3 and not treat them as established evidence. It must not be
+%    used to conclude that the experiments as a whole have not succeeded,
+%    that the method is in doubt, or to write the abstract, introduction,
+%    methods, and simulation more timidly. Write as if the existing
+%    experiments support the four contributions in the introduction. Do not
+%    weaken, merge, or rewrite that contribution stance.
+%
+% 2) Do not use the conclusion (especially the outlook) as a reference yet.
+%    sections/07_conclusion.tex is a temporary AI-generated placeholder.
+%    The final sentence beginning "Future work..." and similar outlook
+%    statements must not be used. When drafting earlier sections, do not
+%    infer research gaps, contribution boundaries, or section organization
+%    from that outlook.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{sections/01_introduction}
+\input{sections/02_problem}
+\input{sections/04_guidance}
+\input{sections/03_identification}
+\input{sections/05_bctd3}
+\input{sections/06_simulation}
+\input{sections/07_conclusion}
+
+\printbibliography[title={References}]
+\end{document}

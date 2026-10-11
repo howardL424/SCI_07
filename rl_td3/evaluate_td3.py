@@ -2,7 +2,8 @@
 evaluate_td3.py — 加载训练好的 TD3/TD3BC 模型进行蒙特卡洛评估。
 
 用法：
-    # 默认：测完全部 samples_clean_test.mat 有效初态
+    # 默认：测完全部 samples_clean_kuoda_test.mat 有效初态
+    # 旧默认：测完全部 samples_clean_test.mat 有效初态
     python evaluate_td3.py --model rl_td3/checkpoints/.../best/best_model
 
     # 旧协议：随机抽 N 轮（有放回）
@@ -11,7 +12,8 @@ evaluate_td3.py — 加载训练好的 TD3/TD3BC 模型进行蒙特卡洛评估�
     # 0711/0715 等旧 checkpoint（raw 观测 + td3_box_log_v1）
     python evaluate_td3.py --model .../best/best_model --obs-mode raw --action-mapping td3_box_log_v1
 
-默认初态池为 samples_clean_test.mat；--episodes 省略或 0 表示测全池。
+默认初态池为 samples_clean_kuoda_test.mat；--episodes 省略或 0 表示测全池。
+# 旧默认初态池为 samples_clean_test.mat；--episodes 省略或 0 表示测全池。
 终端输出默认 tee 到模型所在 training 目录：
     {training_dir}/monte_carlo_eval_{best|final|...}_seed{seed}_{时间戳}.log
 逐轮指标（散点图用）同步写入同目录同名 .npz：
@@ -238,8 +240,10 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--samples",
         type=str,
-        default=SAMPLES_TEST_FILE,
-        help="初态池 mat（默认 samples_clean_test.mat）",
+        # default=SAMPLES_TEST_FILE,  # 旧默认：根目录 samples_clean_test.mat
+        default=str(Path(SAMPLES_TEST_FILE).with_name("samples_clean_kuoda_test.mat")),
+        # help="初态池 mat（默认 samples_clean_test.mat）",
+        help="初态池 mat（默认 samples_clean_kuoda_test.mat）",
     )
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--render", action="store_true", help="打印每步信息（调试用）")

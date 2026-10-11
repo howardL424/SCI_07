@@ -13,7 +13,7 @@ function results = generate_ps_expert_library(N, opts)
 %            .plot             (默认 true)   是否绘制第一条阶段A轨迹
 %            .save             (默认 false)  是否保存 expert_lib.mat
 %            .save_file        (默认 'expert_lib.mat')  保存文件名
-%            .checkpoint_every (默认 50)     每处理多少条保存一次中间结果; 0=禁用
+%            .checkpoint_every (默认 200)    每处理多少条保存一次中间结果; 0=禁用
 %            .resume_ckpt      (默认 '')      checkpoint 文件路径, 非空则从断点续跑
 %            .valid_pos        (默认 [])      指定 valid 行序号子集, 用于分批
 %            .cfg              传给 simulate_warmstart_trajectory 的配置
@@ -33,11 +33,19 @@ function results = generate_ps_expert_library(N, opts)
 %     results.stats.*
 %
 %   路径约定:
-%     samples_clean.mat 位于 GAIL 项目根目录;
-%     默认输出 expert_lib.mat 保存于 expert_trajectory/ 目录。
+%     % samples_clean.mat 位于 GAIL 项目根目录;          % 原初态，还原时改回
+%     初态: D:\LTY\yan\yanerxia\GAIL\samples_clean_kuoda_train.mat
+%     % 默认输出 expert_lib.mat 保存于 expert_trajectory/ 目录。
+%     默认输出与 checkpoint 保存于 E:\matlab\result_1010。
 
     setup_expert_path();
-    [expertRoot, projectRoot] = project_paths();
+    [expertRoot, projectRoot] = project_paths(); %#ok<ASGLU>
+    % expertRoot 保留，便于还原旧输出目录。还原时注释下一行，取消再下一行注释。
+    resultDir = 'E:\matlab\result_1010';
+    % resultDir = expertRoot;
+    if ~isfolder(resultDir)
+        mkdir(resultDir);
+    end
 
     %% -------- 参数默认 --------
     if nargin < 1 || isempty(N); N = 10; end
@@ -45,23 +53,32 @@ function results = generate_ps_expert_library(N, opts)
     if ~isfield(opts,'run_stageB'); opts.run_stageB = false;         end
     if ~isfield(opts,'plot');       opts.plot        = true;          end
     if ~isfield(opts,'save');       opts.save        = false;         end
-    if ~isfield(opts,'save_file');  opts.save_file   = fullfile(expertRoot, 'expert_lib.mat'); end
+    % if ~isfield(opts,'save_file');  opts.save_file   = fullfile(expertRoot, 'expert_lib.mat'); end
+    if ~isfield(opts,'save_file');  opts.save_file   = fullfile(resultDir, 'expert_lib.mat'); end
     if ~isfield(opts,'cfg');              opts.cfg              = struct(); end
     if ~isfield(opts,'ss_cfg');           opts.ss_cfg           = struct(); end
     if ~isfield(opts,'ex_cfg');           opts.ex_cfg           = struct(); end
-    if ~isfield(opts,'checkpoint_every'); opts.checkpoint_every = 50;       end
+    % if ~isfield(opts,'checkpoint_every'); opts.checkpoint_every = 50;       end
+    if ~isfield(opts,'checkpoint_every'); opts.checkpoint_every = 200;      end
     if ~isfield(opts,'resume_ckpt');      opts.resume_ckpt      = '';       end
     if ~isfield(opts,'valid_pos');        opts.valid_pos        = [];       end
-    opts.save_file = resolve_data_path(opts.save_file, expertRoot);
+    % opts.save_file = resolve_data_path(opts.save_file, expertRoot);
+    opts.save_file = resolve_data_path(opts.save_file, resultDir);
+    outParent = fileparts(opts.save_file);
+    if ~isempty(outParent) && ~isfolder(outParent)
+        mkdir(outParent);
+    end
     if ~isempty(opts.resume_ckpt)
-        opts.resume_ckpt = resolve_data_path(opts.resume_ckpt, expertRoot);
+        % opts.resume_ckpt = resolve_data_path(opts.resume_ckpt, expertRoot);
+        opts.resume_ckpt = resolve_data_path(opts.resume_ckpt, resultDir);
     end
 
     %% -------- 加载样本 --------
-    samples_file = fullfile(projectRoot, 'samples_clean.mat');
+    % samples_file = fullfile(projectRoot, 'samples_clean.mat');
+    samples_file = fullfile(projectRoot, 'samples_clean_kuoda_train.mat');
     if ~isfile(samples_file)
         error('generate_ps_expert_library:MissingSamples', ...
-            '未找到 %s, 请先在项目根目录生成 samples_clean.mat', samples_file);
+            '未找到 %s', samples_file);
     end
     S = load(samples_file, 'samples_clean');
     sc = S.samples_clean;
@@ -78,9 +95,9 @@ function results = generate_ps_expert_library(N, opts)
         pos = pos(pos >= 1 & pos <= nValid);
         select_pos = pos;
         N = numel(select_pos);
-        fprintf('samples_clean: %d 有效行, 指定子集 %d 条\n', nValid, N);
+        fprintf('%s: %d 有效行, 指定子集 %d 条\n', samples_file, nValid, N);
     else
-        fprintf('samples_clean: %d 有效行, 本次处理 %d 条\n', nValid, N);
+        fprintf('%s: %d 有效行, 本次处理 %d 条\n', samples_file, nValid, N);
     end
 
     if opts.run_stageB

@@ -5,7 +5,7 @@ clc; clear;
 %   stage2: BC-TD3 每 0.1s 输出权重 → 式47 制导（stage2_step）
 %   stage3: PN 恢复打目标（stage3_rollout）
 %
-% 模型: rl_td3/checkpoints/training_500k_20260728_1455/best/best_model
+% 模型: rl_td3/checkpoints/training_300k_20260730_1917/best/best_model
 % 观测: obs_scale_0714_v1；动作: ratio_log_box_v1
 %
 % 依赖: MATLAB Python 接口指向 rl_pytorch venv（见 td3_load_policy）。
@@ -25,7 +25,7 @@ addpath(fullfile(gail_root, 'expert_trajectory'));
 UsePythonDriver = false;   % true: 整轨交给 Python+MATLAB Engine，本脚本只读结果绘图
 py_exe = 'E:\Python\venvs\rl_pytorch\Scripts\python.exe';
 model_path = fullfile(gail_root, 'rl_td3', 'checkpoints', ...
-    'training_500k_20260728_1455', 'best', 'best_model');
+    'training_300k_20260730_1917', 'best', 'best_model');
 out_mat = fullfile(this_dir, 'record_table2_bctd3.mat');
 
 if UsePythonDriver

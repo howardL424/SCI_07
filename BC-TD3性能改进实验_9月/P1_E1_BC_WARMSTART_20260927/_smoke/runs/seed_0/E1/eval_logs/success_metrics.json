@@ -1,0 +1,23 @@
+[
+  {
+    "timestep": 0,
+    "both_ok_rate": 0.6,
+    "evade_ok_rate": 0.6,
+    "strike_ok_rate": 0.6,
+    "intercepted_rate": 0.4
+  },
+  {
+    "timestep": 100,
+    "both_ok_rate": 1.0,
+    "evade_ok_rate": 1.0,
+    "strike_ok_rate": 1.0,
+    "intercepted_rate": 0.0
+  },
+  {
+    "timestep": 200,
+    "both_ok_rate": 0.8,
+    "evade_ok_rate": 0.8,
+    "strike_ok_rate": 0.8,
+    "intercepted_rate": 0.2
+  }
+]

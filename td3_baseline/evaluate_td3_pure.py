@@ -1,8 +1,9 @@
 """
 evaluate_td3_pure.py — 纯 TD3 对照评估薄封装。
 
-转发 rl_td3/evaluate_td3.py 的同一 MC 协议（默认全量 samples_clean_test），
-便于与 BC-TD3 结果直接对比。加载优先 TD3BC，失败回退 SB3 TD3。
+转发 rl_td3/evaluate_td3.py 的同一 MC 协议（默认全量
+samples_clean_test），便于与 BC-TD3 结果直接对比。加载优先 TD3BC，
+失败回退 SB3 TD3。
 
 用法：
     python td3_baseline/evaluate_td3_pure.py \\

@@ -1,0 +1,51 @@
+[
+  {
+    "timestep": 0,
+    "both_ok_rate": 0.8133333333333334,
+    "evade_ok_rate": 0.8133333333333334,
+    "strike_ok_rate": 0.8133333333333334,
+    "intercepted_rate": 0.18666666666666668
+  },
+  {
+    "timestep": 25000,
+    "both_ok_rate": 0.9,
+    "evade_ok_rate": 0.9,
+    "strike_ok_rate": 0.9,
+    "intercepted_rate": 0.1
+  },
+  {
+    "timestep": 50000,
+    "both_ok_rate": 0.8266666666666667,
+    "evade_ok_rate": 0.8266666666666667,
+    "strike_ok_rate": 0.8266666666666667,
+    "intercepted_rate": 0.17333333333333334
+  },
+  {
+    "timestep": 75000,
+    "both_ok_rate": 0.9533333333333334,
+    "evade_ok_rate": 0.9533333333333334,
+    "strike_ok_rate": 0.9533333333333334,
+    "intercepted_rate": 0.04666666666666667
+  },
+  {
+    "timestep": 100000,
+    "both_ok_rate": 0.9533333333333334,
+    "evade_ok_rate": 0.9533333333333334,
+    "strike_ok_rate": 0.9533333333333334,
+    "intercepted_rate": 0.04666666666666667
+  },
+  {
+    "timestep": 125000,
+    "both_ok_rate": 0.9533333333333334,
+    "evade_ok_rate": 0.9533333333333334,
+    "strike_ok_rate": 0.9533333333333334,
+    "intercepted_rate": 0.04666666666666667
+  },
+  {
+    "timestep": 150000,
+    "both_ok_rate": 0.9533333333333334,
+    "evade_ok_rate": 0.9533333333333334,
+    "strike_ok_rate": 0.9533333333333334,
+    "intercepted_rate": 0.04666666666666667
+  }
+]

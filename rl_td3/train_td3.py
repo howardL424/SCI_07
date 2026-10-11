@@ -19,7 +19,11 @@ train_td3.py — BC 预填充 + 衰减 BC 正则 + TD3 精调训练入口
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
+import subprocess
 import sys
+import time
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
@@ -45,6 +49,12 @@ from load_expert_buffer import (
     load_expert_buffer,
 )
 from action_mapping import DEFAULT_ACTION_MAPPING, ACTION_MAPPING_RATIO, ACTION_MAPPING_TD3_BOX
+from bc_actor import (
+    copy_bc_weights_to_td3_actors,
+    load_bc_checkpoint,
+    validate_bc_checkpoint,
+)
+from obs_norm import OBS_NORM_VERSION, OBS_SCHEMA_VERSION
 from td3_bc import TD3BC
 
 
@@ -96,6 +106,117 @@ SMOKE_DEFAULTS = dict(
 )
 
 LOG_DIR = Path(__file__).parent / "logs"
+
+
+def _sha256(path: str | Path) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _git_version() -> dict[str, object]:
+    root = Path(__file__).resolve().parent.parent
+    try:
+        commit = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=root, text=True
+        ).strip()
+        dirty = bool(
+            subprocess.check_output(
+                ["git", "status", "--porcelain"], cwd=root, text=True
+            ).strip()
+        )
+        return {"commit": commit, "dirty": dirty}
+    except (OSError, subprocess.SubprocessError):
+        return {"commit": None, "dirty": None}
+
+
+def _initialize_from_bc_checkpoint(
+    model: TD3BC,
+    checkpoint_path: str,
+    *,
+    action_mapping: str,
+    probe_states: np.ndarray,
+) -> dict[str, object]:
+    """校验并原位初始化 Actor/target，同时验证三者输出一致。"""
+    # BcActor 构造函数会先随机初始化再载入 state_dict；恢复 RNG，保证 E1
+    # 相对 E0 除初始权重外不额外移动训练随机数流。
+    cpu_rng_state = torch.get_rng_state()
+    cuda_rng_states = torch.cuda.get_rng_state_all() if torch.cuda.is_available() else []
+    try:
+        bc_actor, payload = load_bc_checkpoint(checkpoint_path, device=model.device)
+    finally:
+        torch.set_rng_state(cpu_rng_state)
+        if cuda_rng_states:
+            torch.cuda.set_rng_state_all(cuda_rng_states)
+    obs_dim = int(model.observation_space.shape[0])
+    act_dim = int(model.action_space.shape[0])
+    validate_bc_checkpoint(
+        payload,
+        obs_dim=obs_dim,
+        act_dim=act_dim,
+        net_arch=DEFAULTS["net_arch"],
+        action_mapping=action_mapping,
+    )
+
+    probe = np.asarray(probe_states, dtype=np.float32)[:256]
+    if len(probe) == 0:
+        probe = np.zeros((1, obs_dim), dtype=np.float32)
+    probe_t = torch.as_tensor(probe, device=model.device)
+    with torch.no_grad():
+        bc_out = bc_actor(probe_t)
+        actor_before = model.actor(probe_t)
+        target_before = model.actor_target(probe_t)
+
+    copy_bc_weights_to_td3_actors(model.actor, model.actor_target, bc_actor)
+
+    with torch.no_grad():
+        actor_after = model.actor(probe_t)
+        target_after = model.actor_target(probe_t)
+    actor_err = float(torch.max(torch.abs(actor_after - bc_out)).item())
+    target_err = float(torch.max(torch.abs(target_after - bc_out)).item())
+    actor_target_err = float(
+        torch.max(torch.abs(actor_after - target_after)).item()
+    )
+    if max(actor_err, target_err, actor_target_err) > 1e-6:
+        raise RuntimeError(
+            "BC warm-start 输出一致性检查失败: "
+            f"actor={actor_err:.3e}, target={target_err:.3e}, "
+            f"actor_target={actor_target_err:.3e}"
+        )
+
+    path = Path(checkpoint_path).resolve()
+    metadata: dict[str, object] = {
+        "enabled": True,
+        "checkpoint": str(path),
+        "sha256": _sha256(path),
+        "epoch": int(payload.get("epoch", -1)),
+        "obs_dim": obs_dim,
+        "act_dim": act_dim,
+        "net_arch": list(DEFAULTS["net_arch"]),
+        "obs_schema_version": OBS_SCHEMA_VERSION,
+        "obs_norm_version": OBS_NORM_VERSION,
+        "action_mapping": action_mapping,
+        "probe_n": int(len(probe)),
+        "max_abs_actor_before_vs_bc": float(
+            torch.max(torch.abs(actor_before - bc_out)).item()
+        ),
+        "max_abs_target_before_vs_bc": float(
+            torch.max(torch.abs(target_before - bc_out)).item()
+        ),
+        "max_abs_actor_vs_bc": actor_err,
+        "max_abs_target_vs_bc": target_err,
+        "max_abs_actor_vs_target": actor_target_err,
+    }
+    # SB3 会把该普通属性写入后续 .zip checkpoint，便于追溯初始化来源。
+    model.bc_init_metadata = metadata
+    print(
+        "[train] BC Actor warm-start 完成: "
+        f"epoch={metadata['epoch']}, sha256={metadata['sha256']}, "
+        f"输出误差(actor/target)={actor_err:.3e}/{target_err:.3e}"
+    )
+    return metadata
 
 
 class _Tee:
@@ -269,6 +390,11 @@ def parse_args() -> argparse.Namespace:
         help="回退旧协议：每局重新随机抽评估初态（复现历史 run 时用）",
     )
     p.add_argument(
+        "--eval-at-start",
+        action="store_true",
+        help="在线交互前额外评估一次（t=0），用于 0~150k 曲线面积",
+    )
+    p.add_argument(
         "--train-samples",
         type=str,
         default=SAMPLES_FILE,
@@ -291,6 +417,12 @@ def parse_args() -> argparse.Namespace:
         type=int,
         default=DEFAULTS["bc_decay_steps"],
         help="BC 正则 λ 线性衰减到 0 的步数（默认 200000）",
+    )
+    p.add_argument(
+        "--bc-init-ckpt",
+        type=str,
+        default=None,
+        help="可选：纯 BC Actor checkpoint；同时原位初始化 Actor 与 Actor target",
     )
     p.add_argument(
         "--terminal-cache",
@@ -361,6 +493,8 @@ def make_env(
 
 
 def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
+    started_at = datetime.now().astimezone()
+    started_perf = time.perf_counter()
     # 以实际 buffer 容量计算预填预算（不再写死 DEFAULTS buffer_size）
     bc_max_steps = int(args.buf * args.bc_ratio) if not args.no_bc else 0
     sample_seed = args.seed if args.sample_seed is None else args.sample_seed
@@ -377,6 +511,7 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     print(f"  采样模式: {args.sample_mode}（actor_eligible={getattr(args, 'actor_eligible', 'both_ok')}；include_intercepted={args.actor_include_intercepted}）")
     print(f"  动作映射: {args.action_mapping}")
     print(f"  BC 正则  : λ0={args.bc_lambda0}, 衰减步数={args.bc_decay_steps:,}")
+    print(f"  BC 初始化: {args.bc_init_ckpt or '无（E0 随机 Actor）'}")
     print(f"  终端缓存: {args.terminal_cache}")
     print(f"  专家库  : {args.expert}")
     print(f"  对齐数据: {args.aligned}")
@@ -440,13 +575,14 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     )
 
     # ── BC 预填充 ReplayBuffer + 注入专家数据集 ───────────────────────────────
+    expert_result = None
     if not args.no_bc:
         try:
             plan_out = args.save_sample_plan
             if plan_out is None and args.sample_mode == "balanced" and not args.smoke:
                 # 正式跑默认落一份采样计划，便于对照 BC / 复现
                 plan_out = str(DATA_DIR / f"expert_set_{bc_max_steps}_seed{sample_seed}.npz")
-            result = load_expert_buffer(
+            expert_result = load_expert_buffer(
                 model.replay_buffer,
                 mat_path=args.expert,
                 aligned_path=args.aligned,
@@ -463,14 +599,14 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
                 sample_plan_out=plan_out,
                 action_mapping=args.action_mapping,
             )
-            model.set_expert_dataset(result.states, result.actions)
+            model.set_expert_dataset(expert_result.states, expert_result.actions)
             print(
-                f"[train] BC 预填充完成，Replay 写入 {result.n_written} 条；"
-                f"Actor BC 标签 {len(result.states)} 条；"
+                f"[train] BC 预填充完成，Replay 写入 {expert_result.n_written} 条；"
+                f"Actor BC 标签 {len(expert_result.states)} 条；"
                 f"已注入专家数据集供衰减 BC 正则"
             )
-            if result.sample_summary:
-                s = result.sample_summary
+            if expert_result.sample_summary:
+                s = expert_result.sample_summary
                 print(
                     f"[train] 采样摘要: mode={s.get('sample_mode')} "
                     f"train轨={s.get('n_train_traj')} val轨={s.get('n_val_traj')} "
@@ -481,6 +617,41 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
         except FileNotFoundError as e:
             print(f"[train] 警告: {e}")
             print("[train] 将跳过 BC 预填充；若 λ0>0 且无专家集，BC 正则不生效。")
+
+    bc_init_metadata: dict[str, object] = {"enabled": False}
+    if args.bc_init_ckpt:
+        probe_states = (
+            expert_result.states
+            if expert_result is not None
+            else np.zeros((1, int(model.observation_space.shape[0])), dtype=np.float32)
+        )
+        bc_init_metadata = _initialize_from_bc_checkpoint(
+            model,
+            args.bc_init_ckpt,
+            action_mapping=args.action_mapping,
+            probe_states=probe_states,
+        )
+
+    run_config: dict[str, object] = {
+        "experiment": "P1_E1_actor_bc_warmstart" if args.bc_init_ckpt else "E0",
+        "started_at": started_at.isoformat(),
+        "arguments": vars(args),
+        "defaults": DEFAULTS,
+        "git": _git_version(),
+        "obs_schema_version": OBS_SCHEMA_VERSION,
+        "obs_norm_version": OBS_NORM_VERSION,
+        "bc_init": bc_init_metadata,
+        "sample_summary": (
+            expert_result.sample_summary if expert_result is not None else None
+        ),
+        "identification_enabled": False,
+    }
+    run_config_path = save_dir / "run_config.json"
+    run_config_path.write_text(
+        json.dumps(run_config, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
+    print(f"[train] 运行配置已写入 {run_config_path}")
 
     # ── 回调函数 ─────────────────────────────────────────────────────────────
     checkpoint_cb = CheckpointCallback(
@@ -497,6 +668,7 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
         log_path            = str(save_dir / "eval_logs"),
         deterministic       = True,
         verbose             = 1,
+        evaluate_at_start   = args.eval_at_start,
     )
 
     # ── 梯度裁剪 callback ─────────────────────────────────────────────────────
@@ -516,6 +688,13 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
     # ── 保存最终模型 ─────────────────────────────────────────────────────────
     final_path = str(save_dir / args.name)
     model.save(final_path)
+    run_config["finished_at"] = datetime.now().astimezone().isoformat()
+    run_config["wall_time_seconds"] = float(time.perf_counter() - started_perf)
+    run_config["final_model"] = f"{final_path}.zip"
+    run_config_path.write_text(
+        json.dumps(run_config, indent=2, ensure_ascii=False, default=str),
+        encoding="utf-8",
+    )
     print(f"\n[train] 训练完成，最终模型已保存至 {final_path}.zip")
 
     env.close()

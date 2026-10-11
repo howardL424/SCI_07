@@ -1,0 +1,10 @@
+fig01: traced to 绘图\TAD1D2.emf (sha d17375a881b99ad8)
+fig02: fig02.pdf exported from 绘图\BC-TD3架构（公开）_EN.vsd (English, Times New Roman, cropped to 2 pt margin); previous PNG kept as orig\fig02_before_EN_20260924.png (traced to 绘图\BC-TD3架构图.emf, sha 021c90391df93d5e)
+fig03: fig03.pdf from Latex/section6_tu_adjusted_centered_0926 (2026-09-27); previous PNG kept as orig_section6_before_vector_20260927/fig03.png
+fig04: fig04.pdf from Latex/section6_tu_adjusted_centered_0926 (2026-09-27); previous PNG kept as orig_section6_before_vector_20260927/fig04.png
+fig05: fig05.pdf from Latex/section6_tu_adjusted_centered_0926 (2026-09-27); previous PNG kept as orig_section6_before_vector_20260927/fig05.png
+fig06: fig06.pdf from Latex/section6_tu_adjusted_centered_0926 (2026-09-27); previous PNG kept as orig_section6_before_vector_20260927/fig06.png
+fig07: fig07.pdf from Latex/section6_tu_adjusted_centered_0926 (2026-09-27); previous PNG kept as orig_section6_before_vector_20260927/fig07.png
+fig08: fig08.pdf from Latex/section6_tu_adjusted_centered_0926 (2026-09-27); previous PNG kept as orig_section6_before_vector_20260927/fig08.png
+fig09: fig09.pdf from Latex/section6_tu_adjusted_centered_0926 (2026-09-27); previous PNG kept as orig_section6_before_vector_20260927/fig09.png
+fig10: fig10.pdf from Latex/section6_tu_adjusted_centered_0926 (2026-09-27); previous PNG kept as orig_section6_before_vector_20260927/fig10.png

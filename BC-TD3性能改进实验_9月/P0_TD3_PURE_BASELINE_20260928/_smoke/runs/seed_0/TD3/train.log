@@ -1,0 +1,84 @@
+[train] 终端输出同时写入 D:\LTY\yan\yanerxia\GAIL\BC-TD3性能改进实验_9月\P0_TD3_PURE_BASELINE_20260928\_smoke\runs\seed_0\TD3\train.log
+============================================================
+  训练方案: 纯在线 TD3（无专家预填、无 BC 正则）
+  算法类  : stable_baselines3.TD3
+  运行模式: 正式训练
+  总步数  : 1,000
+  学习率  : 0.0001（Actor / Critic 统一）
+  运行名称: p0_TD3_seed0
+  seed    : 0
+  动作映射: ratio_log_box_v1
+  learning_starts: 1,000
+  评估 ep 数: 5（每 500 步，固定初态遍历）
+  训练初态: D:\LTY\yan\yanerxia\GAIL\samples_clean.mat
+  评估初态: D:\LTY\yan\yanerxia\GAIL\samples_clean_val.mat（EvalCallback / best_model）
+  梯度裁剪: ±10.0
+  保存目录: D:\LTY\yan\yanerxia\GAIL\BC-TD3性能改进实验_9月\P0_TD3_PURE_BASELINE_20260928\_smoke\runs\seed_0\TD3
+  coeff_mode: analytic_truth
+  ident_apply_cmd: True
+  rls_mu / eta / noise_seed: 0.001 / 0.1 / 0
+============================================================
+[EvasionEnv] samples_clean.mat: 保留 2351/3400 行（已滤除全零 1049 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[EvasionEnv] samples_clean_val.mat: 保留 300/438 行（已滤除全零 138 行）
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+[FixedICEvalEnv] 固定评估初态 5/300 个（order_seed=0），row_idx 前 10: [36, 291, 128, 116, 266]
+[FixedICEvalEnv] 评估初态清单已写入 D:\LTY\yan\yanerxia\GAIL\BC-TD3性能改进实验_9月\P0_TD3_PURE_BASELINE_20260928\_smoke\runs\seed_0\TD3\eval_logs\eval_ic_pool.json
+[train] 评估协议: 每 500 步遍历同一组 5 个 val 初态（deterministic，无采样噪声）
+Using cuda device
+Wrapping the env in a DummyVecEnv.
+
+[train] 开始纯 TD3 训练，共 1,000 步…
+Logging to D:\LTY\yan\yanerxia\GAIL\BC-TD3性能改进实验_9月\P0_TD3_PURE_BASELINE_20260928\_smoke\runs\seed_0\TD3\tb_logs\TD3_1
+Eval num_timesteps=0, episode_reward=59.31 +/- 82.25
+Episode length: 84.80 +/- 12.43
+Success rate: 60.00%
+---------------------------------
+| eval/              |          |
+|    mean_ep_length  | 84.8     |
+|    mean_reward     | 59.3     |
+|    success_rate    | 0.6      |
+| time/              |          |
+|    total_timesteps | 0        |
+---------------------------------
+New best mean reward!
+Validation metrics: both_ok=60.00%, evade_ok=60.00%, strike_ok=60.00%, intercepted=40.00%
+[GradClipCallback] 已为 36 个参数张量注册梯度裁剪钩子 (±10.0)
+Eval num_timesteps=500, episode_reward=59.31 +/- 82.25
+Episode length: 84.80 +/- 12.43
+Success rate: 60.00%
+---------------------------------
+| eval/              |          |
+|    mean_ep_length  | 84.8     |
+|    mean_reward     | 59.3     |
+|    success_rate    | 0.6      |
+| time/              |          |
+|    total_timesteps | 500      |
+---------------------------------
+Validation metrics: both_ok=60.00%, evade_ok=60.00%, strike_ok=60.00%, intercepted=40.00%
+---------------------------------
+| rollout/           |          |
+|    ep_len_mean     | 87.3     |
+|    ep_rew_mean     | 126      |
+| time/              |          |
+|    episodes        | 10       |
+|    fps             | 34       |
+|    time_elapsed    | 25       |
+|    total_timesteps | 873      |
+---------------------------------
+Eval num_timesteps=1000, episode_reward=59.31 +/- 82.25
+Episode length: 84.80 +/- 12.43
+Success rate: 60.00%
+---------------------------------
+| eval/              |          |
+|    mean_ep_length  | 84.8     |
+|    mean_reward     | 59.3     |
+|    success_rate    | 0.6      |
+| time/              |          |
+|    total_timesteps | 1000     |
+---------------------------------
+Validation metrics: both_ok=60.00%, evade_ok=60.00%, strike_ok=60.00%, intercepted=40.00%
+
+[train] 训练完成，最终模型已保存至 D:\LTY\yan\yanerxia\GAIL\BC-TD3性能改进实验_9月\P0_TD3_PURE_BASELINE_20260928\_smoke\runs\seed_0\TD3\p0_TD3_seed0.zip

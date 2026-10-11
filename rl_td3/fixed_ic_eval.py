@@ -119,13 +119,105 @@ class FixedICEvalCallback(EvalCallback):
     评估环境不是 `FixedICEvalEnv` 时退化为原生 `EvalCallback` 行为。
     """
 
+    def __init__(self, *args, **kwargs):
+        self.evaluate_at_start = bool(kwargs.pop("evaluate_at_start", False))
+        super().__init__(*args, **kwargs)
+        self._metric_buffers = self._empty_metric_buffers()
+        self.evaluations_metrics: list[dict[str, list[bool]]] = []
+
+    @staticmethod
+    def _empty_metric_buffers() -> dict[str, list[bool]]:
+        return {
+            "both_ok": [],
+            "evade_ok": [],
+            "strike_ok": [],
+            "intercepted": [],
+        }
+
+    def _log_success_callback(self, locals_, globals_) -> None:
+        del globals_
+        if not locals_["done"]:
+            return
+        info = locals_["info"]
+        row = {
+            "both_ok": bool(info.get("both_ok", False)),
+            "evade_ok": bool(info.get("evade_ok", False)),
+            "strike_ok": bool(info.get("strike_ok", False)),
+            "intercepted": bool(info.get("intercepted", False)),
+        }
+        for key, value in row.items():
+            self._metric_buffers[key].append(value)
+        # 继续写入 SB3 标准 successes 字段；本项目主成功判据即 both_ok。
+        self._is_success_buffer.append(row["both_ok"])
+
+    def _save_success_metrics(self) -> None:
+        snapshot = {k: list(v) for k, v in self._metric_buffers.items()}
+        self.evaluations_metrics.append(snapshot)
+        rates = {
+            key: float(np.mean(values)) if values else 0.0
+            for key, values in snapshot.items()
+        }
+        if self.verbose >= 1:
+            print(
+                "Validation metrics: "
+                f"both_ok={rates['both_ok']:.2%}, "
+                f"evade_ok={rates['evade_ok']:.2%}, "
+                f"strike_ok={rates['strike_ok']:.2%}, "
+                f"intercepted={rates['intercepted']:.2%}"
+            )
+        if self.log_path is None:
+            return
+        out_dir = Path(self.log_path).parent
+        out_dir.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "timesteps": np.asarray(self.evaluations_timesteps, dtype=np.int64),
+        }
+        for key in self._metric_buffers:
+            rows = [m[key] for m in self.evaluations_metrics]
+            payload[key] = np.asarray(rows, dtype=bool)
+            payload[f"{key}_rate"] = np.asarray(
+                [float(np.mean(row)) if row else 0.0 for row in rows],
+                dtype=np.float64,
+            )
+        np.savez(out_dir / "success_metrics.npz", **payload)
+        summary = [
+            {
+                "timestep": int(self.evaluations_timesteps[i]),
+                **{
+                    f"{key}_rate": float(payload[f"{key}_rate"][i])
+                    for key in self._metric_buffers
+                },
+            }
+            for i in range(len(self.evaluations_timesteps))
+        ]
+        (out_dir / "success_metrics.json").write_text(
+            json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+
+    def _on_training_start(self) -> None:
+        super()._on_training_start()
+        if not self.evaluate_at_start:
+            return
+        self._metric_buffers = self._empty_metric_buffers()
+        try:
+            self.eval_env.env_method("reset_ic_cursor")
+        except AttributeError:
+            pass
+        EvalCallback._on_step(self)
+        self._save_success_metrics()
+
     def _on_step(self) -> bool:
-        if self.eval_freq > 0 and self.n_calls % self.eval_freq == 0:
+        is_eval_step = self.eval_freq > 0 and self.n_calls % self.eval_freq == 0
+        if is_eval_step:
+            self._metric_buffers = self._empty_metric_buffers()
             try:
                 self.eval_env.env_method("reset_ic_cursor")
             except AttributeError:
                 pass
-        return super()._on_step()
+        continue_training = super()._on_step()
+        if is_eval_step:
+            self._save_success_metrics()
+        return continue_training
 
 
 def save_ic_pool(env: FixedICEvalEnv, path: str | Path) -> Path:

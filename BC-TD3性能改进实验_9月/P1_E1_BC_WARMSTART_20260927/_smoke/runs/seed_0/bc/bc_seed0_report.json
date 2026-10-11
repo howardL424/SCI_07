@@ -1,0 +1,176 @@
+{
+  "best_epoch": 2,
+  "best_val_mse": 0.3368208495274271,
+  "best_ckpt": "D:\\LTY\\yan\\yanerxia\\GAIL\\P1_E1_BC_WARMSTART_20260927\\_smoke\\runs\\seed_0\\bc\\bc_seed0_best.pt",
+  "final_ckpt": "D:\\LTY\\yan\\yanerxia\\GAIL\\P1_E1_BC_WARMSTART_20260927\\_smoke\\runs\\seed_0\\bc\\bc_seed0_final.pt",
+  "action_mapping": "ratio_log_box_v1",
+  "action_names": [
+    "rhoE_n",
+    "rhoT_n",
+    "gamma_n"
+  ],
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 0.34771861271424725,
+      "train": {
+        "mse": 0.3223822786194722,
+        "mae": 0.4177071543124151,
+        "mae_per_action": {
+          "rhoE_n": 0.41733430860375414,
+          "rhoT_n": 0.18845956927510168,
+          "gamma_n": 0.6473275850583895
+        },
+        "boundary_rate": 0.0,
+        "boundary_rate_per_action": {
+          "rhoE_n": 0.0,
+          "rhoT_n": 0.0,
+          "gamma_n": 0.0
+        },
+        "n": 2796
+      },
+      "val": {
+        "mse": 0.36198501161974556,
+        "mae": 0.44110812364285057,
+        "mae_per_action": {
+          "rhoE_n": 0.43155940256549746,
+          "rhoT_n": 0.20280383162528473,
+          "gamma_n": 0.6889611367377695
+        },
+        "boundary_rate": 0.0,
+        "boundary_rate_per_action": {
+          "rhoE_n": 0.0,
+          "rhoT_n": 0.0,
+          "gamma_n": 0.0
+        },
+        "n": 8167
+      }
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.31498008695515717,
+      "train": {
+        "mse": 0.31387184538722185,
+        "mae": 0.4371431843091908,
+        "mae_per_action": {
+          "rhoE_n": 0.4534695810211262,
+          "rhoT_n": 0.18368518020740232,
+          "gamma_n": 0.6742747916990439
+        },
+        "boundary_rate": 0.0,
+        "boundary_rate_per_action": {
+          "rhoE_n": 0.0,
+          "rhoT_n": 0.0,
+          "gamma_n": 0.0
+        },
+        "n": 2796
+      },
+      "val": {
+        "mse": 0.3368208495274271,
+        "mae": 0.4508862713451676,
+        "mae_per_action": {
+          "rhoE_n": 0.4596689533845885,
+          "rhoT_n": 0.19192140165604257,
+          "gamma_n": 0.7010684589948718
+        },
+        "boundary_rate": 0.0,
+        "boundary_rate_per_action": {
+          "rhoE_n": 0.0,
+          "rhoT_n": 0.0,
+          "gamma_n": 0.0
+        },
+        "n": 8167
+      }
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.3127627128904516,
+      "train": {
+        "mse": 0.3103194480683829,
+        "mae": 0.424118749093031,
+        "mae_per_action": {
+          "rhoE_n": 0.43190462455980033,
+          "rhoT_n": 0.18347280852764128,
+          "gamma_n": 0.6569788141916514
+        },
+        "boundary_rate": 0.0,
+        "boundary_rate_per_action": {
+          "rhoE_n": 0.0,
+          "rhoT_n": 0.0,
+          "gamma_n": 0.0
+        },
+        "n": 2796
+      },
+      "val": {
+        "mse": 0.33980728009491934,
+        "mae": 0.4415040859817709,
+        "mae_per_action": {
+          "rhoE_n": 0.43848453799675563,
+          "rhoT_n": 0.19482115663323088,
+          "gamma_n": 0.691206563315326
+        },
+        "boundary_rate": 0.0,
+        "boundary_rate_per_action": {
+          "rhoE_n": 0.0,
+          "rhoT_n": 0.0,
+          "gamma_n": 0.0
+        },
+        "n": 8167
+      }
+    }
+  ],
+  "plan_summary": {
+    "seed": 0,
+    "budget_requested": 4000,
+    "n_replay_steps": 4000,
+    "n_actor_steps": 2796,
+    "n_val_actor_steps": 8167,
+    "budget_filled_frac": 1.0,
+    "n_traj_total": 1287,
+    "n_train_traj": 1158,
+    "n_val_traj": 129,
+    "n_replay_traj_used": 1158,
+    "actor_eligible": "both_ok",
+    "actor_exclude_intercepted": true,
+    "replay_include_intercepted": true,
+    "force_terminal": true,
+    "n_tgo_bins": 4,
+    "val_ratio": 0.1,
+    "intercept_rate_all": 0.23853923853923853,
+    "intercept_rate_train": 0.23834196891191708,
+    "actor_intercept_step_frac": 0.0,
+    "actor_stage3_fail_step_frac": 0.0,
+    "val_actor_intercept_step_frac": 0.0,
+    "val_actor_stage3_fail_step_frac": 0.0,
+    "n_actor_eligible_train": 812,
+    "steps_per_used_traj_mean": 3.454231433506045,
+    "steps_per_used_traj_max": 4,
+    "ok_mode_train": {
+      "unknown": 1158
+    },
+    "ok_mode_val": {
+      "unknown": 129
+    },
+    "both_ok_train": 812,
+    "both_ok_val": 91,
+    "evade_ok_train": 882,
+    "strike_ok_train": 812,
+    "expert_both_ok_rate_val": 0.7054263565891473,
+    "expert_both_ok_rate_val_non_intercept": 0.9285714285714286
+  },
+  "expert_val_boundary_rate_per_action": {
+    "rhoE_n": 0.2286029141667687,
+    "rhoT_n": 0.0012244398187829068,
+    "gamma_n": 0.4411656667074813
+  },
+  "old_box_feasible_rate_val": 0.9976735643443124,
+  "judgment": {
+    "verdict": "fail_high_val_error",
+    "notes": [
+      "验证 MSE 偏高：先做状态/动作可辨识性消融，不要直接调 TD3/奖励/GAIL。",
+      "gamma_n MAE=0.701 仍高（比值坐标未改变 γ）；若闭环无实质改善，进入状态空间消融。",
+      "action_mapping=ratio_log_box_v1",
+      "专家标签基线（val 轨 both_ok）：0.705；未拦截子集：0.929"
+    ]
+  }
+}

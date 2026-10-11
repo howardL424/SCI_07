@@ -1,7 +1,7 @@
 [
   {
     "name": "bctd3_best",
-    "model": "rl_td3/checkpoints/training_500k_20260728_1455/best/best_model",
+    "model": "rl_td3/checkpoints/training_300k_20260730_1917/best/best_model",
     "prefer_td3bc": true
   },
   {

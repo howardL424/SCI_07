@@ -1,0 +1,87 @@
+[evaluate] 终端输出同时写入 rl_td3\checkpoints\training_300k_20260730_1917\monte_carlo_eval_best_seed0_20261011_000247.log
+[evaluate] 逐轮指标将写入 rl_td3\checkpoints\training_300k_20260730_1917\monte_carlo_eval_best_seed0_20261011_000247.npz
+[evaluate] 加载模型：rl_td3/checkpoints/training_300k_20260730_1917/best/best_model.zip
+[evaluate] obs_mode=scaled  action_mapping=ratio_log_box_v1
+[evaluate] 初态池：D:\LTY\yan\yanerxia\GAIL\samples_clean_kuoda_test.mat
+[evaluate] coeff_mode=analytic_truth  ident_apply_cmd=True  rls_mu=0.001  noise_seed=0
+[EvasionEnv] samples_clean_kuoda_test.mat: 保留 300/300 行
+[EvasionEnv] 正在启动 MATLAB Engine，请稍候…
+[EvasionEnv] MATLAB Engine 就绪
+Wrapping the env with a `Monitor` wrapper
+Wrapping the env in a DummyVecEnv.
+
+[evaluate] 开始评估：全量 test-IC（300 个有效初态）…
+  [done  10 | scanned  10/300] 双防+打击成功率 90.0%  r_MD1_min=1.0m  r_minT=nan  Energy=2.258kJ
+  [done  20 | scanned  20/300] 双防+打击成功率 85.0%  r_MD1_min=44.7m  r_minT=0.09m  Energy=9.508kJ
+  [done  30 | scanned  30/300] 双防+打击成功率 90.0%  r_MD1_min=54.9m  r_minT=0.09m  Energy=18.748kJ
+  [done  40 | scanned  40/300] 双防+打击成功率 92.5%  r_MD1_min=67.4m  r_minT=0.06m  Energy=10.643kJ
+  [done  50 | scanned  50/300] 双防+打击成功率 92.0%  r_MD1_min=72.3m  r_minT=0.13m  Energy=9.107kJ
+  [done  60 | scanned  60/300] 双防+打击成功率 93.3%  r_MD1_min=99.6m  r_minT=0.02m  Energy=15.823kJ
+  [done  70 | scanned  70/300] 双防+打击成功率 92.9%  r_MD1_min=71.5m  r_minT=0.16m  Energy=16.486kJ
+  [done  80 | scanned  80/300] 双防+打击成功率 92.5%  r_MD1_min=48.6m  r_minT=0.15m  Energy=11.027kJ
+  [done  90 | scanned  90/300] 双防+打击成功率 93.3%  r_MD1_min=46.2m  r_minT=0.12m  Energy=6.102kJ
+  [done 100 | scanned 100/300] 双防+打击成功率 94.0%  r_MD1_min=40.6m  r_minT=0.23m  Energy=11.932kJ
+  [done 110 | scanned 110/300] 双防+打击成功率 93.6%  r_MD1_min=19.3m  r_minT=0.00m  Energy=7.888kJ
+  [done 120 | scanned 120/300] 双防+打击成功率 93.3%  r_MD1_min=62.2m  r_minT=0.18m  Energy=14.382kJ
+  [done 130 | scanned 130/300] 双防+打击成功率 93.8%  r_MD1_min=52.2m  r_minT=0.07m  Energy=5.088kJ
+  [done 140 | scanned 140/300] 双防+打击成功率 93.6%  r_MD1_min=36.5m  r_minT=0.20m  Energy=7.666kJ
+  [done 150 | scanned 150/300] 双防+打击成功率 94.0%  r_MD1_min=42.2m  r_minT=0.18m  Energy=11.380kJ
+  [done 160 | scanned 160/300] 双防+打击成功率 93.8%  r_MD1_min=4.8m  r_minT=nan  Energy=2.153kJ
+  [done 170 | scanned 170/300] 双防+打击成功率 93.5%  r_MD1_min=19.3m  r_minT=0.03m  Energy=8.220kJ
+  [done 180 | scanned 180/300] 双防+打击成功率 93.9%  r_MD1_min=46.5m  r_minT=0.13m  Energy=13.743kJ
+  [done 190 | scanned 190/300] 双防+打击成功率 93.7%  r_MD1_min=17.2m  r_minT=0.23m  Energy=8.832kJ
+  [done 200 | scanned 200/300] 双防+打击成功率 93.5%  r_MD1_min=2211.1m  r_minT=nan  Energy=0.832kJ
+  [done 210 | scanned 210/300] 双防+打击成功率 93.3%  r_MD1_min=47.1m  r_minT=0.05m  Energy=10.514kJ
+  [done 220 | scanned 220/300] 双防+打击成功率 93.6%  r_MD1_min=43.9m  r_minT=0.21m  Energy=13.732kJ
+  [done 230 | scanned 230/300] 双防+打击成功率 93.5%  r_MD1_min=43.8m  r_minT=0.09m  Energy=17.432kJ
+  [done 240 | scanned 240/300] 双防+打击成功率 93.8%  r_MD1_min=47.9m  r_minT=0.15m  Energy=5.775kJ
+  [done 250 | scanned 250/300] 双防+打击成功率 93.6%  r_MD1_min=2466.0m  r_minT=nan  Energy=0.695kJ
+  [done 260 | scanned 260/300] 双防+打击成功率 93.8%  r_MD1_min=52.0m  r_minT=0.22m  Energy=3.942kJ
+  [done 270 | scanned 270/300] 双防+打击成功率 93.3%  r_MD1_min=2.9m  r_minT=nan  Energy=1.750kJ
+  [done 280 | scanned 280/300] 双防+打击成功率 93.6%  r_MD1_min=23.1m  r_minT=0.21m  Energy=5.893kJ
+  [done 290 | scanned 290/300] 双防+打击成功率 93.1%  r_MD1_min=71.2m  r_minT=0.04m  Energy=6.812kJ
+  [done 300 | scanned 300/300] 双防+打击成功率 92.7%  r_MD1_min=16.5m  r_minT=0.24m  Energy=8.468kJ
+
+============================================================
+  评估结果：TD3 (全量 test-IC)  （300 轮）
+============================================================
+  双防均规避成功  (d1,d2≥6m)       : 280/300 = 93.3%
+  打击成功        (r_minT≤10m)     : 278/300 = 92.7%
+  规避+打击 全部达标                  : 278/300 = 92.7%
+  被拦截          (r_MD<6m)          :  20/300 = 6.7%
+  最小脱靶距离 D1  mean±std (m)       : 91.8 ± 343.1
+  最小脱靶距离 D2  mean±std (m)       : 49.7 ± 142.7
+  终端脱靶 r_minT  mean±std (m)       : 13.04 ± 183.18  (n=280)
+  累计奖励         mean±std            : 114.08 ± 42.13
+  全过程能耗 Energy  mean±std (kJ)    : 9.3814 ± 5.3016  median=9.5584  IQR=[5.2300,12.5132]
+    规避段 stage2                 : 4.2963 ± 2.2120  median=4.4817
+    末端 PN stage3                : 5.0851 ± 3.7770  median=4.7117
+    联合成功子集                  : median=10.1476 kJ  IQR=[5.8944,12.5528]  (n=278)
+[evaluate] 逐轮指标已写入 rl_td3\checkpoints\training_300k_20260730_1917\monte_carlo_eval_best_seed0_20261011_000247.npz
+           keys: r_MD1_min, r_MD2_min, r_minT, evade_ok, strike_ok, both_ok, intercepted, row_idx, local_idx, a_energy, energy_int, energy_kJ, energy_stage2_kJ, energy_stage3_kJ, a_total_variation, saturation_rate, theta_causal_rmse, theta_causal_tail_rmse, theta_command_rmse, theta_command_tail_rmse, frozen_model_rmse, frozen_model_tail_rmse, a_cmd_rmse, a_cmd_tail_rmse, a_cmd_sat_rmse, a_cmd_sat_tail_rmse
+
+[evaluate] 探针前 20 个初态，输出策略网络动作分布…
+    γ= 2.195  wT=9.57e+06  wE=9.64e+03
+    γ= 2.447  wT=9.62e+06  wE=9.65e+03
+    γ=-2.987  wT=1.78e+01  wE=1.78e+03
+    γ=-2.993  wT=2.17e+00  wE=2.17e+02
+    γ=-2.994  wT=3.38e+00  wE=3.38e+02
+    γ=-2.993  wT=5.46e+00  wE=5.46e+02
+    γ= 2.372  wT=8.86e+06  wE=8.99e+03
+    γ= 2.292  wT=9.57e+06  wE=9.59e+03
+    γ=-2.993  wT=4.95e+00  wE=4.95e+02
+    γ=-2.983  wT=2.90e+01  wE=2.90e+03
+    γ=-2.994  wT=4.26e+00  wE=4.26e+02
+    γ=-2.994  wT=3.88e+00  wE=3.88e+02
+    γ= 2.257  wT=9.31e+06  wE=9.43e+03
+    γ= 2.386  wT=9.47e+06  wE=9.51e+03
+    γ= 2.476  wT=9.66e+06  wE=9.67e+03
+    γ=-2.995  wT=3.05e+00  wE=3.05e+02
+    γ= 2.373  wT=9.62e+06  wE=9.64e+03
+    γ= 2.207  wT=9.29e+06  wE=9.42e+03
+    γ=-2.994  wT=7.17e+00  wE=7.17e+02
+    γ=-2.995  wT=2.69e+00  wE=2.69e+02
+
+  γ  均值=-0.596  范围=[-2.995, 2.476]
+  wT 均值=4.25e+06  范围=[2.17e+00, 9.66e+06]
+  wE 均值=4.70e+03  范围=[2.17e+02, 9.67e+03]

@@ -6,7 +6,7 @@ run_table2_bctd3_traj.py — Table 2 初值 + BC-TD3 整轨求解（Python 驱�
 用法:
   E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe \\
     plot_table2_matlab/table2_bctd3/run_table2_bctd3_traj.py \\
-    --model rl_td3/checkpoints/training_500k_20260728_1455/best/best_model \\
+    --model rl_td3/checkpoints/training_300k_20260730_1917/best/best_model \\
     --out plot_table2_matlab/table2_bctd3/record_table2_bctd3.mat
 """
 
@@ -59,7 +59,7 @@ def main() -> int:
         default=str(
             _RL_TD3
             / "checkpoints"
-            / "training_500k_20260728_1455"
+            / "training_300k_20260730_1917"
             / "best"
             / "best_model"
         ),

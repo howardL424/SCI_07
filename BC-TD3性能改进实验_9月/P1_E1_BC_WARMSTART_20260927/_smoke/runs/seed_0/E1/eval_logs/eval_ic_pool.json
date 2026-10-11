@@ -1,0 +1,19 @@
+{
+  "samples_file": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean_val.mat",
+  "n_ic": 5,
+  "order_seed": 0,
+  "local_idx": [
+    36,
+    291,
+    128,
+    116,
+    266
+  ],
+  "row_idx": [
+    36,
+    291,
+    128,
+    116,
+    266
+  ]
+}

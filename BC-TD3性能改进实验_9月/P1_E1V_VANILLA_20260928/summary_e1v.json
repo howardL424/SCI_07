@@ -1,0 +1,294 @@
+{
+  "budget": 50000,
+  "auc_horizon": 50000,
+  "common_steps": [
+    0,
+    25000,
+    50000
+  ],
+  "planned_seeds": [
+    0,
+    42
+  ],
+  "complete_seeds": [
+    0,
+    42
+  ],
+  "missing": [],
+  "records": {
+    "0": {
+      "curve": {
+        "timesteps": [
+          0,
+          25000,
+          50000
+        ],
+        "both_ok": [
+          0.84,
+          0.7733333333333333,
+          0.8066666666666666
+        ],
+        "evade_ok": [
+          0.84,
+          0.7733333333333333,
+          0.8066666666666666
+        ],
+        "strike_ok": [
+          0.84,
+          0.7733333333333333,
+          0.8066666666666666
+        ],
+        "intercepted": [
+          0.16,
+          0.22666666666666666,
+          0.19333333333333333
+        ]
+      },
+      "first_90_step": null,
+      "auc_horizon": 50000,
+      "auc_0_50k": 0.7983333333333335,
+      "both_ok_at": {
+        "0": 0.84,
+        "25000": 0.7733333333333333,
+        "50000": 0.8066666666666666
+      },
+      "wall_time_seconds": 1472.6204277000002,
+      "bc_init": {
+        "enabled": true,
+        "checkpoint": "D:\\LTY\\yan\\yanerxia\\GAIL\\P1_E1_BC_WARMSTART_20260927\\runs\\seed_0\\bc\\bc_seed0_best.pt",
+        "sha256": "866198ddc4cda902c83bd9ae37ef1382450b5cae039fc048678dfb6e4bc06792",
+        "epoch": 21,
+        "obs_dim": 13,
+        "act_dim": 3,
+        "net_arch": [
+          256,
+          256
+        ],
+        "obs_schema_version": "stage2_relative_obs_13d_v1",
+        "obs_norm_version": "obs_scale_0714_v1",
+        "action_mapping": "ratio_log_box_v1",
+        "probe_n": 1,
+        "max_abs_actor_before_vs_bc": 0.25101524591445923,
+        "max_abs_target_before_vs_bc": 0.25101524591445923,
+        "max_abs_actor_vs_bc": 0.0,
+        "max_abs_target_vs_bc": 0.0,
+        "max_abs_actor_vs_target": 0.0
+      },
+      "arguments": {
+        "steps": 50000,
+        "lr": 0.0001,
+        "batch": 256,
+        "buf": 300000,
+        "noise": 0.1,
+        "expert": "E:\\matlab\\result_0714\\expert_lib_1000.mat",
+        "aligned": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\data\\expert_transitions_aligned.mat",
+        "no_bc": true,
+        "save_dir": "D:\\LTY\\yan\\yanerxia\\GAIL\\P1_E1V_VANILLA_20260928\\runs\\seed_0\\E1V",
+        "name": "p1_E1V_seed0",
+        "smoke": false,
+        "log_file": "D:\\LTY\\yan\\yanerxia\\GAIL\\P1_E1V_VANILLA_20260928\\runs\\seed_0\\E1V\\train.log",
+        "no_log": false,
+        "grad_clip": 10.0,
+        "bc_ratio": 0.33,
+        "n_eval": 150,
+        "eval_freq": 25000,
+        "eval_ic_seed": 0,
+        "eval_random_ic": false,
+        "eval_at_start": true,
+        "train_samples": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean.mat",
+        "eval_samples": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean_val.mat",
+        "bc_lambda0": 0.0,
+        "bc_decay_steps": 200000,
+        "bc_init_ckpt": "D:\\LTY\\yan\\yanerxia\\GAIL\\P1_E1_BC_WARMSTART_20260927\\runs\\seed_0\\bc\\bc_seed0_best.pt",
+        "terminal_cache": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\data\\expert_terminal_cache.npz",
+        "seed": 0,
+        "sample_seed": 0,
+        "sample_mode": "balanced",
+        "val_ratio": 0.1,
+        "actor_include_intercepted": false,
+        "actor_eligible": "both_ok",
+        "save_sample_plan": null,
+        "action_mapping": "ratio_log_box_v1"
+      },
+      "vs_E0": {
+        "available": true,
+        "both_ok_delta": {
+          "0": 0.026666666666666616,
+          "25000": -0.033333333333333326,
+          "50000": -0.020000000000000018
+        },
+        "auc_delta": -0.015000000000000013,
+        "first_90_step_delta": 0,
+        "first_90": {
+          "E1V": null,
+          "E0": null
+        }
+      },
+      "vs_E1": {
+        "available": true,
+        "both_ok_delta": {
+          "0": 0.0,
+          "25000": -0.07333333333333336,
+          "50000": -0.06666666666666665
+        },
+        "auc_delta": -0.05333333333333312,
+        "first_90_step_delta": 0,
+        "first_90": {
+          "E1V": null,
+          "E1": null
+        }
+      }
+    },
+    "42": {
+      "curve": {
+        "timesteps": [
+          0,
+          25000,
+          50000
+        ],
+        "both_ok": [
+          0.8333333333333334,
+          0.9333333333333333,
+          0.9266666666666666
+        ],
+        "evade_ok": [
+          0.8333333333333334,
+          0.9333333333333333,
+          0.9266666666666666
+        ],
+        "strike_ok": [
+          0.8333333333333334,
+          0.9333333333333333,
+          0.9266666666666666
+        ],
+        "intercepted": [
+          0.16666666666666666,
+          0.06666666666666667,
+          0.07333333333333333
+        ]
+      },
+      "first_90_step": 25000,
+      "auc_horizon": 50000,
+      "auc_0_50k": 0.9066666666666666,
+      "both_ok_at": {
+        "0": 0.8333333333333334,
+        "25000": 0.9333333333333333,
+        "50000": 0.9266666666666666
+      },
+      "wall_time_seconds": 1463.0388652000006,
+      "bc_init": {
+        "enabled": true,
+        "checkpoint": "D:\\LTY\\yan\\yanerxia\\GAIL\\P1_E1_BC_WARMSTART_20260927\\runs\\seed_42\\bc\\bc_seed42_best.pt",
+        "sha256": "aef01af7571c5089acd3ad852595224dd702b451f3b07f427d64c094b323d896",
+        "epoch": 10,
+        "obs_dim": 13,
+        "act_dim": 3,
+        "net_arch": [
+          256,
+          256
+        ],
+        "obs_schema_version": "stage2_relative_obs_13d_v1",
+        "obs_norm_version": "obs_scale_0714_v1",
+        "action_mapping": "ratio_log_box_v1",
+        "probe_n": 1,
+        "max_abs_actor_before_vs_bc": 0.2036236673593521,
+        "max_abs_target_before_vs_bc": 0.2036236673593521,
+        "max_abs_actor_vs_bc": 0.0,
+        "max_abs_target_vs_bc": 0.0,
+        "max_abs_actor_vs_target": 0.0
+      },
+      "arguments": {
+        "steps": 50000,
+        "lr": 0.0001,
+        "batch": 256,
+        "buf": 300000,
+        "noise": 0.1,
+        "expert": "E:\\matlab\\result_0714\\expert_lib_1000.mat",
+        "aligned": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\data\\expert_transitions_aligned.mat",
+        "no_bc": true,
+        "save_dir": "P1_E1V_VANILLA_20260928/runs/seed_42/E1V",
+        "name": "p1_E1V_seed42",
+        "smoke": false,
+        "log_file": "P1_E1V_VANILLA_20260928/runs/seed_42/E1V/train.log",
+        "no_log": false,
+        "grad_clip": 10.0,
+        "bc_ratio": 0.33,
+        "n_eval": 150,
+        "eval_freq": 25000,
+        "eval_ic_seed": 0,
+        "eval_random_ic": false,
+        "eval_at_start": true,
+        "train_samples": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean.mat",
+        "eval_samples": "D:\\LTY\\yan\\yanerxia\\GAIL\\samples_clean_val.mat",
+        "bc_lambda0": 0.0,
+        "bc_decay_steps": 200000,
+        "bc_init_ckpt": "P1_E1_BC_WARMSTART_20260927/runs/seed_42/bc/bc_seed42_best.pt",
+        "terminal_cache": "D:\\LTY\\yan\\yanerxia\\GAIL\\rl_td3\\data\\expert_terminal_cache.npz",
+        "seed": 42,
+        "sample_seed": 42,
+        "sample_mode": "balanced",
+        "val_ratio": 0.1,
+        "actor_include_intercepted": false,
+        "actor_eligible": "both_ok",
+        "save_sample_plan": null,
+        "action_mapping": "ratio_log_box_v1"
+      },
+      "vs_E0": {
+        "available": true,
+        "both_ok_delta": {
+          "0": 0.06000000000000005,
+          "25000": 0.14,
+          "50000": 0.08666666666666667
+        },
+        "auc_delta": 0.10666666666666658,
+        "first_90_step_delta": -50000,
+        "first_90": {
+          "E1V": 25000,
+          "E0": null
+        }
+      },
+      "vs_E1": {
+        "available": true,
+        "both_ok_delta": {
+          "0": 0.0,
+          "25000": 0.07999999999999996,
+          "50000": 0.09333333333333327
+        },
+        "auc_delta": 0.06333333333333324,
+        "first_90_step_delta": -50000,
+        "first_90": {
+          "E1V": 25000,
+          "E1": null
+        }
+      }
+    }
+  },
+  "aggregate": {
+    "E1V_auc_0_50k": {
+      "mean": 0.8525,
+      "std": 0.07660323462854253
+    },
+    "E1V_minus_E0_auc_delta": {
+      "mean": 0.04583333333333328,
+      "std": 0.08603132504436323
+    },
+    "E1V_minus_E0_first_90_step_delta": {
+      "mean": -25000.0,
+      "std": 35355.33905932738
+    },
+    "E1V_minus_E1_auc_delta": {
+      "mean": 0.00500000000000006,
+      "std": 0.08249579113843034
+    },
+    "E1V_minus_E1_first_90_step_delta": {
+      "mean": -25000.0,
+      "std": 35355.33905932738
+    }
+  },
+  "prescreen_hints": {
+    "mean_auc_improved_vs_E0": true,
+    "mean_auc_improved_vs_E1": true,
+    "no_single_seed_severe_regression": false,
+    "suggestion": "若相对 E0/E1 的平均 0~50k AUC 均有改善且无单 seed 明显退化(>-2pp)，可进入 200k；若两 seed 均无改善或出现明显崩溃，则停止 E1V，按 RESULTS_0927 §10 结合退化时点决定是否进入 P2。"
+  }
+}

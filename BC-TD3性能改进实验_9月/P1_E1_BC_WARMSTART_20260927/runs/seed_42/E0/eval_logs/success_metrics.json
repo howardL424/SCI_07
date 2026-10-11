@@ -1,0 +1,93 @@
+[
+  {
+    "timestep": 0,
+    "both_ok_rate": 0.7733333333333333,
+    "evade_ok_rate": 0.7733333333333333,
+    "strike_ok_rate": 0.7733333333333333,
+    "intercepted_rate": 0.22666666666666666
+  },
+  {
+    "timestep": 25000,
+    "both_ok_rate": 0.7933333333333333,
+    "evade_ok_rate": 0.7933333333333333,
+    "strike_ok_rate": 0.7933333333333333,
+    "intercepted_rate": 0.20666666666666667
+  },
+  {
+    "timestep": 50000,
+    "both_ok_rate": 0.84,
+    "evade_ok_rate": 0.84,
+    "strike_ok_rate": 0.84,
+    "intercepted_rate": 0.16
+  },
+  {
+    "timestep": 75000,
+    "both_ok_rate": 0.9066666666666666,
+    "evade_ok_rate": 0.9066666666666666,
+    "strike_ok_rate": 0.9066666666666666,
+    "intercepted_rate": 0.09333333333333334
+  },
+  {
+    "timestep": 100000,
+    "both_ok_rate": 0.8666666666666667,
+    "evade_ok_rate": 0.8666666666666667,
+    "strike_ok_rate": 0.8666666666666667,
+    "intercepted_rate": 0.13333333333333333
+  },
+  {
+    "timestep": 125000,
+    "both_ok_rate": 0.8066666666666666,
+    "evade_ok_rate": 0.8066666666666666,
+    "strike_ok_rate": 0.8066666666666666,
+    "intercepted_rate": 0.19333333333333333
+  },
+  {
+    "timestep": 150000,
+    "both_ok_rate": 0.8866666666666667,
+    "evade_ok_rate": 0.8866666666666667,
+    "strike_ok_rate": 0.8866666666666667,
+    "intercepted_rate": 0.11333333333333333
+  },
+  {
+    "timestep": 175000,
+    "both_ok_rate": 0.9066666666666666,
+    "evade_ok_rate": 0.9066666666666666,
+    "strike_ok_rate": 0.9066666666666666,
+    "intercepted_rate": 0.09333333333333334
+  },
+  {
+    "timestep": 200000,
+    "both_ok_rate": 0.9133333333333333,
+    "evade_ok_rate": 0.9133333333333333,
+    "strike_ok_rate": 0.9133333333333333,
+    "intercepted_rate": 0.08666666666666667
+  },
+  {
+    "timestep": 225000,
+    "both_ok_rate": 0.8666666666666667,
+    "evade_ok_rate": 0.8666666666666667,
+    "strike_ok_rate": 0.8666666666666667,
+    "intercepted_rate": 0.13333333333333333
+  },
+  {
+    "timestep": 250000,
+    "both_ok_rate": 0.92,
+    "evade_ok_rate": 0.92,
+    "strike_ok_rate": 0.92,
+    "intercepted_rate": 0.08
+  },
+  {
+    "timestep": 275000,
+    "both_ok_rate": 0.9466666666666667,
+    "evade_ok_rate": 0.9466666666666667,
+    "strike_ok_rate": 0.9466666666666667,
+    "intercepted_rate": 0.05333333333333334
+  },
+  {
+    "timestep": 300000,
+    "both_ok_rate": 0.9333333333333333,
+    "evade_ok_rate": 0.9333333333333333,
+    "strike_ok_rate": 0.9333333333333333,
+    "intercepted_rate": 0.06666666666666667
+  }
+]

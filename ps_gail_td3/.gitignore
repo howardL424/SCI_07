@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+checkpoints*/
+logs/
+data/
+matlab_startup.log

@@ -11,7 +11,8 @@ setup_expert_path();
 % % N = 292;
 % % 目标: samples_clean 非零行数 = 290（rng(1) 下 N=422 可复现）
 % N = 422;
-N = 438;
+% N = 438;  % 旧: rng(2) 下 samples_clean 非零行数 = 300（与 val 相同）
+N = 444;
 % dim = 14;
 dim = 14;
 
@@ -19,7 +20,8 @@ dim = 14;
 % 使用 'correlation' 准则可以最大程度降低变量间的相关性，优化采样分布
 % rng(1);% 用来保证200的随机种子
 % rng(1);% 用来保证290的随机种子
-rng(2);% 用来保证300的随机种子（N=438）
+% rng(2);% 用来保证300的随机种子（N=438）；与 val 共用同一组 IC
+rng(3);% 用来保证300的随机种子（N=444）
 X_raw = lhsdesign(N, dim, 'criterion', 'correlation', 'iterations', 10);
 
 % 初始化样本矩阵

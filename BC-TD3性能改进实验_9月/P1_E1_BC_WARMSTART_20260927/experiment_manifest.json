@@ -1,0 +1,31 @@
+﻿{
+    "experiment":  "P1/E1: Actor BC warm-start",
+    "created_at":  "2026-09-27T19:03:30.6941854+08:00",
+    "smoke":  false,
+    "seeds":  [
+                  0,
+                  42
+              ],
+    "screening_mode":  "two_seed_prescreen; third seed deferred by user",
+    "steps":  300000,
+    "eval_freq":  25000,
+    "n_eval":  150,
+    "action_mapping":  "ratio_log_box_v1",
+    "observation":  "13D clean, identification disabled",
+    "conditions":  [
+                       "E0: random Actor + expert Replay + decayed BC regularization",
+                       "E1: E0 + paired BC Actor/Actor-target warm-start"
+                   ],
+    "result":  "P1 two-seed prescreen did not pass the convergence-acceleration gate",
+    "next_experiment":  {
+                            "name":  "E1V: vanilla BC warm-start + standard TD3",
+                            "expert_replay_prefill":  false,
+                            "online_bc_regularization":  false,
+                            "critic_pretraining":  false,
+                            "learning_starts":  1000,
+                            "staging":  "technical smoke -> 50k seeds 0/42 -> conditional 200k",
+                            "status":  "not started"
+                        },
+    "python":  "E:\\Python\\venvs\\rl_pytorch\\Scripts\\python.exe",
+    "git_commit":  "1a8c25bd0e145054415d017e2884cfaafa7f94bc"
+}

@@ -238,6 +238,11 @@ def parse_args() -> argparse.Namespace:
         help=f"每隔多少步评估一次（默认 {DEFAULTS['eval_freq']:,}）",
     )
     p.add_argument(
+        "--eval-at-start",
+        action="store_true",
+        help="在线交互前额外评估一次（t=0），用于 0~150k 曲线面积",
+    )
+    p.add_argument(
         "--eval-ic-seed",
         type=int,
         default=DEFAULTS["eval_ic_seed"],
@@ -391,6 +396,7 @@ def _run_training(args: argparse.Namespace, save_dir: Path) -> None:
         log_path=str(save_dir / "eval_logs"),
         deterministic=True,
         verbose=1,
+        evaluate_at_start=args.eval_at_start,
     )
 
     callbacks = [checkpoint_cb, eval_cb]

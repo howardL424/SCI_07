@@ -1,7 +1,8 @@
 addpath(fileparts(fileparts(mfilename('fullpath'))));  % expert_trajectory/
 setup_expert_path();
-[expertRoot, projectRoot] = project_paths();
-S = load(fullfile(projectRoot, 'samples_clean.mat'), 'samples_clean');
+[expertRoot, projectRoot] = project_paths(); %#ok<ASGLU>
+% S = load(fullfile(projectRoot, 'samples_clean.mat'), 'samples_clean');
+S = load(fullfile(projectRoot, 'samples_clean_kuoda_train.mat'), 'samples_clean');
 nValid = nnz(any(S.samples_clean ~= 0, 2));
 midPos = floor(nValid / 2);
 if midPos < 1
@@ -11,24 +12,34 @@ end
 % ===== 运行模式 =====
 % 'fresh'  : 从头跑 (忽略已有 checkpoint)
 % 'resume' : 从最新 checkpoint 续跑 (按修改时间取 expert_lib_1000_half1_ckpt*.mat 最新)
-RUN_MODE = 'resume';
-% RUN_MODE = 'fresh';
+% RUN_MODE = 'resume';  % 原默认：从已有 checkpoint 续跑
+RUN_MODE = 'fresh';     % 新初态池、新输出目录，从头生成
 
 opts.run_stageB       = true;
 opts.plot             = false;
 opts.save             = true;
-opts.save_file        = 'expert_lib_1000_half1.mat';
-opts.checkpoint_every = 50;
+% opts.save_file        = 'expert_lib_1000_half1.mat';  % 原：expert_trajectory/
+opts.save_file        = fullfile('E:\matlab\result_1010', 'expert_lib_1000_half1.mat');
+% opts.checkpoint_every = 50;
+opts.checkpoint_every = 200;
 opts.valid_pos        = 1:midPos;
 
+% resultDir = expertRoot;  % 原 checkpoint 目录
+resultDir = 'E:\matlab\result_1010';
+if ~isfolder(resultDir)
+    mkdir(resultDir);
+end
+
 if strcmpi(RUN_MODE, 'resume')
-    ckpts = dir(fullfile(expertRoot, 'expert_lib_1000_half1_ckpt*.mat'));
+    % ckpts = dir(fullfile(expertRoot, 'expert_lib_1000_half1_ckpt*.mat'));
+    ckpts = dir(fullfile(resultDir, 'expert_lib_1000_half1_ckpt*.mat'));
     if isempty(ckpts)
         error('P3_generate1000_half1:NoCheckpoint', ...
             '未找到 checkpoint, 请将 RUN_MODE 改为 ''fresh'' 或检查文件路径');
     end
     [~, idx] = max([ckpts.datenum]);
-    ckpt_file = fullfile(expertRoot, ckpts(idx).name);
+    % ckpt_file = fullfile(expertRoot, ckpts(idx).name);
+    ckpt_file = fullfile(resultDir, ckpts(idx).name);
     opts.resume_ckpt = ckpt_file;
     fprintf('续跑模式: 从 %s 继续\n', ckpt_file);
 elseif strcmpi(RUN_MODE, 'fresh')

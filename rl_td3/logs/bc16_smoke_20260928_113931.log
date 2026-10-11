@@ -1,0 +1,39 @@
+[train_bc] 终端输出同时写入 D:\LTY\yan\yanerxia\GAIL\rl_td3\logs\bc16_smoke_20260928_113931.log
+============================================================
+  纯 Actor BC 诊断
+  seed=42  sample_seed=42
+  action_mapping=ratio_log_box_v1
+  obs_schema=rel13_qmag16_v1
+  epochs=5  lr=0.001  batch=256
+  device=cuda  save_dir=BC-TD3性能改进实验_9月\P1_E2S16D_QMAG_20260928\runs\smoke16_s42\smoke
+============================================================
+[train_bc] 加载 transition：expert=E:\matlab\result_0714\expert_lib_1000.mat
+[train_bc] obs_schema=rel13_qmag16_v1（16D，opt-in�[tr[train_bc] 动作映射：td3_box_log_v1 → ratio_log_box_v[tr[train_bc] 比值→旧权重盒可行域比例：99.71%（理论应≈100%�[train_bc] Q 映射校验：{'n_traj': 1287, 'n_steps': 136896, 'max_first_step_diff': 0.0, 'max_full_traj_drift': 27057.76595598313, 'worst_drift_tid': 1026}
+[train_bc] Q 派生完成：n=136896  Q1[0.0000,902.0135] Q2[0.0000,358.4773] QT[0.0000,130.0516]
+[train_bc] 新建采样计划已保存：BC-TD3性能改进实验_9月\P1_E2S16D_QMAG_20260928\runs\smoke16_s0\smoke\bc_sample_plan_seed0.npz
+[train_bc] Q scale（train 99.5% 分位）：[2.85351907e-01 3.03586612e+01 2.31689688e-02]，已保存 BC-TD3性能改进实验_9月\P1_E2S16D_QMAG_20260928\runs\smoke16_s0\smoke\q_scale_seed0.npz
+[train_bc] 16D 归一化 |x|>1：obs13=0.08% Q=2.69%；|x|>5：obs13=0.00% Q=0.76%
+[train_bc] BC 数据：train=2796  val=8167  expert_both_ok_val=0.705  non_int=0.929
+[epoch 001/5] loss=0.355607
+  [train] n=2796  MSE=0.325228  MAE=0.418364  MAE/act[rhoE_n=0.4110 rhoT_n=0.1868 gamma_n=0.6573]  贴边(any)=0.2%  贴边/维[rhoE_n=0.2% rhoT_n=0.1% gamma_n=0.1%]
+  [val  ] n=8167  MSE=0.353634  MAE=0.437852  MAE/act[rhoE_n=0.4271 rhoT_n=0.1959 gamma_n=0.6906]  贴边(any)=0.0%  贴边/维[rhoE_n=0.0% rhoT_n=0.0% gamma_n=0.0%]
+  → 新最佳 val MSE=0.353634，已保存 BC-TD3性能改进实验_9月\P1_E2S16D_QMAG_20260928\runs\smoke16_s0\smoke\bc16_smoke_best.pt
+[epoch 0[epoch 002/5] loss=0.327124
+  [train] n=2805  MSE=0.322351  MAE=0.444645  MAE/act[rhoE_n=0.4586 rhoT_n=0.1896 gamma_n=0.6857]  贴边(any)=0.1%  贴边/维[rhoE_n=0.0% rhoT_n=0.0% gamma_n=0.1%]
+  [val  ] n=7855  MSE=0.308745  MAE=0.443839  MAE/act[rhoE_n=0.4509 rhoT_n=0.1909 gamma_n=0.6897]  贴边(any)=0.0%  贴边/维[rhoE_n=0.0% rhoT_n=0.0% gamma_n  → �[epoch 003/5] loss=0.321958
+  [train] n=2805  MSE=0.319434  MAE=0.436076  MAE/act[rhoE_n=0.4307 rhoT_n=0.1904 gamma_n=0.6872]  贴�[epoch 003/5] loss=0.313183
+  [train] n=2796  MSE=0.309737  MAE=0.426477  MAE/act[rhoE_n=0.4309 rhoT_n=0.1861 gamma_n=0.6624]  贴边(any)=0.1%  贴边/维[rhoE_n=0.1% rhoT_n=0.1% gamma_n=0.1%]
+  [val  ] n=8167  MSE=0.335261  MA  → 新最佳 val MSE=0.300894，已保存 BC-TD3性能改进实验_9月\P1_E2S16D_QMAG_20260928\runs\smoke16_s42\smoke\bc16_smoke_  → 新[epoch 004/5] loss=0.318898
+  [train] n=2805  MSE=0.315686  MAE=0.431128  MAE/act[rhoE_n=0.4349 rhoT_n=0.1888 gamma_n=0.6697]  贴�[epoch 004/5] loss=0.309308
+  [train] n=2796  MSE=0.307641  MAE=0.426205  MAE/act[rhoE_n=0.4309 rhoT_n=0.1879 gamma_n=0.6599]  贴边(any)=0.1%  贴边/维[rhoE_n=0.1% rhoT_n=0.1% gamma_n=0.1%]
+  [val  ] n=8167  MSE=0.335974  MAE[epoch 005/5] loss=0.314851
+  [train] n=2805  MSE=0.313738  MAE=0.431641  MAE/act[rhoE_n=0.4229 rhoT_n=0.1885 gamma_n=0.6835]  贴�[epoch 005/5] loss=0.306900
+  [train] n=2796  MSE=0.305276  MAE=0.422723  MAE/act[rhoE_n=0.4276 rhoT_n=0.1841 gamma_n=0.6565]  贴边(any)=0.1%  贴边/维[rhoE_n=0.0% rhoT_n=0.1% gamma_n=0.1%]
+  [val  ] n=8167  MSE=0.335790  MAE  → 新最佳 val MSE=0.300502，已保存 BC-TD3性能改进实验_9月\P1_E2S16D_QMAG_20260928\runs\smoke16_s42\smoke\bc16_smoke
+[train_b
+[train_bc] 报告已写入 BC-TD3性能改进实验_9月\P1_E2S16D_QMAG_20260928\runs\smoke16_s42\smoke\bc16_smoke_report.json
+[train_bc] 判断门：fail_high_val_error
+  - 验证 MSE 偏高：先做状态/动作可辨识性消融，不要直接调 TD3/奖励/GAIL。
+  - gamma_n MAE=0.688 仍高（比值坐标未改变 γ）；若闭环无实质改善，进入状态空间消融。
+  - action_mapping=ratio_log_box_v1
+  - 专家标签基线（val 轨 both_ok）：0.682；未拦截子集：0.898

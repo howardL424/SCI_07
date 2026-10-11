@@ -1,0 +1,1505 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{none/global//global/global/global}
+    \entry{ding2022review}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=1ca302e3c932b1a598012c1ad67e258c}{%
+           family={Ding},
+           familyi={D\bibinitperiod},
+           given={Yibo},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=3e081402b9bf76e67534386dd83aa387}{%
+           family={Yue},
+           familyi={Y\bibinitperiod},
+           given={Xiaokui},
+           giveni={X\bibinitperiod}}}%
+        {{hash=02ff666e743ee8721d374e2661367deb}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Guangshan},
+           giveni={G\bibinitperiod}}}%
+        {{hash=e45cd51fe9b3d05b93da8eeea462be08}{%
+           family={Si},
+           familyi={S\bibinitperiod},
+           given={Jiashun},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{195949e3fa04d833012f11baa2372b0c}
+      \strng{fullhash}{a653ecd7281e0023427d19b9b49e759a}
+      \strng{fullhashraw}{a653ecd7281e0023427d19b9b49e759a}
+      \strng{bibnamehash}{a653ecd7281e0023427d19b9b49e759a}
+      \strng{authorbibnamehash}{a653ecd7281e0023427d19b9b49e759a}
+      \strng{authornamehash}{195949e3fa04d833012f11baa2372b0c}
+      \strng{authorfullhash}{a653ecd7281e0023427d19b9b49e759a}
+      \strng{authorfullhashraw}{a653ecd7281e0023427d19b9b49e759a}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chinese Journal of Aeronautics}
+      \field{number}{7}
+      \field{title}{Review of control and guidance technology on hypersonic vehicle}
+      \field{volume}{35}
+      \field{year}{2022}
+      \field{pages}{1\bibrangedash 18}
+      \range{pages}{18}
+      \verb{doi}
+      \verb 10.1016/j.cja.2021.10.037
+      \endverb
+    \endentry
+    \entry{prokopov2013}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=b8748c702ca80bbfddbd2a3beac4f023}{%
+           family={Prokopov},
+           familyi={P\bibinitperiod},
+           given={Oleg},
+           giveni={O\bibinitperiod}}}%
+        {{hash=9c45618f5d81fd821479092736b0317a}{%
+           family={Shima},
+           familyi={S\bibinitperiod},
+           given={Tal},
+           giveni={T\bibinitperiod}}}%
+      }
+      \strng{namehash}{d27ebd666d128a77594097f07cff9867}
+      \strng{fullhash}{d27ebd666d128a77594097f07cff9867}
+      \strng{fullhashraw}{d27ebd666d128a77594097f07cff9867}
+      \strng{bibnamehash}{d27ebd666d128a77594097f07cff9867}
+      \strng{authorbibnamehash}{d27ebd666d128a77594097f07cff9867}
+      \strng{authornamehash}{d27ebd666d128a77594097f07cff9867}
+      \strng{authorfullhash}{d27ebd666d128a77594097f07cff9867}
+      \strng{authorfullhashraw}{d27ebd666d128a77594097f07cff9867}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Guidance, Control, and Dynamics}
+      \field{number}{3}
+      \field{title}{Linear quadratic optimal cooperative strategies for active aircraft protection}
+      \field{volume}{36}
+      \field{year}{2013}
+      \field{pages}{753\bibrangedash 764}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.2514/1.58531
+      \endverb
+    \endentry
+    \entry{li2024cja}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=c9a3728dcc2397d1bab78a791b51779b}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=bbe869383a7d3458b82c516a21e4482c}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={X.},
+           giveni={X\bibinitperiod}}}%
+        {{hash=32c575590c3e6521537cdae5efd16ff0}{%
+           family={Zhou},
+           familyi={Z\bibinitperiod},
+           given={H.},
+           giveni={H\bibinitperiod}}}%
+        {{hash=66d548e0e670e107fc4a80dc0c3825b3}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Y.},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{0b26886cabde4f6202af5174b37a09ec}
+      \strng{fullhash}{a0c43ad47ecd37fc2ce1a47bbf61320f}
+      \strng{fullhashraw}{a0c43ad47ecd37fc2ce1a47bbf61320f}
+      \strng{bibnamehash}{a0c43ad47ecd37fc2ce1a47bbf61320f}
+      \strng{authorbibnamehash}{a0c43ad47ecd37fc2ce1a47bbf61320f}
+      \strng{authornamehash}{0b26886cabde4f6202af5174b37a09ec}
+      \strng{authorfullhash}{a0c43ad47ecd37fc2ce1a47bbf61320f}
+      \strng{authorfullhashraw}{a0c43ad47ecd37fc2ce1a47bbf61320f}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chinese Journal of Aeronautics}
+      \field{number}{5}
+      \field{title}{A novel evasion guidance for hypersonic morphing vehicle via intelligent maneuver strategy}
+      \field{volume}{37}
+      \field{year}{2024}
+      \field{pages}{441\bibrangedash 461}
+      \range{pages}{21}
+      \verb{doi}
+      \verb 10.1016/j.cja.2024.02.024
+      \endverb
+    \endentry
+    \entry{wang2024}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=1d051a5b03bf16cfd326ca203dbe63a5}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Chengze},
+           giveni={C\bibinitperiod}}}%
+        {{hash=539f3780725f7aa6da28d6a12516ec5c}{%
+           family={Yan},
+           familyi={Y\bibinitperiod},
+           given={Jiamin},
+           giveni={J\bibinitperiod}}}%
+        {{hash=e602c02613a5972c9118dfb89da524fe}{%
+           family={Lyu},
+           familyi={L\bibinitperiod},
+           given={Rui},
+           giveni={R\bibinitperiod}}}%
+        {{hash=431280423bd6420024af01911832772d}{%
+           family={Liang},
+           familyi={L\bibinitperiod},
+           given={Zhuo},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=f532a47a63f16b583c4455dea6a8018e}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Yang},
+           giveni={Y\bibinitperiod}}}%
+      }
+      \strng{namehash}{341010c0193a1f5793bff3435ca630a7}
+      \strng{fullhash}{aa7ed7b65b7f28e278e428962f162a50}
+      \strng{fullhashraw}{aa7ed7b65b7f28e278e428962f162a50}
+      \strng{bibnamehash}{aa7ed7b65b7f28e278e428962f162a50}
+      \strng{authorbibnamehash}{aa7ed7b65b7f28e278e428962f162a50}
+      \strng{authornamehash}{341010c0193a1f5793bff3435ca630a7}
+      \strng{authorfullhash}{aa7ed7b65b7f28e278e428962f162a50}
+      \strng{authorfullhashraw}{aa7ed7b65b7f28e278e428962f162a50}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Aerospace}
+      \field{number}{12}
+      \field{title}{Optimal guidance law for critical safe miss distance evasion}
+      \field{volume}{11}
+      \field{year}{2024}
+      \field{pages}{1041}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/aerospace11121041
+      \endverb
+    \endentry
+    \entry{shinar1977}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=e333c62aafa76ab6172ab2ea6918d00c}{%
+           family={Shinar},
+           familyi={S\bibinitperiod},
+           given={Josef},
+           giveni={J\bibinitperiod}}}%
+        {{hash=79d06b42c7f34d049bc87b65a64e207e}{%
+           family={Steinberg},
+           familyi={S\bibinitperiod},
+           given={Don},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{4bf01986e3e7d376187e5b06034b1208}
+      \strng{fullhash}{4bf01986e3e7d376187e5b06034b1208}
+      \strng{fullhashraw}{4bf01986e3e7d376187e5b06034b1208}
+      \strng{bibnamehash}{4bf01986e3e7d376187e5b06034b1208}
+      \strng{authorbibnamehash}{4bf01986e3e7d376187e5b06034b1208}
+      \strng{authornamehash}{4bf01986e3e7d376187e5b06034b1208}
+      \strng{authorfullhash}{4bf01986e3e7d376187e5b06034b1208}
+      \strng{authorfullhashraw}{4bf01986e3e7d376187e5b06034b1208}
+      \field{sortinit}{4}
+      \field{sortinithash}{9381316451d1b9788675a07e972a12a7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Aircraft}
+      \field{number}{8}
+      \field{title}{Analysis of optimal evasive maneuvers based on a linearized two-dimensional kinematic model}
+      \field{volume}{14}
+      \field{year}{1977}
+      \field{pages}{795\bibrangedash 802}
+      \range{pages}{8}
+      \verb{doi}
+      \verb 10.2514/3.58855
+      \endverb
+    \endentry
+    \entry{feng2023}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=e6d1f058f811876f4f1c7dc618a1fe8a}{%
+           family={Feng},
+           familyi={F\bibinitperiod},
+           given={L.},
+           giveni={L\bibinitperiod}}}%
+        {{hash=ab361a4c3518e2c13bd5d8b87e314738}{%
+           family={Lu},
+           familyi={L\bibinitperiod},
+           given={W.},
+           giveni={W\bibinitperiod}}}%
+        {{hash=3768cb3691d9f8be784a4b189ba55772}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={F.},
+           giveni={F\bibinitperiod}}}%
+        {{hash=6e8985d8cb66644995173e9d72791746}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={F.},
+           giveni={F\bibinitperiod}}}%
+        {{hash=8e935d2e8b401b4d9e64ed1f9a77574d}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Q.},
+           giveni={Q\bibinitperiod}}}%
+      }
+      \strng{namehash}{2f9f8d4e1bf8dc8b7ef8d91375def144}
+      \strng{fullhash}{0284a4d48e493010ae796e98d2ddbea4}
+      \strng{fullhashraw}{0284a4d48e493010ae796e98d2ddbea4}
+      \strng{bibnamehash}{0284a4d48e493010ae796e98d2ddbea4}
+      \strng{authorbibnamehash}{0284a4d48e493010ae796e98d2ddbea4}
+      \strng{authornamehash}{2f9f8d4e1bf8dc8b7ef8d91375def144}
+      \strng{authorfullhash}{0284a4d48e493010ae796e98d2ddbea4}
+      \strng{authorfullhashraw}{0284a4d48e493010ae796e98d2ddbea4}
+      \field{sortinit}{5}
+      \field{sortinithash}{20e9b4b0b173788c5dace24730f47d8c}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Symmetry}
+      \field{number}{7}
+      \field{title}{Optimal penetration guidance law for high-speed vehicles against an interceptor with modified proportional navigation guidance}
+      \field{volume}{15}
+      \field{year}{2023}
+      \field{pages}{1337}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.3390/sym15071337
+      \endverb
+    \endentry
+    \entry{shaferman2021}{article}{}{}
+      \name{author}{1}{}{%
+        {{hash=f1821b7fae62a3599952135859723964}{%
+           family={Shaferman},
+           familyi={S\bibinitperiod},
+           given={Vitaly},
+           giveni={V\bibinitperiod}}}%
+      }
+      \strng{namehash}{f1821b7fae62a3599952135859723964}
+      \strng{fullhash}{f1821b7fae62a3599952135859723964}
+      \strng{fullhashraw}{f1821b7fae62a3599952135859723964}
+      \strng{bibnamehash}{f1821b7fae62a3599952135859723964}
+      \strng{authorbibnamehash}{f1821b7fae62a3599952135859723964}
+      \strng{authornamehash}{f1821b7fae62a3599952135859723964}
+      \strng{authorfullhash}{f1821b7fae62a3599952135859723964}
+      \strng{authorfullhashraw}{f1821b7fae62a3599952135859723964}
+      \field{sortinit}{7}
+      \field{sortinithash}{108d0be1b1bee9773a1173443802c0a3}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Guidance, Control, and Dynamics}
+      \field{number}{10}
+      \field{title}{Near-optimal evasion from pursuers employing modern linear guidance laws}
+      \field{volume}{44}
+      \field{year}{2021}
+      \field{pages}{1823\bibrangedash 1835}
+      \range{pages}{13}
+      \verb{doi}
+      \verb 10.2514/1.G005725
+      \endverb
+    \endentry
+    \entry{turetsky2003}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=ff8ea84ce476b1e0e6d4ad8bbd75ed53}{%
+           family={Turetsky},
+           familyi={T\bibinitperiod},
+           given={Vladimir},
+           giveni={V\bibinitperiod}}}%
+        {{hash=e333c62aafa76ab6172ab2ea6918d00c}{%
+           family={Shinar},
+           familyi={S\bibinitperiod},
+           given={Josef},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{58b20db57c2f45d36bf53bd45dc47454}
+      \strng{fullhash}{58b20db57c2f45d36bf53bd45dc47454}
+      \strng{fullhashraw}{58b20db57c2f45d36bf53bd45dc47454}
+      \strng{bibnamehash}{58b20db57c2f45d36bf53bd45dc47454}
+      \strng{authorbibnamehash}{58b20db57c2f45d36bf53bd45dc47454}
+      \strng{authornamehash}{58b20db57c2f45d36bf53bd45dc47454}
+      \strng{authorfullhash}{58b20db57c2f45d36bf53bd45dc47454}
+      \strng{authorfullhashraw}{58b20db57c2f45d36bf53bd45dc47454}
+      \field{sortinit}{8}
+      \field{sortinithash}{a231b008ebf0ecbe0b4d96dcc159445f}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Automatica}
+      \field{number}{4}
+      \field{title}{Missile guidance laws based on pursuit--evasion game formulations}
+      \field{volume}{39}
+      \field{year}{2003}
+      \field{pages}{607\bibrangedash 618}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1016/S0005-1098(02)00273-X
+      \endverb
+    \endentry
+    \entry{benasher1988}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=498727aa5abd9747310128bed4ec1f84}{%
+           family={Ben-Asher},
+           familyi={B\bibinithyphendelim A\bibinitperiod},
+           given={Joseph\bibnamedelima Z.},
+           giveni={J\bibinitperiod\bibinitdelim Z\bibinitperiod}}}%
+        {{hash=52e4b3dfa2fa43408ba83ca89ecf2013}{%
+           family={Cliff},
+           familyi={C\bibinitperiod},
+           given={Eugene\bibnamedelima M.},
+           giveni={E\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=590451ff24cb3a64cdfab77bd6fccd11}{%
+           family={Kelley},
+           familyi={K\bibinitperiod},
+           given={Henry\bibnamedelima J.},
+           giveni={H\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \strng{namehash}{0295897005282841c56a863d47660b52}
+      \strng{fullhash}{0295897005282841c56a863d47660b52}
+      \strng{fullhashraw}{0295897005282841c56a863d47660b52}
+      \strng{bibnamehash}{0295897005282841c56a863d47660b52}
+      \strng{authorbibnamehash}{0295897005282841c56a863d47660b52}
+      \strng{authornamehash}{0295897005282841c56a863d47660b52}
+      \strng{authorfullhash}{0295897005282841c56a863d47660b52}
+      \strng{authorfullhashraw}{0295897005282841c56a863d47660b52}
+      \field{sortinit}{9}
+      \field{sortinithash}{0a5ebc79d83c96b6579069544c73c7d4}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Guidance, Control, and Dynamics}
+      \field{number}{4}
+      \field{title}{Optimal evasion with a path-angle constraint and against two pursuers}
+      \field{volume}{11}
+      \field{year}{1988}
+      \field{pages}{300\bibrangedash 304}
+      \range{pages}{5}
+      \verb{doi}
+      \verb 10.2514/3.20311
+      \endverb
+    \endentry
+    \entry{yan2020a}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=d41a5474ed950f0b98951f2abc46a0e1}{%
+           family={Yan},
+           familyi={Y\bibinitperiod},
+           given={Tian},
+           giveni={T\bibinitperiod}}}%
+        {{hash=4ceed54411631af47233413009e8dde7}{%
+           family={Cai},
+           familyi={C\bibinitperiod},
+           given={Yuanli},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=535cdc7e4219cfbc80f6ba9afd8ae743}{%
+           family={Xu},
+           familyi={X\bibinitperiod},
+           given={Bin},
+           giveni={B\bibinitperiod}}}%
+      }
+      \strng{namehash}{477e3fe0c35f096f34f6b66085efa719}
+      \strng{fullhash}{477e3fe0c35f096f34f6b66085efa719}
+      \strng{fullhashraw}{477e3fe0c35f096f34f6b66085efa719}
+      \strng{bibnamehash}{477e3fe0c35f096f34f6b66085efa719}
+      \strng{authorbibnamehash}{477e3fe0c35f096f34f6b66085efa719}
+      \strng{authornamehash}{477e3fe0c35f096f34f6b66085efa719}
+      \strng{authorfullhash}{477e3fe0c35f096f34f6b66085efa719}
+      \strng{authorfullhashraw}{477e3fe0c35f096f34f6b66085efa719}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chinese Journal of Aeronautics}
+      \field{number}{12}
+      \field{title}{Evasion guidance algorithms for air-breathing hypersonic vehicles in three-player pursuit-evasion games}
+      \field{volume}{33}
+      \field{year}{2020}
+      \field{pages}{3423\bibrangedash 3436}
+      \range{pages}{14}
+      \verb{doi}
+      \verb 10.1016/j.cja.2020.03.026
+      \endverb
+    \endentry
+    \entry{zhang2023}{article}{}{}
+      \name{author}{7}{}{%
+        {{hash=0c1e14bba030505a64fc66c0d187dccd}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Kunpeng},
+           giveni={K\bibinitperiod}}}%
+        {{hash=047f7de07364289ade5035d665f1c939}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Yao},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=62257a60e83cd41294d5877cb386fccd}{%
+           family={Shi},
+           familyi={S\bibinitperiod},
+           given={Heng},
+           giveni={H\bibinitperiod}}}%
+        {{hash=daa654d1e8f9054f4817cc67277692f5}{%
+           family={Huang},
+           familyi={H\bibinitperiod},
+           given={Huang},
+           giveni={H\bibinitperiod}}}%
+        {{hash=86e3c9722d375c198406e985db933784}{%
+           family={Bi},
+           familyi={B\bibinitperiod},
+           given={Sifeng},
+           giveni={S\bibinitperiod}}}%
+        {{hash=586e37055722fdc0ddb761701daa198d}{%
+           family={Ye},
+           familyi={Y\bibinitperiod},
+           given={Ji},
+           giveni={J\bibinitperiod}}}%
+        {{hash=fbff8727c8b7d7f74a824b85e24dafb3}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Hongbo},
+           giveni={H\bibinitperiod}}}%
+      }
+      \strng{namehash}{50761ec43a3ef167b0520cf82b7f3bf4}
+      \strng{fullhash}{42c1363806afbf76a9cee8c626306df7}
+      \strng{fullhashraw}{42c1363806afbf76a9cee8c626306df7}
+      \strng{bibnamehash}{42c1363806afbf76a9cee8c626306df7}
+      \strng{authorbibnamehash}{42c1363806afbf76a9cee8c626306df7}
+      \strng{authornamehash}{50761ec43a3ef167b0520cf82b7f3bf4}
+      \strng{authorfullhash}{42c1363806afbf76a9cee8c626306df7}
+      \strng{authorfullhashraw}{42c1363806afbf76a9cee8c626306df7}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Aerospace and Electronic Systems}
+      \field{number}{6}
+      \field{title}{Escape-zone-based optimal evasion guidance against multiple orbital pursuers}
+      \field{volume}{59}
+      \field{year}{2023}
+      \field{pages}{7698\bibrangedash 7714}
+      \range{pages}{17}
+      \verb{doi}
+      \verb 10.1109/TAES.2023.3292072
+      \endverb
+    \endentry
+    \entry{qi2017}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=09efd9a58ff167f3d9a994c7af186010}{%
+           family={Qi},
+           familyi={Q\bibinitperiod},
+           given={Naiming},
+           giveni={N\bibinitperiod}}}%
+        {{hash=7fbadc9dd2805af6f1fa595b43e2fa79}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Qilong},
+           giveni={Q\bibinitperiod}}}%
+        {{hash=3313b0fb30c52802abe615a883198713}{%
+           family={Zhao},
+           familyi={Z\bibinitperiod},
+           given={Jun},
+           giveni={J\bibinitperiod}}}%
+      }
+      \strng{namehash}{e60cc55c2579069519656a1212aa4826}
+      \strng{fullhash}{e60cc55c2579069519656a1212aa4826}
+      \strng{fullhashraw}{e60cc55c2579069519656a1212aa4826}
+      \strng{bibnamehash}{e60cc55c2579069519656a1212aa4826}
+      \strng{authorbibnamehash}{e60cc55c2579069519656a1212aa4826}
+      \strng{authornamehash}{e60cc55c2579069519656a1212aa4826}
+      \strng{authorfullhash}{e60cc55c2579069519656a1212aa4826}
+      \strng{authorfullhashraw}{e60cc55c2579069519656a1212aa4826}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chinese Journal of Aeronautics}
+      \field{number}{6}
+      \field{title}{Evasion and pursuit guidance law against defended target}
+      \field{volume}{30}
+      \field{year}{2017}
+      \field{pages}{1958\bibrangedash 1973}
+      \range{pages}{16}
+      \verb{doi}
+      \verb 10.1016/j.cja.2017.06.015
+      \endverb
+    \endentry
+    \entry{ren2025}{article}{}{}
+      \name{author}{6}{}{%
+        {{hash=cce175d604f2ddca041e5804b2e11198}{%
+           family={Ren},
+           familyi={R\bibinitperiod},
+           given={Leliang},
+           giveni={L\bibinitperiod}}}%
+        {{hash=f8ed4d5f62d6732b9a3b7a5614d1a0a9}{%
+           family={Guo},
+           familyi={G\bibinitperiod},
+           given={Weilin},
+           giveni={W\bibinitperiod}}}%
+        {{hash=d77f416274555bdcb8291e0a402265c8}{%
+           family={Xian},
+           familyi={X\bibinitperiod},
+           given={Yong},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=a412f39ab767bb9e22fdbdd717888bff}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Zhenyu},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=822400067e1aa142d51db5902a49da6a}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={Daqiao},
+           giveni={D\bibinitperiod}}}%
+        {{hash=2da9b88a06859ff9bcd83137fd37448e}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Shaopeng},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{980c825ee9567d2378b796f3390d3db2}
+      \strng{fullhash}{ce7f24af9980efd77dc751a5dc5f7e06}
+      \strng{fullhashraw}{ce7f24af9980efd77dc751a5dc5f7e06}
+      \strng{bibnamehash}{ce7f24af9980efd77dc751a5dc5f7e06}
+      \strng{authorbibnamehash}{ce7f24af9980efd77dc751a5dc5f7e06}
+      \strng{authornamehash}{980c825ee9567d2378b796f3390d3db2}
+      \strng{authorfullhash}{ce7f24af9980efd77dc751a5dc5f7e06}
+      \strng{authorfullhashraw}{ce7f24af9980efd77dc751a5dc5f7e06}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chinese Journal of Aeronautics}
+      \field{number}{1}
+      \field{title}{Deep reinforcement learning based integrated evasion and impact hierarchical intelligent policy of exo-atmospheric vehicles}
+      \field{volume}{38}
+      \field{year}{2025}
+      \field{pages}{103193}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.cja.2024.08.024
+      \endverb
+    \endentry
+    \entry{cheng2022}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=79f08c0027786f80ab7b6ff360f05407}{%
+           family={Cheng},
+           familyi={C\bibinitperiod},
+           given={Tao},
+           giveni={T\bibinitperiod}}}%
+        {{hash=bf8821420565328b3085cef67e44b2af}{%
+           family={Zhou},
+           familyi={Z\bibinitperiod},
+           given={Hao},
+           giveni={H\bibinitperiod}}}%
+        {{hash=b58bb612bdb318c3e4e5e948c6927eaf}{%
+           family={Dong},
+           familyi={D\bibinitperiod},
+           given={Xiaofei},
+           giveni={X\bibinitperiod}}}%
+        {{hash=9c5aafd8698d08e821f63b02b7271ab8}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Wanchun},
+           giveni={W\bibinitperiod}}}%
+      }
+      \strng{namehash}{c7110bf037add49a811f26cb02977de5}
+      \strng{fullhash}{e97ca21f1a23b8c2b4a9fdf70830e2b0}
+      \strng{fullhashraw}{e97ca21f1a23b8c2b4a9fdf70830e2b0}
+      \strng{bibnamehash}{e97ca21f1a23b8c2b4a9fdf70830e2b0}
+      \strng{authorbibnamehash}{e97ca21f1a23b8c2b4a9fdf70830e2b0}
+      \strng{authornamehash}{c7110bf037add49a811f26cb02977de5}
+      \strng{authorfullhash}{e97ca21f1a23b8c2b4a9fdf70830e2b0}
+      \strng{authorfullhashraw}{e97ca21f1a23b8c2b4a9fdf70830e2b0}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Beijing University of Aeronautics and Astronautics}
+      \field{note}{in Chinese}
+      \field{number}{5}
+      \field{title}{Differential game guidance law design for integration of penetration and strike of multiple flight vehicles}
+      \field{volume}{48}
+      \field{year}{2022}
+      \field{pages}{898\bibrangedash 909}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.13700/j.bh.1001-5965.2020.0673
+      \endverb
+    \endentry
+    \entry{hao2025}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=188f0af61122d83fa9cf12ee529ab483}{%
+           family={Hao},
+           familyi={H\bibinitperiod},
+           given={Z.},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=528b0708ec1bf9b1677b35261fac82bf}{%
+           family={Zhang},
+           familyi={Z\bibinitperiod},
+           given={R.},
+           giveni={R\bibinitperiod}}}%
+        {{hash=e2e65bc31792929cfaa15cecf7f23965}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={H.},
+           giveni={H\bibinitperiod}}}%
+      }
+      \strng{namehash}{31996d13663f88b89f8390af4b90e941}
+      \strng{fullhash}{31996d13663f88b89f8390af4b90e941}
+      \strng{fullhashraw}{31996d13663f88b89f8390af4b90e941}
+      \strng{bibnamehash}{31996d13663f88b89f8390af4b90e941}
+      \strng{authorbibnamehash}{31996d13663f88b89f8390af4b90e941}
+      \strng{authornamehash}{31996d13663f88b89f8390af4b90e941}
+      \strng{authorfullhash}{31996d13663f88b89f8390af4b90e941}
+      \strng{authorfullhashraw}{31996d13663f88b89f8390af4b90e941}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chinese Journal of Aeronautics}
+      \field{number}{4}
+      \field{title}{Parameterized evasion strategy for hypersonic glide vehicles against two missiles based on reinforcement learning}
+      \field{volume}{38}
+      \field{year}{2025}
+      \field{pages}{103173}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.cja.2024.08.004
+      \endverb
+    \endentry
+    \entry{shen2022}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=0152e77fe18561672285863ab5412676}{%
+           family={Shen},
+           familyi={S\bibinitperiod},
+           given={Zhipeng},
+           giveni={Z\bibinitperiod}}}%
+        {{hash=0977bc66e092b94f64b2fb79c706a468}{%
+           family={Yu},
+           familyi={Y\bibinitperiod},
+           given={Jianglong},
+           giveni={J\bibinitperiod}}}%
+        {{hash=12d0a11116ae653cdae90e916e87abd8}{%
+           family={Dong},
+           familyi={D\bibinitperiod},
+           given={Xiwang},
+           giveni={X\bibinitperiod}}}%
+        {{hash=74e24af9425baf4a6bd989e79f22e9fc}{%
+           family={Hua},
+           familyi={H\bibinitperiod},
+           given={Yongzhao},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=0f159ab67027fae03aaa26c422bf82da}{%
+           family={Ren},
+           familyi={R\bibinitperiod},
+           given={Zhang},
+           giveni={Z\bibinitperiod}}}%
+      }
+      \strng{namehash}{a9920e1c5c3bfcdb5b56d7718db5b8fd}
+      \strng{fullhash}{0d4502bdb8ae3dfa742f5304e99357a3}
+      \strng{fullhashraw}{0d4502bdb8ae3dfa742f5304e99357a3}
+      \strng{bibnamehash}{0d4502bdb8ae3dfa742f5304e99357a3}
+      \strng{authorbibnamehash}{0d4502bdb8ae3dfa742f5304e99357a3}
+      \strng{authornamehash}{a9920e1c5c3bfcdb5b56d7718db5b8fd}
+      \strng{authorfullhash}{0d4502bdb8ae3dfa742f5304e99357a3}
+      \strng{authorfullhashraw}{0d4502bdb8ae3dfa742f5304e99357a3}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Aerospace Science and Technology}
+      \field{title}{Penetration trajectory optimization for the hypersonic gliding vehicle encountering two interceptors}
+      \field{volume}{121}
+      \field{year}{2022}
+      \field{pages}{107363}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.ast.2022.107363
+      \endverb
+    \endentry
+    \entry{ren2025nondy}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=08183828f2fb108179707ab8484a7804}{%
+           family={Ren},
+           familyi={R\bibinitperiod},
+           given={Bin},
+           giveni={B\bibinitperiod}}}%
+        {{hash=7220de554a5067751c0e1b416a3e9d7e}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Honglun},
+           giveni={H\bibinitperiod}}}%
+        {{hash=2decb12dff77cf07264d78a3ccfa7a04}{%
+           family={Wu},
+           familyi={W\bibinitperiod},
+           given={Tiancai},
+           giveni={T\bibinitperiod}}}%
+      }
+      \strng{namehash}{3ac9adfc1a91b7b4b979d69acf3eacf5}
+      \strng{fullhash}{3ac9adfc1a91b7b4b979d69acf3eacf5}
+      \strng{fullhashraw}{3ac9adfc1a91b7b4b979d69acf3eacf5}
+      \strng{bibnamehash}{3ac9adfc1a91b7b4b979d69acf3eacf5}
+      \strng{authorbibnamehash}{3ac9adfc1a91b7b4b979d69acf3eacf5}
+      \strng{authornamehash}{3ac9adfc1a91b7b4b979d69acf3eacf5}
+      \strng{authorfullhash}{3ac9adfc1a91b7b4b979d69acf3eacf5}
+      \strng{authorfullhashraw}{3ac9adfc1a91b7b4b979d69acf3eacf5}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Nonlinear Dynamics}
+      \field{number}{1}
+      \field{title}{Contextual {DRL}-empowered integrated guidance and evasion approach for hypersonic glide vehicles}
+      \field{volume}{114}
+      \field{year}{2025}
+      \field{pages}{17}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1007/s11071-025-11899-2
+      \endverb
+    \endentry
+    \entry{skolnik2008}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=24ee3ef297142fd740713cee92e5bd15}{%
+           family={Skolnik},
+           familyi={S\bibinitperiod},
+           given={Merrill\bibnamedelima I.},
+           giveni={M\bibinitperiod\bibinitdelim I\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {New York}%
+      }
+      \list{publisher}{1}{%
+        {McGraw-Hill}%
+      }
+      \strng{namehash}{24ee3ef297142fd740713cee92e5bd15}
+      \strng{fullhash}{24ee3ef297142fd740713cee92e5bd15}
+      \strng{fullhashraw}{24ee3ef297142fd740713cee92e5bd15}
+      \strng{bibnamehash}{24ee3ef297142fd740713cee92e5bd15}
+      \strng{authorbibnamehash}{24ee3ef297142fd740713cee92e5bd15}
+      \strng{authornamehash}{24ee3ef297142fd740713cee92e5bd15}
+      \strng{authorfullhash}{24ee3ef297142fd740713cee92e5bd15}
+      \strng{authorfullhashraw}{24ee3ef297142fd740713cee92e5bd15}
+      \field{sortinit}{1}
+      \field{sortinithash}{4f6aaa89bab872aa0999fec09ff8e98a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{3}
+      \field{isbn}{978-0-07-148547-0}
+      \field{title}{Radar Handbook}
+      \field{year}{2008}
+    \endentry
+    \entry{liu2025}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=7ceda39643494ec30a977c021b867caf}{%
+           family={Liu},
+           familyi={L\bibinitperiod},
+           given={Tianrun},
+           giveni={T\bibinitperiod}}}%
+        {{hash=920acc6f52b2368c595e3bdb01c2cbb2}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Yang-Yang},
+           giveni={Y\bibinithyphendelim Y\bibinitperiod}}}%
+        {{hash=1737b25c2f1767ecb6df80207745741b}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Shihua},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{ecb0e85b605bccf29511b8e63dc8f2b1}
+      \strng{fullhash}{ecb0e85b605bccf29511b8e63dc8f2b1}
+      \strng{fullhashraw}{ecb0e85b605bccf29511b8e63dc8f2b1}
+      \strng{bibnamehash}{ecb0e85b605bccf29511b8e63dc8f2b1}
+      \strng{authorbibnamehash}{ecb0e85b605bccf29511b8e63dc8f2b1}
+      \strng{authornamehash}{ecb0e85b605bccf29511b8e63dc8f2b1}
+      \strng{authorfullhash}{ecb0e85b605bccf29511b8e63dc8f2b1}
+      \strng{authorfullhashraw}{ecb0e85b605bccf29511b8e63dc8f2b1}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Aerospace and Electronic Systems}
+      \field{number}{4}
+      \field{title}{Adaptive cooperative estimation and guidance against unknown maneuvering target}
+      \field{volume}{61}
+      \field{year}{2025}
+      \field{pages}{9129\bibrangedash 9140}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1109/TAES.2025.3553459
+      \endverb
+    \endentry
+    \entry{paleologu2008}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=7c13e7bc47cba3d262df927c795a1e2b}{%
+           family={Paleologu},
+           familyi={P\bibinitperiod},
+           given={Constantin},
+           giveni={C\bibinitperiod}}}%
+        {{hash=50f152a58e4a694e44bf07fc68be4636}{%
+           family={Benesty},
+           familyi={B\bibinitperiod},
+           given={Jacob},
+           giveni={J\bibinitperiod}}}%
+        {{hash=1cea8db787b0b20b7ba145b7d773b9a1}{%
+           family={Ciochină},
+           familyi={C\bibinitperiod},
+           given={Silviu},
+           giveni={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{137d86bacc19a6aaa4e8136897f1e542}
+      \strng{fullhash}{137d86bacc19a6aaa4e8136897f1e542}
+      \strng{fullhashraw}{137d86bacc19a6aaa4e8136897f1e542}
+      \strng{bibnamehash}{137d86bacc19a6aaa4e8136897f1e542}
+      \strng{authorbibnamehash}{137d86bacc19a6aaa4e8136897f1e542}
+      \strng{authornamehash}{137d86bacc19a6aaa4e8136897f1e542}
+      \strng{authorfullhash}{137d86bacc19a6aaa4e8136897f1e542}
+      \strng{authorfullhashraw}{137d86bacc19a6aaa4e8136897f1e542}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Signal Processing Letters}
+      \field{title}{A robust variable forgetting factor recursive least-squares algorithm for system identification}
+      \field{volume}{15}
+      \field{year}{2008}
+      \field{pages}{597\bibrangedash 600}
+      \range{pages}{4}
+      \verb{doi}
+      \verb 10.1109/LSP.2008.2001559
+      \endverb
+    \endentry
+    \entry{bruce2020}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=98131be552eeef9ed468ecf03b48093c}{%
+           family={Bruce},
+           familyi={B\bibinitperiod},
+           given={Adam\bibnamedelima L.},
+           giveni={A\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+        {{hash=41dca33c1eb89b1a0936b414553b5908}{%
+           family={Goel},
+           familyi={G\bibinitperiod},
+           given={Ankit},
+           giveni={A\bibinitperiod}}}%
+        {{hash=248953a478a97620aae286e8282daf9f}{%
+           family={Bernstein},
+           familyi={B\bibinitperiod},
+           given={Dennis\bibnamedelima S.},
+           giveni={D\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+      }
+      \strng{namehash}{5d6ba51c241b0cc2abb3bb57cefc6845}
+      \strng{fullhash}{5d6ba51c241b0cc2abb3bb57cefc6845}
+      \strng{fullhashraw}{5d6ba51c241b0cc2abb3bb57cefc6845}
+      \strng{bibnamehash}{5d6ba51c241b0cc2abb3bb57cefc6845}
+      \strng{authorbibnamehash}{5d6ba51c241b0cc2abb3bb57cefc6845}
+      \strng{authornamehash}{5d6ba51c241b0cc2abb3bb57cefc6845}
+      \strng{authorfullhash}{5d6ba51c241b0cc2abb3bb57cefc6845}
+      \strng{authorfullhashraw}{5d6ba51c241b0cc2abb3bb57cefc6845}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Automatica}
+      \field{title}{Convergence and consistency of recursive least squares with variable-rate forgetting}
+      \field{volume}{119}
+      \field{year}{2020}
+      \field{pages}{109052}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.automatica.2020.109052
+      \endverb
+    \endentry
+    \entry{angelosante2010}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=f2026fa75b4825f7598187e49a6dbc84}{%
+           family={Angelosante},
+           familyi={A\bibinitperiod},
+           given={Daniele},
+           giveni={D\bibinitperiod}}}%
+        {{hash=c2eb7b11a42fe8bc836922d6271d3425}{%
+           family={Bazerque},
+           familyi={B\bibinitperiod},
+           given={Juan\bibnamedelima Andrés},
+           giveni={J\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=2808efbb7839110315be19b3f0a43f20}{%
+           family={Giannakis},
+           familyi={G\bibinitperiod},
+           given={Georgios\bibnamedelima B.},
+           giveni={G\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+      }
+      \strng{namehash}{0403696ac14c5772454455427c8da434}
+      \strng{fullhash}{0403696ac14c5772454455427c8da434}
+      \strng{fullhashraw}{0403696ac14c5772454455427c8da434}
+      \strng{bibnamehash}{0403696ac14c5772454455427c8da434}
+      \strng{authorbibnamehash}{0403696ac14c5772454455427c8da434}
+      \strng{authornamehash}{0403696ac14c5772454455427c8da434}
+      \strng{authorfullhash}{0403696ac14c5772454455427c8da434}
+      \strng{authorfullhashraw}{0403696ac14c5772454455427c8da434}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Transactions on Signal Processing}
+      \field{number}{7}
+      \field{title}{Online adaptive estimation of sparse signals: where {RLS} meets the $\ell_1$-norm}
+      \field{volume}{58}
+      \field{year}{2010}
+      \field{pages}{3436\bibrangedash 3447}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.1109/TSP.2010.2046897
+      \endverb
+    \endentry
+    \entry{lillicrap2016}{inproceedings}{}{}
+      \name{author}{8}{}{%
+        {{hash=2a321a868e44d49baf52b5e2d816fb71}{%
+           family={Lillicrap},
+           familyi={L\bibinitperiod},
+           given={Timothy\bibnamedelima P.},
+           giveni={T\bibinitperiod\bibinitdelim P\bibinitperiod}}}%
+        {{hash=e0c5cec59a932511b2af6220473fad61}{%
+           family={Hunt},
+           familyi={H\bibinitperiod},
+           given={Jonathan\bibnamedelima J.},
+           giveni={J\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=4295e4094c426f01903ac60155866130}{%
+           family={Pritzel},
+           familyi={P\bibinitperiod},
+           given={Alexander},
+           giveni={A\bibinitperiod}}}%
+        {{hash=231312991eab5915498d6c19c2a8cd4e}{%
+           family={Heess},
+           familyi={H\bibinitperiod},
+           given={Nicolas},
+           giveni={N\bibinitperiod}}}%
+        {{hash=3b79ca47f08451987877fd8682e971e5}{%
+           family={Erez},
+           familyi={E\bibinitperiod},
+           given={Tom},
+           giveni={T\bibinitperiod}}}%
+        {{hash=58112cb88a80c1bc045b6eaab26a8695}{%
+           family={Tassa},
+           familyi={T\bibinitperiod},
+           given={Yuval},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=89dbd30410c2085cd059f32c57d4593e}{%
+           family={Silver},
+           familyi={S\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+        {{hash=d7805381550fb5f8360345f7f72c0b49}{%
+           family={Wierstra},
+           familyi={W\bibinitperiod},
+           given={Daan},
+           giveni={D\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {San Juan, Puerto Rico}%
+      }
+      \strng{namehash}{e9929f8db9dd2c08064f17b4d9a7c551}
+      \strng{fullhash}{9f2f0357b439f9ae4a3953d81392aaa0}
+      \strng{fullhashraw}{9f2f0357b439f9ae4a3953d81392aaa0}
+      \strng{bibnamehash}{9f2f0357b439f9ae4a3953d81392aaa0}
+      \strng{authorbibnamehash}{9f2f0357b439f9ae4a3953d81392aaa0}
+      \strng{authornamehash}{e9929f8db9dd2c08064f17b4d9a7c551}
+      \strng{authorfullhash}{9f2f0357b439f9ae4a3953d81392aaa0}
+      \strng{authorfullhashraw}{9f2f0357b439f9ae4a3953d81392aaa0}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 4th International Conference on Learning Representations (ICLR)}
+      \field{title}{Continuous control with deep reinforcement learning}
+      \field{year}{2016}
+    \endentry
+    \entry{fujimoto2018}{inproceedings}{}{}
+      \name{author}{3}{}{%
+        {{hash=064fb8795fb3fe6537e4d29fc8578ec4}{%
+           family={Fujimoto},
+           familyi={F\bibinitperiod},
+           given={Scott},
+           giveni={S\bibinitperiod}}}%
+        {{hash=f2db100b30806f7c8e894892db68dadb}{%
+           family={Hoof},
+           familyi={H\bibinitperiod},
+           given={Herke},
+           giveni={H\bibinitperiod},
+           prefix={van},
+           prefixi={v\bibinitperiod}}}%
+        {{hash=a5137015bf373eff6cd1b6a96b145c3c}{%
+           family={Meger},
+           familyi={M\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {PMLR}%
+      }
+      \strng{namehash}{fa31fcf8611ccec7d2a280d8c08326e7}
+      \strng{fullhash}{fa31fcf8611ccec7d2a280d8c08326e7}
+      \strng{fullhashraw}{fa31fcf8611ccec7d2a280d8c08326e7}
+      \strng{bibnamehash}{fa31fcf8611ccec7d2a280d8c08326e7}
+      \strng{authorbibnamehash}{fa31fcf8611ccec7d2a280d8c08326e7}
+      \strng{authornamehash}{fa31fcf8611ccec7d2a280d8c08326e7}
+      \strng{authorfullhash}{fa31fcf8611ccec7d2a280d8c08326e7}
+      \strng{authorfullhashraw}{fa31fcf8611ccec7d2a280d8c08326e7}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 35th International Conference on Machine Learning}
+      \field{series}{Proceedings of Machine Learning Research}
+      \field{title}{Addressing function approximation error in actor-critic methods}
+      \field{volume}{80}
+      \field{year}{2018}
+      \field{pages}{1587\bibrangedash 1596}
+      \range{pages}{10}
+    \endentry
+    \entry{gaudet2020}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=1a8b2a5a925f99c27fb241ca1ac7711b}{%
+           family={Gaudet},
+           familyi={G\bibinitperiod},
+           given={Brian},
+           giveni={B\bibinitperiod}}}%
+        {{hash=cc014062f5c99674859d9f6308484b64}{%
+           family={Furfaro},
+           familyi={F\bibinitperiod},
+           given={Roberto},
+           giveni={R\bibinitperiod}}}%
+        {{hash=8cedd29a1597b110e535ec33c8afc60a}{%
+           family={Linares},
+           familyi={L\bibinitperiod},
+           given={Richard},
+           giveni={R\bibinitperiod}}}%
+      }
+      \strng{namehash}{3d62beeb04b63505362eb5fc3977de0e}
+      \strng{fullhash}{3d62beeb04b63505362eb5fc3977de0e}
+      \strng{fullhashraw}{3d62beeb04b63505362eb5fc3977de0e}
+      \strng{bibnamehash}{3d62beeb04b63505362eb5fc3977de0e}
+      \strng{authorbibnamehash}{3d62beeb04b63505362eb5fc3977de0e}
+      \strng{authornamehash}{3d62beeb04b63505362eb5fc3977de0e}
+      \strng{authorfullhash}{3d62beeb04b63505362eb5fc3977de0e}
+      \strng{authorfullhashraw}{3d62beeb04b63505362eb5fc3977de0e}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Aerospace Science and Technology}
+      \field{title}{Reinforcement learning for angle-only intercept guidance of maneuvering targets}
+      \field{volume}{99}
+      \field{year}{2020}
+      \field{pages}{105746}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.ast.2020.105746
+      \endverb
+    \endentry
+    \entry{he2021}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=a896bdd318be17e6fe5a071f7f5b33eb}{%
+           family={He},
+           familyi={H\bibinitperiod},
+           given={Shaoming},
+           giveni={S\bibinitperiod}}}%
+        {{hash=d6fc01c1eef8e8e54c00bd6c7816f142}{%
+           family={Shin},
+           familyi={S\bibinitperiod},
+           given={Hyo-Sang},
+           giveni={H\bibinithyphendelim S\bibinitperiod}}}%
+        {{hash=b27e6dd15c91a210ad8faf19939b3ce5}{%
+           family={Tsourdos},
+           familyi={T\bibinitperiod},
+           given={Antonios},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{8193f84e082229f8b800a89d98298444}
+      \strng{fullhash}{8193f84e082229f8b800a89d98298444}
+      \strng{fullhashraw}{8193f84e082229f8b800a89d98298444}
+      \strng{bibnamehash}{8193f84e082229f8b800a89d98298444}
+      \strng{authorbibnamehash}{8193f84e082229f8b800a89d98298444}
+      \strng{authornamehash}{8193f84e082229f8b800a89d98298444}
+      \strng{authorfullhash}{8193f84e082229f8b800a89d98298444}
+      \strng{authorfullhashraw}{8193f84e082229f8b800a89d98298444}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Aerospace Information Systems}
+      \field{number}{8}
+      \field{title}{Computational missile guidance: a deep reinforcement learning approach}
+      \field{volume}{18}
+      \field{year}{2021}
+      \field{pages}{571\bibrangedash 582}
+      \range{pages}{12}
+      \verb{doi}
+      \verb 10.2514/1.I010970
+      \endverb
+    \endentry
+    \entry{li2024td3hgv}{article}{}{}
+      \name{author}{3}{}{%
+        {{hash=0548d797e1c40a48d6df8f5f6dc57c57}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Jianfeng},
+           giveni={J\bibinitperiod}}}%
+        {{hash=dc9c89de9f28e06ac20e5ec0b2307a1c}{%
+           family={Song},
+           familyi={S\bibinitperiod},
+           given={Shenmin},
+           giveni={S\bibinitperiod}}}%
+        {{hash=27040fa9a89d4dd728fbbe69ac83934e}{%
+           family={Shi},
+           familyi={S\bibinitperiod},
+           given={Xiaoping},
+           giveni={X\bibinitperiod}}}%
+      }
+      \strng{namehash}{3d2b68acbf54dd4f8295cd9be5349ff3}
+      \strng{fullhash}{3d2b68acbf54dd4f8295cd9be5349ff3}
+      \strng{fullhashraw}{3d2b68acbf54dd4f8295cd9be5349ff3}
+      \strng{bibnamehash}{3d2b68acbf54dd4f8295cd9be5349ff3}
+      \strng{authorbibnamehash}{3d2b68acbf54dd4f8295cd9be5349ff3}
+      \strng{authornamehash}{3d2b68acbf54dd4f8295cd9be5349ff3}
+      \strng{authorfullhash}{3d2b68acbf54dd4f8295cd9be5349ff3}
+      \strng{authorfullhashraw}{3d2b68acbf54dd4f8295cd9be5349ff3}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Proceedings of the Institution of Mechanical Engineers, Part G: Journal of Aerospace Engineering}
+      \field{number}{16}
+      \field{title}{Deep reinforcement learning based trajectory real-time planning for hypersonic gliding vehicles}
+      \field{volume}{238}
+      \field{year}{2024}
+      \field{pages}{1665\bibrangedash 1682}
+      \range{pages}{18}
+      \verb{doi}
+      \verb 10.1177/09544100241278023
+      \endverb
+    \endentry
+    \entry{vecerik2017}{article}{}{}
+      \name{author}{10}{}{%
+        {{hash=cee2188a11ca38cc7e08df0f9af353a2}{%
+           family={Vecerik},
+           familyi={V\bibinitperiod},
+           given={Mel},
+           giveni={M\bibinitperiod}}}%
+        {{hash=c637e4ed3fcc395fa56d8aab57126d4d}{%
+           family={Hester},
+           familyi={H\bibinitperiod},
+           given={Todd},
+           giveni={T\bibinitperiod}}}%
+        {{hash=396ee21498260ebc9cefb203ae91c6bb}{%
+           family={Scholz},
+           familyi={S\bibinitperiod},
+           given={Jonathan},
+           giveni={J\bibinitperiod}}}%
+        {{hash=d0731637c0874191b9b6f6d9941a8b1f}{%
+           family={Wang},
+           familyi={W\bibinitperiod},
+           given={Fumin},
+           giveni={F\bibinitperiod}}}%
+        {{hash=fa8a4817aef70fffae62a48b98481ef7}{%
+           family={Pietquin},
+           familyi={P\bibinitperiod},
+           given={Olivier},
+           giveni={O\bibinitperiod}}}%
+        {{hash=f31963abd2aa43dd3aafc40aa1252a05}{%
+           family={Piot},
+           familyi={P\bibinitperiod},
+           given={Bilal},
+           giveni={B\bibinitperiod}}}%
+        {{hash=231312991eab5915498d6c19c2a8cd4e}{%
+           family={Heess},
+           familyi={H\bibinitperiod},
+           given={Nicolas},
+           giveni={N\bibinitperiod}}}%
+        {{hash=93ebc4c0f257bbc791412b820360dcfa}{%
+           family={Rothörl},
+           familyi={R\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=88b7db69f42e22293022f02f63af62cf}{%
+           family={Lampe},
+           familyi={L\bibinitperiod},
+           given={Thomas},
+           giveni={T\bibinitperiod}}}%
+        {{hash=9449802bcb467309c0ebced658096818}{%
+           family={Riedmiller},
+           familyi={R\bibinitperiod},
+           given={Martin},
+           giveni={M\bibinitperiod}}}%
+      }
+      \strng{namehash}{7ebba7d5f5faad4cfd4c390ba9f381d6}
+      \strng{fullhash}{bd5b81d2819972d29d30f6d3b25a12df}
+      \strng{fullhashraw}{bd5b81d2819972d29d30f6d3b25a12df}
+      \strng{bibnamehash}{bd5b81d2819972d29d30f6d3b25a12df}
+      \strng{authorbibnamehash}{bd5b81d2819972d29d30f6d3b25a12df}
+      \strng{authornamehash}{7ebba7d5f5faad4cfd4c390ba9f381d6}
+      \strng{authorfullhash}{bd5b81d2819972d29d30f6d3b25a12df}
+      \strng{authorfullhashraw}{bd5b81d2819972d29d30f6d3b25a12df}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{arXiv preprint arXiv:1707.08817}
+      \field{title}{Leveraging demonstrations for deep reinforcement learning on robotics problems with sparse rewards}
+      \field{year}{2017}
+    \endentry
+    \entry{fujimoto2021}{inproceedings}{}{}
+      \name{author}{2}{}{%
+        {{hash=064fb8795fb3fe6537e4d29fc8578ec4}{%
+           family={Fujimoto},
+           familyi={F\bibinitperiod},
+           given={Scott},
+           giveni={S\bibinitperiod}}}%
+        {{hash=c6ad9b4948652ebe5c60d3cf11dfc28d}{%
+           family={Gu},
+           familyi={G\bibinitperiod},
+           given={Shixiang\bibnamedelima Shane},
+           giveni={S\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Curran Associates, Inc.}%
+      }
+      \strng{namehash}{2167e69c9c944ad00f8aba80f59a5ee5}
+      \strng{fullhash}{2167e69c9c944ad00f8aba80f59a5ee5}
+      \strng{fullhashraw}{2167e69c9c944ad00f8aba80f59a5ee5}
+      \strng{bibnamehash}{2167e69c9c944ad00f8aba80f59a5ee5}
+      \strng{authorbibnamehash}{2167e69c9c944ad00f8aba80f59a5ee5}
+      \strng{authornamehash}{2167e69c9c944ad00f8aba80f59a5ee5}
+      \strng{authorfullhash}{2167e69c9c944ad00f8aba80f59a5ee5}
+      \strng{authorfullhashraw}{2167e69c9c944ad00f8aba80f59a5ee5}
+      \field{sortinit}{2}
+      \field{sortinithash}{8b555b3791beccb63322c22f3320aa9a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Advances in Neural Information Processing Systems 34 (NeurIPS 2021)}
+      \field{title}{A minimalist approach to offline reinforcement learning}
+      \field{volume}{34}
+      \field{year}{2021}
+    \endentry
+    \entry{hui2025}{article}{}{}
+      \name{author}{5}{}{%
+        {{hash=534081ac2a527c0ba5757d637d9db526}{%
+           family={Hui},
+           familyi={H\bibinitperiod},
+           given={Yaoluo},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=e12b01081e974e246f413c864b385b74}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Xiumin},
+           giveni={X\bibinitperiod}}}%
+        {{hash=8b0338921cb1b7773c2e58d76fd85d2e}{%
+           family={Liang},
+           familyi={L\bibinitperiod},
+           given={Chen},
+           giveni={C\bibinitperiod}}}%
+        {{hash=2e47f9f65c26b37c5723dbc43689b7e1}{%
+           family={Sun},
+           familyi={S\bibinitperiod},
+           given={Junzheng},
+           giveni={J\bibinitperiod}}}%
+        {{hash=5448410ae4d36a9605def2db3079d0ca}{%
+           family={Du},
+           familyi={D\bibinitperiod},
+           given={Zheng},
+           giveni={Z\bibinitperiod}}}%
+      }
+      \strng{namehash}{a92dd288448a49f2d6164162afdcb856}
+      \strng{fullhash}{4681a5ec8fe846c82cea98d6490a1fc4}
+      \strng{fullhashraw}{4681a5ec8fe846c82cea98d6490a1fc4}
+      \strng{bibnamehash}{4681a5ec8fe846c82cea98d6490a1fc4}
+      \strng{authorbibnamehash}{4681a5ec8fe846c82cea98d6490a1fc4}
+      \strng{authornamehash}{a92dd288448a49f2d6164162afdcb856}
+      \strng{authorfullhash}{4681a5ec8fe846c82cea98d6490a1fc4}
+      \strng{authorfullhashraw}{4681a5ec8fe846c82cea98d6490a1fc4}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Chinese Journal of Aeronautics}
+      \field{number}{4}
+      \field{title}{Endo-atmospheric maneuver penetration strategy based on generative adversarial reinforcement learning}
+      \field{volume}{38}
+      \field{year}{2025}
+      \field{pages}{103200}
+      \range{pages}{1}
+      \verb{doi}
+      \verb 10.1016/j.cja.2024.08.031
+      \endverb
+    \endentry
+    \entry{murtaugh1966}{article}{}{}
+      \name{author}{2}{}{%
+        {{hash=56bfe30757987200290a9dc18eed7e29}{%
+           family={Murtaugh},
+           familyi={M\bibinitperiod},
+           given={Stephen\bibnamedelima A.},
+           giveni={S\bibinitperiod\bibinitdelim A\bibinitperiod}}}%
+        {{hash=8c67fad97cbd86cad7258b57e7eb20f7}{%
+           family={Criel},
+           familyi={C\bibinitperiod},
+           given={Harry\bibnamedelima E.},
+           giveni={H\bibinitperiod\bibinitdelim E\bibinitperiod}}}%
+      }
+      \strng{namehash}{68b6afde808fe481fd1ce486088ba17e}
+      \strng{fullhash}{68b6afde808fe481fd1ce486088ba17e}
+      \strng{fullhashraw}{68b6afde808fe481fd1ce486088ba17e}
+      \strng{bibnamehash}{68b6afde808fe481fd1ce486088ba17e}
+      \strng{authorbibnamehash}{68b6afde808fe481fd1ce486088ba17e}
+      \strng{authornamehash}{68b6afde808fe481fd1ce486088ba17e}
+      \strng{authorfullhash}{68b6afde808fe481fd1ce486088ba17e}
+      \strng{authorfullhashraw}{68b6afde808fe481fd1ce486088ba17e}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{IEEE Spectrum}
+      \field{number}{12}
+      \field{title}{Fundamentals of proportional navigation}
+      \field{volume}{3}
+      \field{year}{1966}
+      \field{pages}{75\bibrangedash 85}
+      \range{pages}{11}
+      \verb{doi}
+      \verb 10.1109/MSPEC.1966.5217080
+      \endverb
+    \endentry
+    \entry{ljung1999}{book}{}{}
+      \name{author}{1}{}{%
+        {{hash=f7cffd38dd9d98d3fd91ec52f00c4c77}{%
+           family={Ljung},
+           familyi={L\bibinitperiod},
+           given={Lennart},
+           giveni={L\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {Upper Saddle River, {NJ}}%
+      }
+      \list{publisher}{1}{%
+        {Prentice Hall PTR}%
+      }
+      \strng{namehash}{f7cffd38dd9d98d3fd91ec52f00c4c77}
+      \strng{fullhash}{f7cffd38dd9d98d3fd91ec52f00c4c77}
+      \strng{fullhashraw}{f7cffd38dd9d98d3fd91ec52f00c4c77}
+      \strng{bibnamehash}{f7cffd38dd9d98d3fd91ec52f00c4c77}
+      \strng{authorbibnamehash}{f7cffd38dd9d98d3fd91ec52f00c4c77}
+      \strng{authornamehash}{f7cffd38dd9d98d3fd91ec52f00c4c77}
+      \strng{authorfullhash}{f7cffd38dd9d98d3fd91ec52f00c4c77}
+      \strng{authorfullhashraw}{f7cffd38dd9d98d3fd91ec52f00c4c77}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{edition}{2}
+      \field{isbn}{0-13-656695-2}
+      \field{title}{System Identification: Theory for the User}
+      \field{year}{1999}
+    \endentry
+    \entry{barshalom2001}{book}{}{}
+      \name{author}{3}{}{%
+        {{hash=a01ea5a6fd3b000f4e53c2b816b56101}{%
+           family={Bar-Shalom},
+           familyi={B\bibinithyphendelim S\bibinitperiod},
+           given={Yaakov},
+           giveni={Y\bibinitperiod}}}%
+        {{hash=2cca97167d316f121e8e9f74497eca15}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={X.\bibnamedelimi Rong},
+           giveni={X\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+        {{hash=994eb6b343bb55a0df53333ef56b95fe}{%
+           family={Kirubarajan},
+           familyi={K\bibinitperiod},
+           given={Thiagalingam},
+           giveni={T\bibinitperiod}}}%
+      }
+      \list{location}{1}{%
+        {New York}%
+      }
+      \list{publisher}{1}{%
+        {John Wiley \& Sons}%
+      }
+      \strng{namehash}{b3b419cabbc56ab43a9fa8f0befc850d}
+      \strng{fullhash}{b3b419cabbc56ab43a9fa8f0befc850d}
+      \strng{fullhashraw}{b3b419cabbc56ab43a9fa8f0befc850d}
+      \strng{bibnamehash}{b3b419cabbc56ab43a9fa8f0befc850d}
+      \strng{authorbibnamehash}{b3b419cabbc56ab43a9fa8f0befc850d}
+      \strng{authornamehash}{b3b419cabbc56ab43a9fa8f0befc850d}
+      \strng{authorfullhash}{b3b419cabbc56ab43a9fa8f0befc850d}
+      \strng{authorfullhashraw}{b3b419cabbc56ab43a9fa8f0befc850d}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{isbn}{0-471-41655-X}
+      \field{title}{Estimation with Applications to Tracking and Navigation: Theory, Algorithms and Software}
+      \field{year}{2001}
+    \endentry
+    \entry{johnstone1982}{article}{}{}
+      \name{author}{4}{}{%
+        {{hash=f1ba7e8d2a87289365d017db9045756c}{%
+           family={Johnstone},
+           familyi={J\bibinitperiod},
+           given={Richard\bibnamedelima M.},
+           giveni={R\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=a6b34afea6209255263a6819eaf4fe1e}{%
+           family={Johnson},
+           familyi={J\bibinitperiod},
+           given={C.\bibnamedelimi Richard},
+           giveni={C\bibinitperiod\bibinitdelim R\bibinitperiod},
+           suffix={Jr.},
+           suffixi={J\bibinitperiod}}}%
+        {{hash=7643abaf47727b0e1606d17ea4fe5ec4}{%
+           family={Bitmead},
+           familyi={B\bibinitperiod},
+           given={Robert\bibnamedelima R.},
+           giveni={R\bibinitperiod\bibinitdelim R\bibinitperiod}}}%
+        {{hash=e8a4070f47356ebf747da5eda23eeddd}{%
+           family={Anderson},
+           familyi={A\bibinitperiod},
+           given={Brian\bibnamedelimb D.\bibnamedelimi O.},
+           giveni={B\bibinitperiod\bibinitdelim D\bibinitperiod\bibinitdelim O\bibinitperiod}}}%
+      }
+      \strng{namehash}{e30056ade28e9d44dea2aadf583fd24f}
+      \strng{fullhash}{40b29007a92c6e40c2696e2abd380167}
+      \strng{fullhashraw}{40b29007a92c6e40c2696e2abd380167}
+      \strng{bibnamehash}{40b29007a92c6e40c2696e2abd380167}
+      \strng{authorbibnamehash}{40b29007a92c6e40c2696e2abd380167}
+      \strng{authornamehash}{e30056ade28e9d44dea2aadf583fd24f}
+      \strng{authorfullhash}{40b29007a92c6e40c2696e2abd380167}
+      \strng{authorfullhashraw}{40b29007a92c6e40c2696e2abd380167}
+      \field{sortinit}{3}
+      \field{sortinithash}{ad6fe7482ffbd7b9f99c9e8b5dccd3d7}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Systems \& Control Letters}
+      \field{number}{2}
+      \field{title}{Exponential convergence of recursive least squares with exponential forgetting factor}
+      \field{volume}{2}
+      \field{year}{1982}
+      \field{pages}{77\bibrangedash 82}
+      \range{pages}{6}
+      \verb{doi}
+      \verb 10.1016/S0167-6911(82)80014-5
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
